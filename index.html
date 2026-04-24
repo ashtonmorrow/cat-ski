@@ -158,6 +158,19 @@
   }
   .overlay.hidden { display: none; }
 
+  /* Start screen uses the social preview image as its backdrop for
+     visual continuity with shared links. A dark gradient on top keeps
+     the panel legible. Image scaled with crisp-edges to keep its
+     pixel-art character at the rendered size. */
+  #overlay-start {
+    background:
+      linear-gradient(rgba(5,10,20,0.55), rgba(5,10,20,0.85)),
+      url('preview.png') center/cover no-repeat;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    backdrop-filter: none;
+  }
+
   .panel {
     border: 2px solid var(--snow-dim);
     background: #0b1320;
@@ -336,6 +349,7 @@
       <div>
         <div><span class="label">DIST</span> <span class="value" id="hud-dist">0</span> M</div>
         <div><span class="label">SCORE</span> <span class="value" id="hud-score">0</span></div>
+        <div><span class="label">FLAGS</span> <span class="value" id="hud-flags">0</span></div>
       </div>
       <div style="text-align:right">
         <div><span class="label">TIME</span> <span class="value" id="hud-time">0:00</span></div>
@@ -352,9 +366,9 @@
         <p>Dodge trees. Launch jumps. Grab flags.</p>
         <p>Don't look behind you.</p>
         <div class="keys">
-          <kbd>&larr; &rarr;</kbd><span>STEER</span>
-          <kbd>&darr;</kbd><span>TUCK / FASTER</span>
-          <kbd>&uarr;</kbd><span>SLOW / CARVE</span>
+          <kbd id="key-steer">&larr;&nbsp;&rarr;</kbd><span>STEER</span>
+          <kbd id="key-fast">&darr;</kbd><span>TUCK / FASTER</span>
+          <kbd id="key-slow">&uarr;</kbd><span>SLOW / CARVE</span>
           <kbd>SPACE</kbd><span>START / RETRY</span>
         </div>
         <div class="hint"><span class="blink">&gt;</span> PRESS SPACE TO START</div>
@@ -406,6 +420,14 @@
     <button class="diff-swatch" data-diff="insta"  aria-label="Instant death">INSTA DEATH</button>
   </div>
 
+  <!-- Control picker: arrow keys or WASD. Both always work; this only
+       swaps which key legend is shown. -->
+  <div class="cat-picker diff-picker" role="radiogroup" aria-label="Controls">
+    <span class="cat-picker-label">KEYS</span>
+    <button class="diff-swatch ctrl-swatch" data-ctrl="arrows" aria-label="Arrow keys">ARROWS</button>
+    <button class="diff-swatch ctrl-swatch" data-ctrl="wasd"   aria-label="WASD">WASD</button>
+  </div>
+
   <div class="footer">ARROWS &#9679; SPACE &#9679; NO QUARTER REQUIRED</div>
 </div>
 
@@ -440,6 +462,7 @@
   // HUD elements
   const hudDist    = document.getElementById('hud-dist');
   const hudScore   = document.getElementById('hud-score');
+  const hudFlags   = document.getElementById('hud-flags');
   const hudTime    = document.getElementById('hud-time');
   const hudSpeed   = document.getElementById('hud-speed');
   const hudWarning = document.getElementById('hud-warning');
@@ -463,24 +486,75 @@
 
   // ---------- input ----------
   // Simple held-key map. Space is edge-triggered for start/retry.
+  // Both arrow keys and WASD are always active so nobody's muscle memory
+  // gets rejected. The controlMode toggle only changes the displayed legend.
   const keys = { left:false, right:false, up:false, down:false };
   let spacePressed = false;
 
+  function normalizeKey(e) {
+    // Map both arrow keys and WASD to a shared direction string.
+    // Case-insensitive so caps lock doesn't break WASD.
+    // Modifier keys (Ctrl/Cmd/Alt) pass through so browser shortcuts like
+    // Ctrl+A, Cmd+D, Ctrl+W still work.
+    if (e.ctrlKey || e.metaKey || e.altKey) return null;
+    const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    if (k === 'ArrowLeft'  || k === 'a') return 'left';
+    if (k === 'ArrowRight' || k === 'd') return 'right';
+    if (k === 'ArrowUp'    || k === 'w') return 'up';
+    if (k === 'ArrowDown'  || k === 's') return 'down';
+    if (k === ' ')                       return 'space';
+    return null;
+  }
+
   window.addEventListener('keydown', e => {
-    if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].includes(e.key)) e.preventDefault();
+    const dir = normalizeKey(e);
+    if (dir) e.preventDefault();
     if (e.repeat) return;
-    if (e.key === 'ArrowLeft')  keys.left = true;
-    if (e.key === 'ArrowRight') keys.right = true;
-    if (e.key === 'ArrowUp')    keys.up = true;
-    if (e.key === 'ArrowDown')  keys.down = true;
-    if (e.key === ' ')          spacePressed = true;
+    if (dir === 'left')  keys.left = true;
+    if (dir === 'right') keys.right = true;
+    if (dir === 'up')    keys.up = true;
+    if (dir === 'down')  keys.down = true;
+    if (dir === 'space') spacePressed = true;
   });
   window.addEventListener('keyup', e => {
-    if (e.key === 'ArrowLeft')  keys.left = false;
-    if (e.key === 'ArrowRight') keys.right = false;
-    if (e.key === 'ArrowUp')    keys.up = false;
-    if (e.key === 'ArrowDown')  keys.down = false;
+    const dir = normalizeKey(e);
+    if (dir === 'left')  keys.left = false;
+    if (dir === 'right') keys.right = false;
+    if (dir === 'up')    keys.up = false;
+    if (dir === 'down')  keys.down = false;
   });
+
+  // ---------- control mode toggle ----------
+  // Cosmetic only: swaps the displayed key legend between arrows and WASD.
+  // Both sets always function in play.
+  let controlMode = localStorage.getItem('skior_controls') || 'arrows';
+  if (controlMode !== 'arrows' && controlMode !== 'wasd') controlMode = 'arrows';
+
+  function updateKeysLegend() {
+    const wasd = controlMode === 'wasd';
+    const steer = document.getElementById('key-steer');
+    const slow  = document.getElementById('key-slow');
+    const fast  = document.getElementById('key-fast');
+    if (!steer) return;
+    steer.innerHTML = wasd ? 'A&nbsp;&nbsp;D' : '&larr;&nbsp;&rarr;';
+    slow.innerHTML  = wasd ? 'W'              : '&uarr;';
+    fast.innerHTML  = wasd ? 'S'              : '&darr;';
+  }
+
+  function setControlMode(name) {
+    if (name !== 'arrows' && name !== 'wasd') return;
+    controlMode = name;
+    localStorage.setItem('skior_controls', name);
+    document.querySelectorAll('.ctrl-swatch').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.ctrl === name);
+    });
+    updateKeysLegend();
+  }
+
+  document.querySelectorAll('.ctrl-swatch').forEach(btn => {
+    btn.addEventListener('click', () => setControlMode(btn.dataset.ctrl));
+  });
+  setControlMode(controlMode);
 
   // ---------- cat palettes ----------
   // Each palette gives a base fur color, a darker accent for shadows
@@ -846,7 +920,9 @@
     worldY += player.speed;
     stats.elapsed += 1 / 60;
     stats.distance = Math.floor(worldY / 10); // 10px = 1m
-    stats.score    = stats.distance + stats.flags * 50 + stats.jumps * 25;
+    // Flags now worth 100 each (up from 50) so grabbing them visibly
+    // moves the score needle; jumps still 25.
+    stats.score    = stats.distance + stats.flags * 100 + stats.jumps * 25;
 
     // Airborne countdown
     if (player.air > 0) {
@@ -899,13 +975,16 @@
         continue;
       }
 
-      // Flags: collect when between the pair side flag, give points
+      // Flags: run them over for bonus points. Flag count shows in the
+      // HUD so the reward is visible live; the per-flag value is applied
+      // once per frame via the score formula below.
       if (o.type === 'flag') {
         if (aabb(pb, ob)) {
           o.hit = true;
           stats.flags++;
-          stats.score += 50;
-          spawnPuff(o.x, o.y, 8, '#ffcc00');
+          // Big yellow puff + a second smaller one for a "pop" feel.
+          spawnPuff(o.x, o.y, 12, '#ffcc00');
+          spawnPuff(o.x, o.y - 4, 6, '#ffffff');
         }
         continue;
       }
@@ -950,6 +1029,7 @@
     // Push HUD
     hudDist.textContent  = stats.distance;
     hudScore.textContent = stats.score;
+    hudFlags.textContent = stats.flags;
     hudTime.textContent  = formatTime(stats.elapsed);
     hudSpeed.textContent = player.speed.toFixed(1);
 
