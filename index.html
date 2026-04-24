@@ -410,6 +410,43 @@
     transition: transform 40ms linear;
   }
 
+  /* Trick pad — three buttons shown during air time in touch mode. The
+     joystick hides while this is visible so they don't fight for the
+     same thumb. Buttons are big enough to tap without aiming. */
+  .trick-pad {
+    display: none;
+    position: fixed;
+    bottom: max(18px, env(safe-area-inset-bottom, 18px));
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 11;
+    gap: 8px;
+    pointer-events: none;
+  }
+  body.touch-active.airborne .trick-pad { display: flex; }
+  body.touch-active.airborne .stick-area { display: none; }
+  .trick-btn {
+    pointer-events: auto;
+    padding: 18px 14px;
+    min-width: 72px;
+    background: rgba(10, 20, 35, 0.75);
+    border: 2px solid rgba(255, 204, 0, 0.65);
+    color: var(--accent-2);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    border-radius: 10px;
+    box-shadow: 2px 2px 0 #000;
+    cursor: pointer;
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .trick-btn:active {
+    background: rgba(255, 204, 0, 0.35);
+    transform: translateY(1px);
+    box-shadow: 1px 1px 0 #000;
+  }
+
   /* ---------- Mobile / full-bleed layout ----------
      Triggered by body.mobile-layout (JS toggles this on when touch is
      active OR the viewport is narrow). Strips frame chrome so the game
@@ -530,6 +567,7 @@
         <div><span class="label">DIST</span> <span class="value" id="hud-dist">0</span> M</div>
         <div><span class="label">SCORE</span> <span class="value" id="hud-score">0</span></div>
         <div><span class="label">FLAGS</span> <span class="value" id="hud-flags">0</span></div>
+        <div><span class="label">TRICKS</span> <span class="value" id="hud-tricks">0</span></div>
       </div>
       <div style="text-align:right">
         <div><span class="label">TIME</span> <span class="value" id="hud-time">0:00</span></div>
@@ -549,6 +587,7 @@
           <kbd id="key-steer">&larr;&nbsp;&rarr;</kbd><span>STEER</span>
           <kbd id="key-fast">&darr;</kbd><span>TUCK / FASTER</span>
           <kbd id="key-slow">&uarr;</kbd><span>SLOW / CARVE</span>
+          <kbd>1 2 3</kbd><span>TRICKS (AIR)</span>
           <kbd>SPACE</kbd><span>START / RETRY</span>
         </div>
         <div class="hint"><span class="blink">&gt;</span> PRESS SPACE TO START</div>
@@ -635,12 +674,19 @@
     </div>
   </div>
 
-  <!-- Game controls: pause + restart. Also wired to keyboard shortcuts
-       (P or Esc to pause, R to restart) for desktop keyboard players. -->
-  <div class="cat-picker diff-picker action-picker" role="group" aria-label="Game controls">
-    <span class="cat-picker-label">GAME</span>
-    <button class="diff-swatch action-btn" id="btn-pause"   type="button" aria-label="Pause / resume">PAUSE</button>
-    <button class="diff-swatch action-btn" id="btn-restart" type="button" aria-label="Restart run">RESTART</button>
+  <!-- Game controls (pause/restart) + sound toggle, on one row. Pause/
+       restart are also on keyboard shortcuts: P / Esc pauses, R restarts. -->
+  <div class="cat-picker diff-picker combo-picker">
+    <div class="sub-picker" role="group" aria-label="Game controls">
+      <span class="cat-picker-label">GAME</span>
+      <button class="diff-swatch action-btn" id="btn-pause"   type="button" aria-label="Pause / resume">PAUSE</button>
+      <button class="diff-swatch action-btn" id="btn-restart" type="button" aria-label="Restart run">RESTART</button>
+    </div>
+    <div class="sub-picker" role="radiogroup" aria-label="Sound">
+      <span class="cat-picker-label">SOUND</span>
+      <button class="diff-swatch sound-swatch" data-sound="on"  aria-label="Sound on">ON</button>
+      <button class="diff-swatch sound-swatch" data-sound="off" aria-label="Sound off">OFF</button>
+    </div>
   </div>
 
   <div class="footer">ARROWS &#9679; SPACE &#9679; NO QUARTER REQUIRED</div>
@@ -653,11 +699,21 @@
 </div>
 
 <!-- Virtual thumbstick: lives at viewport-level so it never overlaps the
-     game area. Position:fixed at bottom-center. Hidden unless touch-active. -->
+     game area. Position:fixed at bottom-center. Hidden unless touch-active.
+     During air time, the trick pad replaces it so both don't compete
+     for the same screen real estate. -->
 <div class="stick-area" id="stick-area" aria-hidden="true">
   <div class="stick" id="stick">
     <div class="stick-knob" id="stick-knob"></div>
   </div>
+</div>
+
+<!-- Trick pad (mobile): 3 buttons that appear in place of the joystick
+     while the cat is airborne. Tap for trick, land to resume joystick. -->
+<div class="trick-pad" id="trick-pad" aria-hidden="true">
+  <button class="trick-btn" data-trick="roll"  type="button">ROLL</button>
+  <button class="trick-btn" data-trick="twist" type="button">TWIST</button>
+  <button class="trick-btn" data-trick="nap"   type="button">NAP</button>
 </div>
 
 <script>
@@ -692,6 +748,7 @@
   const hudDist    = document.getElementById('hud-dist');
   const hudScore   = document.getElementById('hud-score');
   const hudFlags   = document.getElementById('hud-flags');
+  const hudTricks  = document.getElementById('hud-tricks');
   const hudTime    = document.getElementById('hud-time');
   const hudSpeed   = document.getElementById('hud-speed');
   const hudWarning = document.getElementById('hud-warning');
@@ -756,6 +813,12 @@
       } else if (lk === 'r' && state !== STATE.TITLE) {
         restartRun();
         e.preventDefault();
+      }
+      // Trick keys (1 = roll, 2 = twist, 3 = nap). Only fire mid-air.
+      if (state === STATE.PLAY && player && player.air > 0) {
+        if (e.key === '1') { startTrick('roll');  e.preventDefault(); }
+        if (e.key === '2') { startTrick('twist'); e.preventDefault(); }
+        if (e.key === '3') { startTrick('nap');   e.preventDefault(); }
       }
     }
   });
@@ -939,6 +1002,183 @@
   btnPause.addEventListener('click', () => togglePause());
   btnRestart.addEventListener('click', () => restartRun());
 
+  // ---------- audio ----------
+  // Procedural Web Audio: every sound built from OscillatorNode /
+  // BufferSource + envelopes. No audio files = still one HTML file,
+  // single-file deploy. AudioContext is created lazily on first user
+  // interaction to respect browser autoplay policies.
+  let audioCtx    = null;
+  let masterGain  = null;
+  let swooshGain  = null;
+  let swooshNode  = null;
+  let audioEnabled = localStorage.getItem('skior_audio') !== 'off';
+
+  function ensureAudio() {
+    if (audioCtx) return audioCtx;
+    const Ctor = window.AudioContext || window.webkitAudioContext;
+    if (!Ctor) return null;
+    audioCtx = new Ctor();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = audioEnabled ? 0.35 : 0;
+    masterGain.connect(audioCtx.destination);
+    return audioCtx;
+  }
+
+  // Single tone with attack/release envelope
+  function tone({freq, type='sine', start=0, duration=0.15, peak=0.3, attack=0.005}) {
+    const ctx = ensureAudio();
+    if (!ctx || !masterGain) return;
+    const now = ctx.currentTime + start;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(peak, now + attack);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    osc.connect(gain).connect(masterGain);
+    osc.start(now);
+    osc.stop(now + duration + 0.05);
+  }
+
+  // Pitch sweep — used for jumps, meows, crashes
+  function sweep({from, to, duration=0.25, type='sine', peak=0.3, attack=0.008, curve='exp'}) {
+    const ctx = ensureAudio();
+    if (!ctx || !masterGain) return;
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(Math.max(1, from), now);
+    if (curve === 'exp') osc.frequency.exponentialRampToValueAtTime(Math.max(1, to), now + duration);
+    else                  osc.frequency.linearRampToValueAtTime(to, now + duration);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(peak, now + attack);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    osc.connect(gain).connect(masterGain);
+    osc.start(now);
+    osc.stop(now + duration + 0.05);
+  }
+
+  // White noise burst (filtered) — used for crashes, thumps, chomps
+  function noise({duration=0.1, peak=0.3, lowpass=2000, attack=0.005}) {
+    const ctx = ensureAudio();
+    if (!ctx || !masterGain) return;
+    const now = ctx.currentTime;
+    const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * duration), ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const filt = ctx.createBiquadFilter();
+    filt.type = 'lowpass';
+    filt.frequency.value = lowpass;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(peak, now + attack);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    src.connect(filt).connect(gain).connect(masterGain);
+    src.start(now);
+    src.stop(now + duration + 0.05);
+  }
+
+  // Sound bank
+  const sfx = {
+    start() {
+      tone({freq: 523, duration: 0.08, peak: 0.22});                    // C5
+      tone({freq: 784, start: 0.08, duration: 0.15, peak: 0.22});       // G5
+    },
+    flag() {
+      tone({freq: 659, duration: 0.08, peak: 0.22});                    // E5
+      tone({freq: 880, start: 0.05, duration: 0.14, peak: 0.22});       // A5
+    },
+    jump()  { sweep({from: 220, to: 620, duration: 0.28, type: 'triangle', peak: 0.2}); },
+    land()  { tone({freq: 130, duration: 0.09, type: 'sine', peak: 0.16});
+              noise({duration: 0.06, peak: 0.12, lowpass: 900}); },
+    trick() {
+      // Bright 3-note rising arpeggio
+      tone({freq: 659, duration: 0.05, peak: 0.2});
+      tone({freq: 784, start: 0.04, duration: 0.05, peak: 0.2});
+      tone({freq: 988, start: 0.08, duration: 0.11, peak: 0.22});
+    },
+    crash() {
+      sweep({from: 220, to: 70, duration: 0.3, type: 'sawtooth', peak: 0.26});
+      noise({duration: 0.18, peak: 0.2, lowpass: 400});
+    },
+    meow() {
+      // Two-stage pitch contour: up then fall — like a real meow
+      sweep({from: 300, to: 680, duration: 0.1, type: 'sine', peak: 0.22});
+      setTimeout(() => sweep({from: 680, to: 380, duration: 0.22, type: 'sine', peak: 0.2}), 100);
+    },
+    bark() {
+      sweep({from: 340, to: 170, duration: 0.07, type: 'square', peak: 0.22});
+      setTimeout(() => sweep({from: 340, to: 170, duration: 0.08, type: 'square', peak: 0.22}), 90);
+    },
+    chomp() {
+      noise({duration: 0.1, peak: 0.25, lowpass: 500});
+      tone({freq: 90, duration: 0.16, type: 'sawtooth', peak: 0.25});
+    },
+  };
+
+  // Continuous swoosh while skiing (filtered white noise, volume scales
+  // with speed). Looped buffer source so it keeps going for the full run.
+  function startSwoosh() {
+    const ctx = ensureAudio();
+    if (!ctx || swooshNode) return;
+    const buf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.4;
+    swooshNode = ctx.createBufferSource();
+    swooshNode.buffer = buf;
+    swooshNode.loop = true;
+    const filt = ctx.createBiquadFilter();
+    filt.type = 'bandpass';
+    filt.frequency.value = 380;
+    filt.Q.value = 0.6;
+    swooshGain = ctx.createGain();
+    swooshGain.gain.value = 0;
+    swooshNode.connect(filt).connect(swooshGain).connect(masterGain);
+    swooshNode.start();
+  }
+  function updateSwoosh(speed) {
+    if (!swooshGain || !audioCtx) return;
+    const target = Math.min(0.12, speed * 0.035);
+    swooshGain.gain.setTargetAtTime(target, audioCtx.currentTime, 0.08);
+  }
+  function silenceSwoosh() {
+    if (!swooshGain || !audioCtx) return;
+    swooshGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.04);
+  }
+
+  function setAudioEnabled(on) {
+    audioEnabled = !!on;
+    localStorage.setItem('skior_audio', on ? 'on' : 'off');
+    if (masterGain && audioCtx) {
+      masterGain.gain.setTargetAtTime(on ? 0.35 : 0, audioCtx.currentTime, 0.05);
+    }
+    document.querySelectorAll('.sound-swatch').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.sound === (on ? 'on' : 'off'));
+    });
+  }
+  document.querySelectorAll('.sound-swatch').forEach(btn => {
+    btn.addEventListener('click', () => {
+      ensureAudio(); // user gesture — unlocks audio on this interaction
+      setAudioEnabled(btn.dataset.sound === 'on');
+    });
+  });
+  setAudioEnabled(audioEnabled);
+
+  // ---------- mobile trick buttons ----------
+  // One handler per button; delegates to startTrick(name). Using
+  // pointerdown (not click) so the response feels immediate and the
+  // trick fires the instant the finger lands, not on release.
+  document.querySelectorAll('.trick-btn').forEach(btn => {
+    btn.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      startTrick(btn.dataset.trick);
+    });
+  });
+
   // ---------- cat palettes ----------
   // Each palette gives a base fur color, a darker accent for shadows
   // and markings, a belly/chest light, eye color, and a "patch" color
@@ -1066,6 +1306,11 @@
       grabbed: false,
       width: 12,
       height: 16,
+      // Trick state
+      trick: null,              // 'roll' | 'twist' | 'nap' | null
+      trickFrames: 0,           // total duration of current trick
+      trickElapsed: 0,          // progress within current trick
+      trickChain: [],           // names of tricks landed this jump
     };
 
     objects = [];     // trees, rocks, flags, jumps, moguls
@@ -1079,6 +1324,8 @@
       score: 0,
       flags: 0,
       jumps: 0,
+      tricks: 0,             // count of landed tricks
+      trickScore: 0,         // accumulated bonus from chains
       yetiWarned: false,
       yetiSpawned: false,
       snowmanSpawned: false,
@@ -1203,6 +1450,8 @@
     };
     stats.yetiSpawned = true;
     hudWarning.style.display = 'block';
+    sfx.bark();
+    setTimeout(() => sfx.bark(), 180);  // double-bark for dramatic entrance
   }
 
   function updateYeti() {
@@ -1226,6 +1475,8 @@
     if (yeti.y > py - 6 && Math.abs(yeti.x - player.x) < 12 && !player.grabbed && player.air <= 0) {
       player.grabbed = true;
       yeti.state = 'grab';
+      sfx.chomp();
+      silenceSwoosh();
       endRun('CAUGHT!', 'THE DOG GOT YA');
     }
   }
@@ -1271,6 +1522,8 @@
     if (!player.grabbed && Math.abs(snowman.x - player.x) < 10) {
       player.grabbed = true;
       snowman.chompT = 20;
+      sfx.chomp();
+      silenceSwoosh();
       endRun('CHOMP!', 'EATEN BY A SNOWMAN');
     }
   }
@@ -1311,9 +1564,9 @@
     worldY += player.speed;
     stats.elapsed += 1 / 60;
     stats.distance = Math.floor(worldY / 10); // 10px = 1m
-    // Flags now worth 100 each (up from 50) so grabbing them visibly
-    // moves the score needle; jumps still 25.
-    stats.score    = stats.distance + stats.flags * 100 + stats.jumps * 25;
+    // Score formula: distance + flag bonus + jump bonus + trick bonus.
+    // Trick chain points accumulate in stats.trickScore when a jump ends.
+    stats.score    = stats.distance + stats.flags * 100 + stats.jumps * 25 + stats.trickScore;
 
     // Airborne countdown
     if (player.air > 0) {
@@ -1321,10 +1574,38 @@
       // parabolic arc: peak in the middle
       const t = player.air / player.airMax;
       player.airHeight = Math.sin(t * Math.PI) * 18;
+
+      // Trick animation advances during air
+      if (player.trick) {
+        player.trickElapsed++;
+        if (player.trickElapsed >= player.trickFrames) {
+          // Trick completes, ready for another
+          player.trick = null;
+          player.trickElapsed = 0;
+        }
+      }
+
       if (player.air <= 0) {
         player.airHeight = 0;
-        // landing puff
+        // Cancel any in-progress trick (still counts toward chain — it
+        // was initiated, just didn't finish rotating in time)
+        player.trick = null;
+        player.trickElapsed = 0;
+        // Landing puff + thump
         spawnPuff(player.x, worldY + player.screenY, 6);
+        sfx.land();
+        // Award chain bonus: 1 trick = 10, 2 = 10+20, 3 = 10+20+30, etc
+        const n = player.trickChain.length;
+        if (n > 0) {
+          let bonus = 0;
+          for (let i = 0; i < n; i++) bonus += 10 * (i + 1);
+          stats.tricks += n;
+          stats.trickScore += bonus;
+          // Floating "+N" text over landing point, bigger for bigger combos
+          spawnFloatText('+' + bonus, player.x, worldY + player.screenY - 4,
+                         n >= 3 ? '#ff3b30' : '#ffcc00');
+          player.trickChain = [];
+        }
       }
     }
 
@@ -1361,6 +1642,7 @@
           player.airMax = o.type === 'jump' ? 38 : 22;
           player.air = player.airMax;
           stats.jumps++;
+          sfx.jump();
           spawnPuff(player.x, worldY + player.screenY, 10);
         }
         continue;
@@ -1373,6 +1655,7 @@
         if (aabb(pb, ob)) {
           o.hit = true;
           stats.flags++;
+          sfx.flag();
           // Big yellow puff + a second smaller one for a "pop" feel.
           spawnPuff(o.x, o.y, 12, '#ffcc00');
           spawnPuff(o.x, o.y - 4, 6, '#ffffff');
@@ -1419,12 +1702,26 @@
     // Camera shake decay
     if (stats.shakeT > 0) stats.shakeT--;
 
+    // Toggle body.airborne for mobile trick-pad swap. Done here (not in
+    // render) so the class only reflects game-state truth, not render
+    // accidents. Safe to set every frame — classList.toggle is a no-op
+    // when the target state already matches.
+    document.body.classList.toggle('airborne', player.air > 0 && !player.crashed && !player.grabbed);
+
+    // Swoosh wind sound tracks player speed, quieter when airborne
+    // (nothing to scrape) and silent when paused/crashed.
+    const swooshSpeed = player.crashed || player.grabbed ? 0
+      : player.air > 0 ? player.speed * 0.4
+      : player.speed;
+    updateSwoosh(swooshSpeed);
+
     // Push HUD
-    hudDist.textContent  = stats.distance;
-    hudScore.textContent = stats.score;
-    hudFlags.textContent = stats.flags;
-    hudTime.textContent  = formatTime(stats.elapsed);
-    hudSpeed.textContent = player.speed.toFixed(1);
+    hudDist.textContent   = stats.distance;
+    hudScore.textContent  = stats.score;
+    hudFlags.textContent  = stats.flags;
+    hudTricks.textContent = stats.tricks;
+    hudTime.textContent   = formatTime(stats.elapsed);
+    hudSpeed.textContent  = player.speed.toFixed(1);
 
     // Maintain world strips + cull
     maintainWorld();
@@ -1444,10 +1741,50 @@
     }
   }
 
+  // Floating text particle — rises, fades, lives in world coords so it
+  // scrolls with the terrain. Used for trick bonuses on landing.
+  function spawnFloatText(text, x, y, color = '#ffcc00') {
+    particles.push({
+      x, y,
+      vx: 0,
+      vy: -0.8,
+      life: 55,
+      maxLife: 55,
+      color,
+      text,
+      size: 0,
+    });
+  }
+
+  // ---------- tricks ----------
+  // Start a trick if the player is airborne and not currently rotating.
+  // Tricks get added to player.trickChain the instant they start, so
+  // even a partially-rotated trick counts (the cat landed already moving).
+  const TRICK_NAMES = {
+    roll:  'MEOW ROLL',
+    twist: 'WHISKER TWIST',
+    nap:   'CAT NAP',
+  };
+  function startTrick(name) {
+    if (!player || player.air <= 0 || player.crashed || player.grabbed) return;
+    if (!TRICK_NAMES[name]) return;
+    if (player.trick) return; // already rotating, wait for finish
+    // Duration scales with jump airMax so a mogul gets shorter tricks
+    // than a full jump ramp. Minimum 8 frames so visual reads.
+    player.trickFrames  = Math.max(8, Math.floor((player.airMax || 20) / 3));
+    player.trickElapsed = 0;
+    player.trick        = name;
+    player.trickChain.push(name);
+    sfx.trick();
+  }
+
   function crash(cause) {
     if (player.crashed) return;
     player.crashed = true;
     stats.shakeT = 18;
+    sfx.crash();
+    sfx.meow();
+    silenceSwoosh();
     // debris
     for (let i = 0; i < 18; i++) {
       particles.push({
@@ -1490,6 +1827,9 @@
     btnPause.classList.remove('paused');
     btnPause.textContent = 'PAUSE';
     state = STATE.PLAY;
+    ensureAudio();   // unlocks audio on first start
+    sfx.start();
+    startSwoosh();
   }
 
   // ---------- pause / resume / restart ----------
@@ -1499,6 +1839,7 @@
     overlayPaused.classList.remove('hidden');
     btnPause.classList.add('paused');
     btnPause.textContent = 'RESUME';
+    silenceSwoosh();
     // Release any held direction keys so the player doesn't keep tucking
     // through the pause (especially since touch users can't release).
     keys.left = keys.right = keys.up = keys.down = false;
@@ -1782,10 +2123,35 @@
     const crashed  = !!opts.crashed;
     const airborne = !!opts.airborne;
     const pose     = opts.pose || 'skier';
+    const trick    = opts.trick || null;       // 'roll' | 'twist' | 'nap'
+    const tPhase   = opts.trickPhase || 0;     // 0..1 progress
 
     g.save();
     g.translate(cx, cy);
-    g.scale(scale, scale);
+
+    // Trick transforms applied around the cat's origin. Each trick maps
+    // phase 0..1 to a canvas transform that visually sells the move
+    // without changing the underlying sprite geometry.
+    let scaleX = scale, scaleY = scale;
+    if (trick === 'roll') {
+      // MEOW ROLL: full 360° rotation in the direction of motion
+      g.rotate(tPhase * Math.PI * 2);
+    } else if (trick === 'twist') {
+      // WHISKER TWIST: horizontal flip via negative X scale cycling
+      // through 1 -> 0 -> -1 -> 0 -> 1 so the cat appears to spin
+      // around its vertical axis (edge-on at quarter and three-quarter)
+      const sx = Math.cos(tPhase * Math.PI * 2);
+      scaleX = scale * sx;
+    } else if (trick === 'nap') {
+      // CAT NAP: scale down + slight rotate then back up. Sine envelope
+      // gives a quick compress-and-release "ball" effect.
+      const s = Math.sin(tPhase * Math.PI);
+      const shrink = 1 - s * 0.35;
+      scaleX = scale * shrink;
+      scaleY = scale * shrink;
+      g.rotate(s * 0.4);
+    }
+    g.scale(scaleX, scaleY);
 
     // Helpers
     const ellipse = (x, y, rx, ry, fill, stroke, lw) => {
@@ -2123,13 +2489,19 @@
       ctx.fillRect(sx + 3,  sy + 10, 9, 2);
     }
 
-    // Draw the cat
+    // Draw the cat, passing the in-progress trick (if any) so drawCat
+    // can apply rotation/scale transforms to sell the move.
+    const trickPhase = player.trickFrames > 0
+      ? Math.min(1, player.trickElapsed / player.trickFrames)
+      : 0;
     drawCat(ctx, sx, sy, 1, p, {
       lean,
       tucked,
       airborne,
       crashed: player.crashed,
       pose: 'skier',
+      trick: player.trick,
+      trickPhase,
     });
 
     // Ski poles (cat holds them out when not tucked and grounded)
@@ -2341,6 +2713,23 @@
   function drawParticles() {
     for (const p of particles) {
       const sy = toScreenY(p.y);
+      // Floating text particles (e.g. trick bonuses) render differently
+      if (p.text) {
+        const alpha = Math.max(0, Math.min(1, p.life / (p.maxLife || 30)));
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = p.color;
+        ctx.font = 'bold 9px "Press Start 2P", monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        // Outline for readability
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 3;
+        ctx.strokeText(p.text, Math.round(p.x), Math.round(sy));
+        ctx.fillText(p.text,   Math.round(p.x), Math.round(sy));
+        ctx.restore();
+        continue;
+      }
       ctx.fillStyle = p.color;
       ctx.fillRect(Math.round(p.x), Math.round(sy), Math.max(1, Math.floor(p.size)), Math.max(1, Math.floor(p.size)));
     }
