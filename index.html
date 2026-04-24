@@ -345,6 +345,26 @@
     color: var(--accent);
   }
 
+  /* Combo picker: two sub-groups (e.g. KEYS + TOUCH) on one line */
+  .combo-picker { gap: 18px; flex-wrap: wrap; }
+  .sub-picker {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Action buttons (PAUSE / RESTART) — same chassis as diff-swatch,
+     restart gets a red accent because it throws away progress. */
+  #btn-pause.paused {
+    border-color: var(--accent-2);
+    box-shadow: 2px 2px 0 #000, 0 0 0 2px var(--accent-2) inset;
+    color: var(--accent-2);
+  }
+  #btn-restart:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
   /* ---------- Virtual thumbstick (mobile) ----------
      Lives at viewport level (position: fixed), not inside the game
      area, so it never covers the cat / obstacles. Hidden unless
@@ -535,6 +555,15 @@
       </div>
     </div>
 
+    <!-- Pause screen -->
+    <div class="overlay hidden" id="overlay-paused">
+      <div class="panel">
+        <h1>PAUSED</h1>
+        <p>Take a breath.</p>
+        <div class="hint" id="paused-hint"><span class="blink">&gt;</span> SPACE TO RESUME</div>
+      </div>
+    </div>
+
     <!-- Game over screen -->
     <div class="overlay hidden" id="overlay-over">
       <div class="panel">
@@ -579,30 +608,39 @@
     </button>
   </div>
 
-  <!-- Difficulty picker: easy / medium / instant death -->
+  <!-- Difficulty picker: easy / medium / hard / insta death -->
   <div class="cat-picker diff-picker" role="radiogroup" aria-label="Difficulty">
     <span class="cat-picker-label">MODE</span>
     <button class="diff-swatch" data-diff="easy"   aria-label="Easy">EASY</button>
     <button class="diff-swatch" data-diff="medium" aria-label="Medium">MEDIUM</button>
+    <button class="diff-swatch" data-diff="hard"   aria-label="Hard">HARD</button>
     <button class="diff-swatch" data-diff="insta"  aria-label="Instant death">INSTA DEATH</button>
   </div>
 
-  <!-- Control picker: arrow keys or WASD. Both always work; this only
-       swaps which key legend is shown. -->
-  <div class="cat-picker diff-picker" role="radiogroup" aria-label="Controls">
-    <span class="cat-picker-label">KEYS</span>
-    <button class="diff-swatch ctrl-swatch" data-ctrl="arrows" aria-label="Arrow keys">ARROWS</button>
-    <button class="diff-swatch ctrl-swatch" data-ctrl="wasd"   aria-label="WASD">WASD</button>
+  <!-- KEYS + TOUCH combined on one row. KEYS selects ARROWS or WASD
+       (both always function; this swaps the legend). TOUCH decides
+       whether to show the virtual joystick: AUTO detects a touch device
+       via viewport + pointer capability; ON / OFF force it. -->
+  <div class="cat-picker diff-picker combo-picker">
+    <div class="sub-picker" role="radiogroup" aria-label="Controls">
+      <span class="cat-picker-label">KEYS</span>
+      <button class="diff-swatch ctrl-swatch" data-ctrl="arrows" aria-label="Arrow keys">ARROWS</button>
+      <button class="diff-swatch ctrl-swatch" data-ctrl="wasd"   aria-label="WASD">WASD</button>
+    </div>
+    <div class="sub-picker" role="radiogroup" aria-label="Touch mode">
+      <span class="cat-picker-label">TOUCH</span>
+      <button class="diff-swatch touch-swatch" data-touch="auto" aria-label="Auto-detect touch">AUTO</button>
+      <button class="diff-swatch touch-swatch" data-touch="on"   aria-label="Force touch on">ON</button>
+      <button class="diff-swatch touch-swatch" data-touch="off"  aria-label="Force touch off">OFF</button>
+    </div>
   </div>
 
-  <!-- Touch / mobile-mode picker. AUTO detects a touch device via
-       viewport width + pointer capability; ON forces mobile controls
-       even on a big screen; OFF keeps the desktop layout. -->
-  <div class="cat-picker diff-picker" role="radiogroup" aria-label="Touch mode">
-    <span class="cat-picker-label">TOUCH</span>
-    <button class="diff-swatch touch-swatch" data-touch="auto" aria-label="Auto-detect touch">AUTO</button>
-    <button class="diff-swatch touch-swatch" data-touch="on"   aria-label="Force touch on">ON</button>
-    <button class="diff-swatch touch-swatch" data-touch="off"  aria-label="Force touch off">OFF</button>
+  <!-- Game controls: pause + restart. Also wired to keyboard shortcuts
+       (P or Esc to pause, R to restart) for desktop keyboard players. -->
+  <div class="cat-picker diff-picker action-picker" role="group" aria-label="Game controls">
+    <span class="cat-picker-label">GAME</span>
+    <button class="diff-swatch action-btn" id="btn-pause"   type="button" aria-label="Pause / resume">PAUSE</button>
+    <button class="diff-swatch action-btn" id="btn-restart" type="button" aria-label="Restart run">RESTART</button>
   </div>
 
   <div class="footer">ARROWS &#9679; SPACE &#9679; NO QUARTER REQUIRED</div>
@@ -658,8 +696,9 @@
   const hudSpeed   = document.getElementById('hud-speed');
   const hudWarning = document.getElementById('hud-warning');
 
-  const overlayStart = document.getElementById('overlay-start');
-  const overlayOver  = document.getElementById('overlay-over');
+  const overlayStart  = document.getElementById('overlay-start');
+  const overlayPaused = document.getElementById('overlay-paused');
+  const overlayOver   = document.getElementById('overlay-over');
   const overTitle    = document.getElementById('over-title');
   const overSub      = document.getElementById('over-sub');
   const overTime     = document.getElementById('over-time');
@@ -706,6 +745,19 @@
     if (dir === 'up')    keys.up = true;
     if (dir === 'down')  keys.down = true;
     if (dir === 'space') spacePressed = true;
+
+    // Pause / restart shortcuts (skip when modifier held so Cmd+R, Ctrl+P
+    // and friends still do their normal browser things).
+    if (!(e.ctrlKey || e.metaKey || e.altKey)) {
+      const lk = e.key.toLowerCase();
+      if (lk === 'p' || e.key === 'Escape') {
+        togglePause();
+        e.preventDefault();
+      } else if (lk === 'r' && state !== STATE.TITLE) {
+        restartRun();
+        e.preventDefault();
+      }
+    }
   });
   window.addEventListener('keyup', e => {
     const dir = normalizeKey(e);
@@ -775,12 +827,15 @@
     const narrow = window.innerWidth < 820;
     document.body.classList.toggle('touch-active', on);
     document.body.classList.toggle('mobile-layout', on || narrow);
-    const startHint = document.querySelector('#overlay-start .hint');
-    const overHint  = document.querySelector('#overlay-over  .hint');
+    const startHint  = document.querySelector('#overlay-start .hint');
+    const overHint   = document.querySelector('#overlay-over  .hint');
+    const pausedHint = document.getElementById('paused-hint');
     if (startHint) startHint.innerHTML =
       '<span class="blink">&gt;</span> ' + (on ? 'TAP TO START' : 'PRESS SPACE TO START');
     if (overHint)  overHint.innerHTML =
       '<span class="blink">&gt;</span> ' + (on ? 'TAP TO TRY AGAIN' : 'SPACE TO TRY AGAIN');
+    if (pausedHint) pausedHint.innerHTML =
+      '<span class="blink">&gt;</span> ' + (on ? 'TAP TO RESUME' : 'SPACE TO RESUME');
   }
 
   function setTouchMode(name) {
@@ -863,6 +918,7 @@
   const overlayTap = () => { spacePressed = true; };
   document.getElementById('overlay-start').addEventListener('click', overlayTap);
   document.getElementById('overlay-over').addEventListener('click', overlayTap);
+  document.getElementById('overlay-paused').addEventListener('click', overlayTap);
 
   // ---------- controls collapse toggle ----------
   // On mobile-layout, pickers are hidden by default so the game fills
@@ -873,6 +929,15 @@
     ctrlToggle.innerHTML = expanded ? '&#9650; HIDE CONTROLS' : '&#9660; SHOW CONTROLS';
     ctrlToggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
   });
+
+  // ---------- pause / restart buttons ----------
+  // Grab button refs here; the pause/resume/restart functions themselves
+  // are defined below and are hoisted into scope so the click callbacks
+  // resolve them at invocation time.
+  const btnPause   = document.getElementById('btn-pause');
+  const btnRestart = document.getElementById('btn-restart');
+  btnPause.addEventListener('click', () => togglePause());
+  btnRestart.addEventListener('click', () => restartRun());
 
   // ---------- cat palettes ----------
   // Each palette gives a base fur color, a darker accent for shadows
@@ -920,29 +985,37 @@
   renderPickerPreviews();
 
   // ---------- difficulty ----------
-  // Three preset "moods" layered on top of the core difficulty ramp.
+  // Four preset "moods" layered on top of the core difficulty ramp.
   // speedMul     scales the skier's base cruise/tuck speed bands
   // densityMul   scales object spawn density + tightens strip spacing
   // rampSeconds  how long it takes the ramp to reach max intensity
   // baseRamp     starting ramp value so "insta" is never calm
-  // yetiDistance meters at which the dog wakes
-  // snowmanMin / snowmanWindow seconds: snowman rolls into this window
+  // yetiSeconds  seconds at which the dog wakes and starts chasing
+  //              (was previously distance-based, but snowman would kill
+  //              the player before they covered enough distance on easy)
+  // snowmanMin / snowmanWindow: snowman rolls into this window. Always
+  // scheduled AFTER yetiSeconds so players get a dog-chase phase first.
   // startSpeed   initial player speed at t=0
   const DIFFICULTIES = {
     easy: {
       name: 'EASY',
       speedMul: 1.0,  densityMul: 1.0,  rampSeconds: 150, baseRamp: 0.0,
-      yetiDistance: 1600, snowmanMin: 120, snowmanWindow: 60, startSpeed: 0.8,
+      yetiSeconds: 60, snowmanMin: 105, snowmanWindow: 45, startSpeed: 0.8,
     },
     medium: {
       name: 'MEDIUM',
       speedMul: 1.3,  densityMul: 1.7,  rampSeconds: 90,  baseRamp: 0.2,
-      yetiDistance: 1000, snowmanMin: 75,  snowmanWindow: 45, startSpeed: 1.2,
+      yetiSeconds: 40, snowmanMin: 75,  snowmanWindow: 35, startSpeed: 1.2,
+    },
+    hard: {
+      name: 'HARD',
+      speedMul: 1.4,  densityMul: 2.0,  rampSeconds: 70,  baseRamp: 0.3,
+      yetiSeconds: 25, snowmanMin: 55,  snowmanWindow: 25, startSpeed: 1.4,
     },
     insta: {
       name: 'INSTA DEATH',
       speedMul: 1.65, densityMul: 2.6,  rampSeconds: 45,  baseRamp: 0.5,
-      yetiDistance: 400,  snowmanMin: 30,  snowmanWindow: 20, startSpeed: 1.8,
+      yetiSeconds: 10, snowmanMin: 32,  snowmanWindow: 18, startSpeed: 1.8,
     },
   };
 
@@ -965,8 +1038,8 @@
   setDifficulty(difficultyMode);
 
   // ---------- game state ----------
-  // State machine: 'title' -> 'play' -> 'over' -> 'play' ...
-  const STATE = { TITLE:'title', PLAY:'play', OVER:'over' };
+  // State machine: 'title' -> 'play' <-> 'paused' -> 'over' -> 'play' ...
+  const STATE = { TITLE:'title', PLAY:'play', PAUSED:'paused', OVER:'over' };
   let state = STATE.TITLE;
 
   let best = Number(localStorage.getItem('skior_best') || 0);
@@ -1315,13 +1388,15 @@
       }
     }
 
-    // Yeti wake-up (threshold depends on difficulty mode)
-    const yetiDist = diff().yetiDistance;
-    if (!stats.yetiWarned && stats.distance >= yetiDist - 60) {
+    // Dog wake-up (time-based — snowman was instakilling players on easy
+    // before they could ever cover enough distance to trigger the dog).
+    const yetiAt = diff().yetiSeconds;
+    if (!stats.yetiWarned && stats.elapsed >= yetiAt - 4) {
       stats.yetiWarned = true;
+      hudWarning.textContent = '! DOG !';
       hudWarning.style.display = 'block';
     }
-    if (!stats.yetiSpawned && stats.distance >= yetiDist) {
+    if (!stats.yetiSpawned && stats.elapsed >= yetiAt) {
       spawnYeti();
     }
     updateYeti();
@@ -1411,7 +1486,39 @@
     hudWarning.style.display = 'none';
     overlayStart.classList.add('hidden');
     overlayOver.classList.add('hidden');
+    overlayPaused.classList.add('hidden');
+    btnPause.classList.remove('paused');
+    btnPause.textContent = 'PAUSE';
     state = STATE.PLAY;
+  }
+
+  // ---------- pause / resume / restart ----------
+  function pauseGame() {
+    if (state !== STATE.PLAY) return;
+    state = STATE.PAUSED;
+    overlayPaused.classList.remove('hidden');
+    btnPause.classList.add('paused');
+    btnPause.textContent = 'RESUME';
+    // Release any held direction keys so the player doesn't keep tucking
+    // through the pause (especially since touch users can't release).
+    keys.left = keys.right = keys.up = keys.down = false;
+  }
+  function resumeGame() {
+    if (state !== STATE.PAUSED) return;
+    state = STATE.PLAY;
+    overlayPaused.classList.add('hidden');
+    btnPause.classList.remove('paused');
+    btnPause.textContent = 'PAUSE';
+  }
+  function togglePause() {
+    if (state === STATE.PLAY)   pauseGame();
+    else if (state === STATE.PAUSED) resumeGame();
+  }
+  function restartRun() {
+    // Only allowed from play/paused/over — on title the user should press
+    // SPACE to start rather than RESTART.
+    if (state === STATE.TITLE) return;
+    startRun();
   }
 
   // ---------- rendering ----------
@@ -2266,11 +2373,13 @@
 
   // ---------- main loop ----------
   function loop() {
-    // Edge-triggered space handling for start/retry
+    // Edge-triggered space: start/retry on title/over, resume on paused.
     if (spacePressed) {
       spacePressed = false;
       if (state === STATE.TITLE || state === STATE.OVER) {
         startRun();
+      } else if (state === STATE.PAUSED) {
+        resumeGame();
       }
     }
 
