@@ -336,43 +336,49 @@
   }
 
   /* ---------- Virtual thumbstick (mobile) ----------
-     Centered at the bottom of the screen-wrap. Hidden by default;
-     .touch-active on <body> reveals it. touch-action:none prevents the
-     page from scrolling / pinch-zooming when the finger drags.         */
-  .stick {
+     Lives at viewport level (position: fixed), not inside the game
+     area, so it never covers the cat / obstacles. Hidden unless
+     .touch-active is set on body. touch-action:none prevents the
+     page from scrolling / pinch-zooming while the finger drags. */
+  .stick-area {
     display: none;
-    position: absolute;
-    bottom: 18px;
+    position: fixed;
+    bottom: max(18px, env(safe-area-inset-bottom, 18px));
     left: 50%;
     transform: translateX(-50%);
-    width: 120px;
-    height: 120px;
+    z-index: 10;
+    pointer-events: none; /* container ignores, stick itself catches */
+  }
+  body.touch-active .stick-area { display: block; }
+  body.touch-active .screen-wrap { touch-action: none; }
+  .stick {
+    position: relative;
+    width: 130px;
+    height: 130px;
     border-radius: 50%;
-    background: rgba(10, 20, 35, 0.35);
-    border: 3px solid rgba(234, 244, 255, 0.45);
-    box-shadow: inset 0 0 0 2px #000, 2px 2px 0 rgba(0,0,0,0.4);
-    z-index: 4;
+    background: rgba(10, 20, 35, 0.55);
+    border: 3px solid rgba(234, 244, 255, 0.55);
+    box-shadow: inset 0 0 0 2px #000, 2px 2px 0 rgba(0,0,0,0.5);
     touch-action: none;
     user-select: none;
     -webkit-user-select: none;
+    pointer-events: auto;
   }
   .stick-knob {
     position: absolute;
     left: 50%;
     top: 50%;
-    width: 50px;
-    height: 50px;
-    margin-left: -25px;
-    margin-top: -25px;
+    width: 52px;
+    height: 52px;
+    margin-left: -26px;
+    margin-top: -26px;
     border-radius: 50%;
-    background: rgba(255, 204, 0, 0.9);
+    background: rgba(255, 204, 0, 0.95);
     border: 2px solid #0b1320;
     box-shadow: 2px 2px 0 rgba(0,0,0,0.5);
     pointer-events: none;
     transition: transform 40ms linear;
   }
-  body.touch-active .stick { display: block; }
-  body.touch-active .screen-wrap { touch-action: none; }
 
   /* ---------- Mobile / full-bleed layout ----------
      Triggered by body.mobile-layout (JS toggles this on when touch is
@@ -428,18 +434,24 @@
   body.mobile-layout .panel .hint { font-size: 10px; margin-top: 12px; }
   body.mobile-layout .footer { font-size: 7px; padding: 8px 0; }
 
-  /* Stick scales a little bigger in full-bleed layout for thumb reach */
-  body.touch-active.mobile-layout .stick {
-    width: 132px;
-    height: 132px;
-    bottom: 14px;
+  /* Credit line — small, unobtrusive, subtle hover on the link */
+  .credit {
+    margin-top: 10px;
+    text-align: center;
+    font-family: 'VT323', monospace;
+    font-size: 13px;
+    letter-spacing: 1px;
+    color: #4e6b8a;
   }
-  body.touch-active.mobile-layout .stick-knob {
-    width: 56px;
-    height: 56px;
-    margin-left: -28px;
-    margin-top: -28px;
+  .credit a {
+    color: #7aa7c7;
+    text-decoration: none;
+    border-bottom: 1px dotted #4e6b8a;
   }
+  .credit a:hover { color: var(--snow-dim); border-bottom-color: var(--snow-dim); }
+  body.mobile-layout .credit { font-size: 12px; padding: 8px 10px 14px; }
+  body.mobile-layout .credit { display: none; }
+  body.mobile-layout.controls-expanded .credit { display: block; }
 
   /* ---------- Mobile controls toggle ----------
      Hides all the pickers by default when in mobile-layout, so the
@@ -528,11 +540,6 @@
       </div>
     </div>
 
-    <!-- Virtual thumbstick (shown only when touch mode is active) -->
-    <div class="stick" id="stick" aria-hidden="true">
-      <div class="stick-knob" id="stick-knob"></div>
-    </div>
-
     <div class="crt"></div>
   </div>
 
@@ -591,6 +598,20 @@
   </div>
 
   <div class="footer">ARROWS &#9679; SPACE &#9679; NO QUARTER REQUIRED</div>
+
+  <!-- Small unobtrusive credit -->
+  <div class="credit">
+    created by
+    <a href="https://www.linkedin.com/in/mikelee89/" target="_blank" rel="noopener noreferrer">Whisker Leaks</a>
+  </div>
+</div>
+
+<!-- Virtual thumbstick: lives at viewport-level so it never overlaps the
+     game area. Position:fixed at bottom-center. Hidden unless touch-active. -->
+<div class="stick-area" id="stick-area" aria-hidden="true">
+  <div class="stick" id="stick">
+    <div class="stick-knob" id="stick-knob"></div>
+  </div>
 </div>
 
 <script>
@@ -802,6 +823,14 @@
   }
   stickEl.addEventListener('pointerdown', e => {
     if (stickPointerId !== null) return;
+    // If not in play state, treat a stick tap as "start/retry" rather
+    // than a joystick drag — otherwise the joystick consumes the tap
+    // and the game never starts on touch devices.
+    if (state !== STATE.PLAY) {
+      spacePressed = true;
+      e.preventDefault();
+      return;
+    }
     stickPointerId = e.pointerId;
     try { stickEl.setPointerCapture(e.pointerId); } catch (_) {}
     updateStick(e);
