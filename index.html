@@ -2,8 +2,25 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>SKI OR DIE // Retro Downhill</title>
+<title>CAT SKI // Retro Downhill 1989</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Waste a couple minutes of your life with this free game. A retro pixel downhill skier where you play as a cat.">
+
+<!-- Open Graph (iMessage, Slack, Discord, Facebook, LinkedIn) -->
+<meta property="og:title" content="CAT SKI // 1989">
+<meta property="og:description" content="Waste a couple minutes of your life with this free game.">
+<meta property="og:image" content="https://ski.mike-lee.me/preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://ski.mike-lee.me">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="cat-ski">
+
+<!-- Twitter / X -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="CAT SKI // 1989">
+<meta name="twitter:description" content="Waste a couple minutes of your life with this free game.">
+<meta name="twitter:image" content="https://ski.mike-lee.me/preview.png">
 <style>
   /* ---------- RETRO PIXEL AESTHETIC ----------
      Chunky HUD with a CRT vibe. Cool blue snow palette with a single
@@ -266,12 +283,46 @@
   .cat-swatch.active .cat-name {
     color: var(--accent-2);
   }
+
+  /* Difficulty picker: text-only swatches, same chassis as cat-picker */
+  .diff-picker {
+    margin-top: 8px;
+  }
+  .diff-swatch {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    letter-spacing: 2px;
+    color: var(--snow-dim);
+    padding: 8px 10px;
+    background: #182638;
+    border: 2px solid #2b3c54;
+    cursor: pointer;
+    box-shadow: 2px 2px 0 #000;
+    transition: transform 80ms, border-color 80ms, background 80ms, color 80ms;
+  }
+  .diff-swatch:hover {
+    transform: translate(-1px, -1px);
+    border-color: var(--snow-dim);
+    background: #1d2c42;
+    color: var(--snow);
+  }
+  .diff-swatch.active {
+    border-color: var(--accent-2);
+    box-shadow: 2px 2px 0 #000, 0 0 0 2px var(--accent-2) inset;
+    background: #1f2e44;
+    color: var(--accent-2);
+  }
+  .diff-swatch[data-diff="insta"].active {
+    border-color: var(--accent);
+    box-shadow: 2px 2px 0 #000, 0 0 0 2px var(--accent) inset;
+    color: var(--accent);
+  }
 </style>
 </head>
 <body>
 
 <div class="frame">
-  <div class="bezel-title">SKI OR DIE <span class="dot">&#9632;</span> 1986</div>
+  <div class="bezel-title">CAT SKI <span class="dot">&#9632;</span> 1989</div>
 
   <div class="screen-wrap" id="screen">
     <canvas id="game" width="360" height="270"></canvas>
@@ -292,8 +343,8 @@
     <!-- Start screen -->
     <div class="overlay" id="overlay-start">
       <div class="panel">
-        <h1>SKI <span class="alt">OR</span> DIE</h1>
-        <h2>DOWNHILL 86</h2>
+        <h1><span class="alt">CAT</span> SKI</h1>
+        <h2>DOWNHILL 89</h2>
         <p>Dodge trees. Launch jumps. Grab flags.</p>
         <p>Don't look behind you.</p>
         <div class="keys">
@@ -343,12 +394,20 @@
     </button>
   </div>
 
+  <!-- Difficulty picker: easy / medium / instant death -->
+  <div class="cat-picker diff-picker" role="radiogroup" aria-label="Difficulty">
+    <span class="cat-picker-label">MODE</span>
+    <button class="diff-swatch" data-diff="easy"   aria-label="Easy">EASY</button>
+    <button class="diff-swatch" data-diff="medium" aria-label="Medium">MEDIUM</button>
+    <button class="diff-swatch" data-diff="insta"  aria-label="Instant death">INSTA DEATH</button>
+  </div>
+
   <div class="footer">ARROWS &#9679; SPACE &#9679; NO QUARTER REQUIRED</div>
 </div>
 
 <script>
 /* ============================================================
-   SKI OR DIE  --  retro downhill skier, single file
+   CAT SKI  --  retro downhill skier, single file
    ------------------------------------------------------------
    Main systems:
      1. Input           keyboard state, arrow keys + space
@@ -464,6 +523,51 @@
   }
   renderPickerPreviews();
 
+  // ---------- difficulty ----------
+  // Three preset "moods" layered on top of the core difficulty ramp.
+  // speedMul     scales the skier's base cruise/tuck speed bands
+  // densityMul   scales object spawn density + tightens strip spacing
+  // rampSeconds  how long it takes the ramp to reach max intensity
+  // baseRamp     starting ramp value so "insta" is never calm
+  // yetiDistance meters at which the dog wakes
+  // snowmanMin / snowmanWindow seconds: snowman rolls into this window
+  // startSpeed   initial player speed at t=0
+  const DIFFICULTIES = {
+    easy: {
+      name: 'EASY',
+      speedMul: 1.0,  densityMul: 1.0,  rampSeconds: 150, baseRamp: 0.0,
+      yetiDistance: 1600, snowmanMin: 120, snowmanWindow: 60, startSpeed: 0.8,
+    },
+    medium: {
+      name: 'MEDIUM',
+      speedMul: 1.3,  densityMul: 1.7,  rampSeconds: 90,  baseRamp: 0.2,
+      yetiDistance: 1000, snowmanMin: 75,  snowmanWindow: 45, startSpeed: 1.2,
+    },
+    insta: {
+      name: 'INSTA DEATH',
+      speedMul: 1.65, densityMul: 2.6,  rampSeconds: 45,  baseRamp: 0.5,
+      yetiDistance: 400,  snowmanMin: 30,  snowmanWindow: 20, startSpeed: 1.8,
+    },
+  };
+
+  let difficultyMode = localStorage.getItem('skior_difficulty') || 'easy';
+  if (!DIFFICULTIES[difficultyMode]) difficultyMode = 'easy';
+  function diff() { return DIFFICULTIES[difficultyMode]; }
+
+  function setDifficulty(name) {
+    if (!DIFFICULTIES[name]) return;
+    difficultyMode = name;
+    localStorage.setItem('skior_difficulty', name);
+    document.querySelectorAll('.diff-swatch').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.diff === name);
+    });
+  }
+
+  document.querySelectorAll('.diff-swatch').forEach(btn => {
+    btn.addEventListener('click', () => setDifficulty(btn.dataset.diff));
+  });
+  setDifficulty(difficultyMode);
+
   // ---------- game state ----------
   // State machine: 'title' -> 'play' -> 'over' -> 'play' ...
   const STATE = { TITLE:'title', PLAY:'play', OVER:'over' };
@@ -476,18 +580,16 @@
   let worldY = 0;
   let player, objects, particles, tracks, yeti, stats;
 
-  // Distance at which the yeti wakes. Once awake, it never leaves.
-  const YETI_DISTANCE = 1600; // meters
-
   function resetGame() {
     worldY = 0;
 
+    const D = diff();
     player = {
       x: W / 2,                 // screen x
       screenY: H * 0.42,        // fixed screen y while grounded
       vx: 0,
-      speed: 0.8,               // forward speed (world y per frame) - starts slow
-      targetSpeed: 0.8,
+      speed: D.startSpeed,      // forward speed (world y per frame) - starts slow on easy
+      targetSpeed: D.startSpeed,
       angle: 0,                 // -1 hard left, 0 straight, +1 hard right
       air: 0,                   // >0 means airborne, counts down
       airHeight: 0,             // render offset for jump arc
@@ -511,7 +613,7 @@
       yetiWarned: false,
       yetiSpawned: false,
       snowmanSpawned: false,
-      snowmanAt: 120 + Math.random() * 60,   // 120-180s, rolled per run
+      snowmanAt: D.snowmanMin + Math.random() * D.snowmanWindow,
       elapsed: 0,            // seconds since run started
       shakeT: 0,
     };
@@ -525,22 +627,25 @@
 
   // ---------- object spawning ----------
   // Difficulty is driven by elapsed time AND distance, whichever is
-  // further along. It ramps from 0 at the start to 1 over the first
-  // ~150 seconds, giving the player a calm warm-up and a long climb.
+  // further along. It ramps from the mode's baseRamp up to 1 over
+  // rampSeconds, giving Easy a calm warm-up and Insta Death no mercy.
   function difficulty() {
-    const byTime = stats.elapsed / 150;         // 0 -> 1 over 150s
-    const byDist = stats.distance / 4000;       // 0 -> 1 over 4000m
-    return Math.min(1, Math.max(byTime, byDist));
+    const D = diff();
+    const byTime = stats.elapsed / D.rampSeconds;
+    const byDist = stats.distance / (D.rampSeconds * 26.67); // ~distance equiv
+    const ramped = Math.max(byTime, byDist);
+    return Math.min(1, D.baseRamp + ramped * (1 - D.baseRamp));
   }
 
   function spawnObjectsAround(worldSpawnY, forcedDensity) {
     const d = difficulty();
 
-    // Density ramps from ~0.4 (very sparse) up to ~4 at full difficulty.
+    // Density ramps from ~0.4 (very sparse) up to ~4 at full difficulty,
+    // then scales by the difficulty mode's densityMul.
     // forcedDensity lets the initial seed start extra calm.
     const density = forcedDensity != null
       ? forcedDensity
-      : 0.4 + d * 3.6;
+      : (0.4 + d * 3.6) * diff().densityMul;
 
     // Turn fractional density into an integer count probabilistically
     const count = Math.floor(density) + (Math.random() < (density % 1) ? 1 : 0);
@@ -586,7 +691,8 @@
   function maintainWorld() {
     const viewBottomWorld = worldY + H + 100;
     const d = difficulty();
-    const stripSpacing = 70 - d * 40;   // 70 early -> 30 late
+    // Higher-density modes tighten strip spacing on top of the base ramp.
+    const stripSpacing = (70 - d * 40) / Math.sqrt(diff().densityMul);
     while (spawnCursor < viewBottomWorld) {
       spawnObjectsAround(spawnCursor);
       spawnCursor += stripSpacing;
@@ -615,7 +721,7 @@
   }
 
   // ---------- yeti ----------
-  // Wakes after YETI_DISTANCE. Chases from above, faster than baseline
+  // Wakes after diff().yetiDistance. Chases from above, faster than baseline
   // but slower than a fully-tucked skier, so you can outrun briefly.
   function spawnYeti() {
     yeti = {
@@ -710,11 +816,13 @@
 
     // Speed: down tucks (faster), up carves (slower).
     // Baselines start low and climb with difficulty so the first
-    // moments feel like gliding, not racing.
+    // moments feel like gliding, not racing. Mode speedMul multiplies
+    // the whole band.
     const d = difficulty();
-    const baseMin = 0.6 + d * 0.8;       // 0.6  -> 1.4
-    const baseCruise = 1.0 + d * 1.3;    // 1.0  -> 2.3
-    const baseMax = 1.6 + d * 1.8;       // 1.6  -> 3.4
+    const sMul = diff().speedMul;
+    const baseMin    = (0.6 + d * 0.8) * sMul;   // 0.6  -> 1.4 (easy)
+    const baseCruise = (1.0 + d * 1.3) * sMul;   // 1.0  -> 2.3 (easy)
+    const baseMax    = (1.6 + d * 1.8) * sMul;   // 1.6  -> 3.4 (easy)
     let desired;
     if (keys.down)     desired = baseMax;
     else if (keys.up)  desired = baseMin;
@@ -806,12 +914,13 @@
       }
     }
 
-    // Yeti wake-up
-    if (!stats.yetiWarned && stats.distance >= YETI_DISTANCE - 60) {
+    // Yeti wake-up (threshold depends on difficulty mode)
+    const yetiDist = diff().yetiDistance;
+    if (!stats.yetiWarned && stats.distance >= yetiDist - 60) {
       stats.yetiWarned = true;
       hudWarning.style.display = 'block';
     }
-    if (!stats.yetiSpawned && stats.distance >= YETI_DISTANCE) {
+    if (!stats.yetiSpawned && stats.distance >= yetiDist) {
       spawnYeti();
     }
     updateYeti();
