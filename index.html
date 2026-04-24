@@ -867,6 +867,188 @@
   });
   setControlMode(controlMode);
 
+  // ---------- localized flavor text ----------
+  // Each end-of-run event has its own pool of titles + subtitles. The
+  // system picks one at random per event, avoiding the one it picked
+  // last time so the same line never fires back-to-back. Start screen
+  // and pause screen lines rotate too.
+  //
+  // IMPORTANT: this block must be declared before the touch mode setup
+  // below, because applyTouchState() calls hintText() during its first
+  // invocation (triggered by setTouchMode at init). MESSAGES is a const
+  // and would otherwise be in the temporal dead zone, throwing.
+  //
+  // Spanish is rioplatense (Argentinian) — deliberately, to give the
+  // translation personality. Cultural note: in Spanish-speaking cat
+  // lore, cats have SEVEN lives, not nine.
+  const MESSAGES = {
+    en: {
+      tree: {
+        titles: ['WIPEOUT', 'SPLAT!', 'TIMBER!', 'KABLAM!'],
+        subs: [
+          'MET A PINE TREE',
+          'HUGGED A TRUNK',
+          'THE TREE WON',
+          'USED UP LIFE #1',
+          'WHO PLANTED THAT?',
+          'TREE: 1 — CAT: 0',
+        ],
+      },
+      log: {
+        titles: ['WIPEOUT', 'SPLAT!', 'TIMBER!'],
+        subs: [
+          'TRIPPED ON A LOG',
+          'BECAME FIREWOOD',
+          'LOGGED OFF',
+          'SHOULDA LOOKED DOWN',
+          'BONKED A BIRCH',
+          'SPLINTERED',
+        ],
+      },
+      dog: {
+        titles: ['CAUGHT!', 'GOTCHA!', 'NABBED!', 'BUSTED'],
+        subs: [
+          'THE DOG GOT YA',
+          'SOMETIMES SPIKE GETS JERRY',
+          'BAD KITTY!',
+          'SHOULDA ZIGGED',
+          'TREED BY A DOG',
+          'WOOF > MEOW',
+        ],
+      },
+      snowman: {
+        titles: ['CHOMP!', 'CRUNCH!', 'GULP!', 'NOM NOM'],
+        subs: [
+          'EATEN BY A SNOWMAN',
+          'FROSTY WANTED SECONDS',
+          'NINE LIVES WASN\'T ENOUGH',
+          'THE CARROT WAS A WARNING',
+          'COLD TAKE',
+          'SNOWMAN: HUNGRY. CAT: TOAST',
+        ],
+      },
+      start1: [
+        'Dodge trees. Launch jumps. Grab flags.',
+        'Dodge pines. Catch flags. Don\'t get eaten.',
+        'Eight lives to spare. Waste them all.',
+        'Snow\'s soft. Trees are not.',
+      ],
+      start2: [
+        'Don\'t look behind you.',
+        'Curiosity killed this cat.',
+        'Watch for the dog.',
+        'The snowman comes without warning.',
+      ],
+      paused: [
+        'Take a breath.',
+        'Lick a paw.',
+        'Cat nap.',
+        'Nine lives accepting applications.',
+      ],
+      hints: {
+        startKeys:  'PRESS SPACE TO START',
+        startTap:   'TAP TO START',
+        resumeKeys: 'SPACE TO RESUME',
+        resumeTap:  'TAP TO RESUME',
+        retryKeys:  'SPACE TO TRY AGAIN',
+        retryTap:   'TAP TO TRY AGAIN',
+      },
+    },
+    es: {
+      tree: {
+        titles: ['¡PLAF!', '¡TIMBER!', '¡KABLAM!', 'WIPEOUT'],
+        subs: [
+          'SE COMIÓ UN ÁRBOL',
+          'CHE, BOLUDO — ESE PINO',
+          'EL PINO GANÓ ESTA VEZ',
+          'SIEMPRE HAY UN PINO DE MÁS',
+        ],
+      },
+      log: {
+        titles: ['¡PLAF!', '¡TIMBER!', 'WIPEOUT'],
+        subs: [
+          'TROPEZÓ CON UN TRONCO',
+          'NO VIO EL TRONCO, BOLUDO',
+          'HICIERON LEÑA DEL GATO',
+          'LO DESPERTÓ UN TRONCO',
+        ],
+      },
+      dog: {
+        titles: ['¡AGARRADO!', '¡TE CAZÓ!', '¡NOCAUT!', 'CHAU GATO'],
+        subs: [
+          'TE AGARRÓ EL PERRO',
+          'EL PERRO ESTÁ FELIZ',
+          'CHE, QUÉ PAPELÓN',
+          'LO CAZÓ UN PERRO — UN GATO',
+        ],
+      },
+      snowman: {
+        titles: ['¡ÑAM!', '¡CRUNCH!', '¡GLUP!', 'ÑAM ÑAM'],
+        subs: [
+          'LO COMIÓ UN MUÑECO DE NIEVE',
+          'FRIO, PERO FATAL',
+          'EL MUÑECO TENÍA HAMBRE',
+          'NI LAS SIETE VIDAS LO SALVARON',
+        ],
+      },
+      start1: [
+        'Esquivá pinos. Agarrá banderas.',
+        'Esquivá pinos. Cuidado con el perro.',
+        'Siete vidas. A gastarlas todas.',
+        'La nieve es blanda. Los árboles no.',
+      ],
+      start2: [
+        'No mires atrás.',
+        'La curiosidad mató al gato.',
+        'Ojo con el perro.',
+        'El muñeco llega sin aviso.',
+      ],
+      paused: [
+        'Tomá aire.',
+        'Lamete una pata.',
+        'Una siestita.',
+        'Siete vidas recibiendo CVs.',
+      ],
+      hints: {
+        startKeys:  'PRESIONÁ SPACE',
+        startTap:   'TOCÁ PARA EMPEZAR',
+        resumeKeys: 'SPACE PARA SEGUIR',
+        resumeTap:  'TOCÁ PARA SEGUIR',
+        retryKeys:  'SPACE PARA REINTENTAR',
+        retryTap:   'TOCÁ PARA REINTENTAR',
+      },
+    },
+  };
+
+  let lang = localStorage.getItem('skior_lang') || 'en';
+  if (!MESSAGES[lang]) lang = 'en';
+
+  // Remember last selection per array so we never fire the same line
+  // twice in a row. Keyed by 'lang.category.field'.
+  const lastPicked = {};
+  function pickFrom(pool, key) {
+    if (!pool || pool.length === 0) return '';
+    if (pool.length === 1) return pool[0];
+    let choice;
+    do {
+      choice = pool[Math.floor(Math.random() * pool.length)];
+    } while (choice === lastPicked[key] && pool.length > 1);
+    lastPicked[key] = choice;
+    return choice;
+  }
+  function msg(category, field) {
+    const pack = MESSAGES[lang][category] || MESSAGES.en[category];
+    const pool = pack && pack[field] ? pack[field] : (MESSAGES.en[category] && MESSAGES.en[category][field]);
+    return pickFrom(pool, lang + '.' + category + '.' + field);
+  }
+  function pickList(key) {
+    const pool = MESSAGES[lang][key] || MESSAGES.en[key];
+    return pickFrom(pool, lang + '.' + key);
+  }
+  function hintText(key) {
+    return (MESSAGES[lang].hints && MESSAGES[lang].hints[key]) || MESSAGES.en.hints[key] || '';
+  }
+
   // ---------- touch / mobile mode ----------
   // AUTO: detect by viewport width + coarse pointer (catches phones AND
   //       tablets including iPads that report desktop UA).
@@ -1291,184 +1473,6 @@
   let difficultyMode = localStorage.getItem('skior_difficulty') || 'easy';
   if (!DIFFICULTIES[difficultyMode]) difficultyMode = 'easy';
   function diff() { return DIFFICULTIES[difficultyMode]; }
-
-  // ---------- localized flavor text ----------
-  // Each end-of-run event has its own pool of titles + subtitles. The
-  // system picks one at random per event, avoiding the one it picked
-  // last time so the same line never fires back-to-back. Start screen
-  // and pause screen lines rotate too.
-  //
-  // Spanish is rioplatense (Argentinian) — deliberately, to give the
-  // translation personality. Cultural note: in Spanish-speaking cat
-  // lore, cats have SEVEN lives, not nine.
-  const MESSAGES = {
-    en: {
-      tree: {
-        titles: ['WIPEOUT', 'SPLAT!', 'TIMBER!', 'KABLAM!'],
-        subs: [
-          'MET A PINE TREE',
-          'HUGGED A TRUNK',
-          'THE TREE WON',
-          'USED UP LIFE #1',
-          'WHO PLANTED THAT?',
-          'TREE: 1 — CAT: 0',
-        ],
-      },
-      log: {
-        titles: ['WIPEOUT', 'SPLAT!', 'TIMBER!'],
-        subs: [
-          'TRIPPED ON A LOG',
-          'BECAME FIREWOOD',
-          'LOGGED OFF',
-          'SHOULDA LOOKED DOWN',
-          'BONKED A BIRCH',
-          'SPLINTERED',
-        ],
-      },
-      dog: {
-        titles: ['CAUGHT!', 'GOTCHA!', 'NABBED!', 'BUSTED'],
-        subs: [
-          'THE DOG GOT YA',
-          'SOMETIMES SPIKE GETS JERRY',
-          'BAD KITTY!',
-          'SHOULDA ZIGGED',
-          'TREED BY A DOG',
-          'WOOF > MEOW',
-        ],
-      },
-      snowman: {
-        titles: ['CHOMP!', 'CRUNCH!', 'GULP!', 'NOM NOM'],
-        subs: [
-          'EATEN BY A SNOWMAN',
-          'FROSTY WANTED SECONDS',
-          'NINE LIVES WASN\'T ENOUGH',
-          'THE CARROT WAS A WARNING',
-          'COLD TAKE',
-          'SNOWMAN: HUNGRY. CAT: TOAST',
-        ],
-      },
-      start1: [
-        'Dodge trees. Launch jumps. Grab flags.',
-        'Dodge pines. Catch flags. Don\'t get eaten.',
-        'Eight lives to spare. Waste them all.',
-        'Snow\'s soft. Trees are not.',
-      ],
-      start2: [
-        'Don\'t look behind you.',
-        'Curiosity killed this cat.',
-        'Watch for the dog.',
-        'The snowman comes without warning.',
-      ],
-      paused: [
-        'Take a breath.',
-        'Lick a paw.',
-        'Cat nap.',
-        'Nine lives accepting applications.',
-      ],
-      hints: {
-        startKeys:  'PRESS SPACE TO START',
-        startTap:   'TAP TO START',
-        resumeKeys: 'SPACE TO RESUME',
-        resumeTap:  'TAP TO RESUME',
-        retryKeys:  'SPACE TO TRY AGAIN',
-        retryTap:   'TAP TO TRY AGAIN',
-      },
-    },
-    es: {
-      tree: {
-        titles: ['¡PLAF!', '¡TIMBER!', '¡KABLAM!', 'WIPEOUT'],
-        subs: [
-          'SE COMIÓ UN ÁRBOL',
-          'CHE, BOLUDO — ESE PINO',
-          'EL PINO GANÓ ESTA VEZ',
-          'SIEMPRE HAY UN PINO DE MÁS',
-        ],
-      },
-      log: {
-        titles: ['¡PLAF!', '¡TIMBER!', 'WIPEOUT'],
-        subs: [
-          'TROPEZÓ CON UN TRONCO',
-          'NO VIO EL TRONCO, BOLUDO',
-          'HICIERON LEÑA DEL GATO',
-          'LO DESPERTÓ UN TRONCO',
-        ],
-      },
-      dog: {
-        titles: ['¡AGARRADO!', '¡TE CAZÓ!', '¡NOCAUT!', 'CHAU GATO'],
-        subs: [
-          'TE AGARRÓ EL PERRO',
-          'EL PERRO ESTÁ FELIZ',
-          'CHE, QUÉ PAPELÓN',
-          'LO CAZÓ UN PERRO — UN GATO',
-        ],
-      },
-      snowman: {
-        titles: ['¡ÑAM!', '¡CRUNCH!', '¡GLUP!', 'ÑAM ÑAM'],
-        subs: [
-          'LO COMIÓ UN MUÑECO DE NIEVE',
-          'FRIO, PERO FATAL',
-          'EL MUÑECO TENÍA HAMBRE',
-          'NI LAS SIETE VIDAS LO SALVARON',
-        ],
-      },
-      start1: [
-        'Esquivá pinos. Agarrá banderas.',
-        'Esquivá pinos. Cuidado con el perro.',
-        'Siete vidas. A gastarlas todas.',
-        'La nieve es blanda. Los árboles no.',
-      ],
-      start2: [
-        'No mires atrás.',
-        'La curiosidad mató al gato.',
-        'Ojo con el perro.',
-        'El muñeco llega sin aviso.',
-      ],
-      paused: [
-        'Tomá aire.',
-        'Lamete una pata.',
-        'Una siestita.',
-        'Siete vidas recibiendo CVs.',
-      ],
-      hints: {
-        startKeys:  'PRESIONÁ SPACE',
-        startTap:   'TOCÁ PARA EMPEZAR',
-        resumeKeys: 'SPACE PARA SEGUIR',
-        resumeTap:  'TOCÁ PARA SEGUIR',
-        retryKeys:  'SPACE PARA REINTENTAR',
-        retryTap:   'TOCÁ PARA REINTENTAR',
-      },
-    },
-  };
-
-  let lang = localStorage.getItem('skior_lang') || 'en';
-  if (!MESSAGES[lang]) lang = 'en';
-
-  // Remember last selection per array so we never fire the same line
-  // twice in a row. Keyed by 'category.field' e.g. 'dog.subs'.
-  const lastPicked = {};
-  function pickFrom(pool, key) {
-    if (!pool || pool.length === 0) return '';
-    if (pool.length === 1) return pool[0];
-    let choice;
-    do {
-      choice = pool[Math.floor(Math.random() * pool.length)];
-    } while (choice === lastPicked[key] && pool.length > 1);
-    lastPicked[key] = choice;
-    return choice;
-  }
-  // Fallback to English if a Spanish category is missing.
-  function msg(category, field) {
-    const pack = MESSAGES[lang][category] || MESSAGES.en[category];
-    const pool = pack && pack[field] ? pack[field] : (MESSAGES.en[category] && MESSAGES.en[category][field]);
-    return pickFrom(pool, lang + '.' + category + '.' + field);
-  }
-  function pickList(key) {
-    const pool = MESSAGES[lang][key] || MESSAGES.en[key];
-    return pickFrom(pool, lang + '.' + key);
-  }
-  function hintText(key) {
-    return (MESSAGES[lang].hints && MESSAGES[lang].hints[key]) || MESSAGES.en.hints[key] || '';
-  }
 
   function setDifficulty(name) {
     if (!DIFFICULTIES[name]) return;
