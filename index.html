@@ -1,0 +1,1779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SKI OR DIE // Retro Downhill</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  /* ---------- RETRO PIXEL AESTHETIC ----------
+     Chunky HUD with a CRT vibe. Cool blue snow palette with a single
+     warm accent for flags and warnings. Pixel-perfect rendering on the
+     canvas (image-rendering: pixelated) so scaled shapes stay crisp. */
+
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+
+  :root {
+    --snow:      #eaf4ff;
+    --snow-dim:  #cfe2f5;
+    --shadow:    #9fb6cc;
+    --ice:       #7aa7c7;
+    --deep:      #1a2838;
+    --ink:       #0b1320;
+    --accent:    #ff3b30;
+    --accent-2:  #ffcc00;
+    --pine:      #1f6b3a;
+    --pine-dk:   #0f4424;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: var(--ink);
+    color: var(--snow);
+    font-family: 'VT323', monospace;
+    overflow: hidden;
+  }
+
+  body {
+    display: grid;
+    place-items: center;
+    background:
+      radial-gradient(ellipse at 50% 0%, #24384f 0%, #0b1320 60%, #050910 100%);
+  }
+
+  .frame {
+    position: relative;
+    padding: 14px 14px 18px;
+    border-radius: 6px;
+    background:
+      linear-gradient(#111a27, #0a111c);
+    box-shadow:
+      0 0 0 2px #1d2a3c,
+      0 0 0 4px #000,
+      0 30px 60px rgba(0,0,0,.6),
+      inset 0 0 40px rgba(0,0,0,.6);
+  }
+
+  .bezel-title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--snow-dim);
+    text-align: center;
+    margin-bottom: 10px;
+    text-shadow: 0 0 6px rgba(122,167,199,.6);
+  }
+  .bezel-title .dot {
+    color: var(--accent);
+    animation: blink 1.2s steps(2,end) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .screen-wrap {
+    position: relative;
+    width: 720px;
+    height: 540px;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #000;
+    box-shadow: inset 0 0 0 2px #000, inset 0 0 0 4px #24384f;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+
+  /* Scanline + vignette overlay for CRT feel */
+  .crt {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    background:
+      repeating-linear-gradient(
+        to bottom,
+        rgba(0,0,0,0) 0px,
+        rgba(0,0,0,0) 2px,
+        rgba(0,0,0,.18) 3px,
+        rgba(0,0,0,0) 4px
+      ),
+      radial-gradient(ellipse at center, rgba(0,0,0,0) 60%, rgba(0,0,0,.55) 100%);
+    mix-blend-mode: multiply;
+  }
+
+  /* HUD */
+  .hud {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 14px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--snow);
+    text-shadow: 2px 2px 0 #000;
+    pointer-events: none;
+  }
+  .hud .label { color: var(--snow-dim); }
+  .hud .value { color: var(--accent-2); }
+  .hud .danger { color: var(--accent); animation: blink 0.6s steps(2,end) infinite; }
+
+  /* Overlays */
+  .overlay {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: rgba(5, 10, 20, 0.78);
+    backdrop-filter: blur(2px);
+    text-align: center;
+    padding: 20px;
+    z-index: 5;
+  }
+  .overlay.hidden { display: none; }
+
+  .panel {
+    border: 2px solid var(--snow-dim);
+    background: #0b1320;
+    padding: 22px 28px;
+    box-shadow: 6px 6px 0 #000, 0 0 0 2px #000 inset;
+    max-width: 520px;
+  }
+  .panel h1 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 22px;
+    color: var(--snow);
+    line-height: 1.4;
+    margin-bottom: 8px;
+    letter-spacing: 2px;
+  }
+  .panel h1 .alt { color: var(--accent); }
+  .panel h2 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 14px;
+    color: var(--accent-2);
+    margin-bottom: 14px;
+  }
+  .panel p {
+    font-size: 22px;
+    line-height: 1.25;
+    color: var(--snow-dim);
+    margin: 8px 0;
+  }
+  .panel .keys {
+    display: inline-grid;
+    grid-template-columns: auto auto;
+    gap: 4px 14px;
+    margin: 14px 0 8px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    color: var(--snow);
+    text-align: left;
+  }
+  .panel .keys kbd {
+    display: inline-block;
+    padding: 4px 7px;
+    border: 1px solid var(--snow-dim);
+    background: #182638;
+    color: var(--snow);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 9px;
+    box-shadow: 2px 2px 0 #000;
+  }
+  .panel .hint {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    color: var(--snow);
+    margin-top: 16px;
+    letter-spacing: 1px;
+  }
+  .panel .hint .blink { color: var(--accent-2); animation: blink 1s steps(2,end) infinite; }
+  .panel .stat-row {
+    display: flex; justify-content: space-between; gap: 30px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 11px;
+    color: var(--snow);
+    margin: 6px 0;
+  }
+  .panel .stat-row .v { color: var(--accent-2); }
+
+  .footer {
+    margin-top: 10px;
+    text-align: center;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    letter-spacing: 2px;
+    color: #4e6b8a;
+  }
+
+  .cat-picker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 8px 10px;
+    background: #0e1826;
+    border: 2px solid #1d2a3c;
+    box-shadow: inset 0 0 0 2px #000;
+  }
+  .cat-picker-label {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--snow-dim);
+    margin-right: 4px;
+  }
+  .cat-swatch {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 5px 6px 4px;
+    background: #182638;
+    border: 2px solid #2b3c54;
+    cursor: pointer;
+    box-shadow: 2px 2px 0 #000;
+    transition: transform 80ms, border-color 80ms, background 80ms;
+  }
+  .cat-swatch canvas {
+    display: block;
+    width: 48px;
+    height: 48px;
+    image-rendering: auto;
+  }
+  .cat-swatch .cat-name {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 7px;
+    letter-spacing: 1px;
+    color: var(--snow-dim);
+  }
+  .cat-swatch:hover {
+    transform: translate(-1px, -1px);
+    border-color: var(--snow-dim);
+    background: #1d2c42;
+  }
+  .cat-swatch.active {
+    border-color: var(--accent-2);
+    box-shadow: 2px 2px 0 #000, 0 0 0 2px var(--accent-2) inset;
+    background: #1f2e44;
+  }
+  .cat-swatch.active .cat-name {
+    color: var(--accent-2);
+  }
+</style>
+</head>
+<body>
+
+<div class="frame">
+  <div class="bezel-title">SKI OR DIE <span class="dot">&#9632;</span> 1986</div>
+
+  <div class="screen-wrap" id="screen">
+    <canvas id="game" width="360" height="270"></canvas>
+
+    <!-- HUD: distance, time, score, speed, yeti warning -->
+    <div class="hud">
+      <div>
+        <div><span class="label">DIST</span> <span class="value" id="hud-dist">0</span> M</div>
+        <div><span class="label">SCORE</span> <span class="value" id="hud-score">0</span></div>
+      </div>
+      <div style="text-align:right">
+        <div><span class="label">TIME</span> <span class="value" id="hud-time">0:00</span></div>
+        <div><span class="label">SPD</span> <span class="value" id="hud-speed">0</span></div>
+        <div id="hud-warning" class="danger" style="display:none">! DOG !</div>
+      </div>
+    </div>
+
+    <!-- Start screen -->
+    <div class="overlay" id="overlay-start">
+      <div class="panel">
+        <h1>SKI <span class="alt">OR</span> DIE</h1>
+        <h2>DOWNHILL 86</h2>
+        <p>Dodge trees. Launch jumps. Grab flags.</p>
+        <p>Don't look behind you.</p>
+        <div class="keys">
+          <kbd>&larr; &rarr;</kbd><span>STEER</span>
+          <kbd>&darr;</kbd><span>TUCK / FASTER</span>
+          <kbd>&uarr;</kbd><span>SLOW / CARVE</span>
+          <kbd>SPACE</kbd><span>START / RETRY</span>
+        </div>
+        <div class="hint"><span class="blink">&gt;</span> PRESS SPACE TO START</div>
+      </div>
+    </div>
+
+    <!-- Game over screen -->
+    <div class="overlay hidden" id="overlay-over">
+      <div class="panel">
+        <h1 id="over-title">WIPEOUT</h1>
+        <h2 id="over-sub">YOU ATE SNOW</h2>
+        <div class="stat-row"><span>TIME</span><span class="v" id="over-time">0:00</span></div>
+        <div class="stat-row"><span>DISTANCE</span><span class="v" id="over-dist">0 M</span></div>
+        <div class="stat-row"><span>SCORE</span><span class="v" id="over-score">0</span></div>
+        <div class="stat-row"><span>BEST</span><span class="v" id="over-best">0</span></div>
+        <div class="hint"><span class="blink">&gt;</span> SPACE TO TRY AGAIN</div>
+      </div>
+    </div>
+
+    <div class="crt"></div>
+  </div>
+
+  <!-- Cat color picker: each button shows the actual rendered cat -->
+  <div class="cat-picker" role="radiogroup" aria-label="Cat color">
+    <span class="cat-picker-label">CAT</span>
+    <button class="cat-swatch" data-cat="black"  aria-label="Black cat">
+      <canvas width="48" height="48"></canvas>
+      <span class="cat-name">BLACK</span>
+    </button>
+    <button class="cat-swatch" data-cat="tabby"  aria-label="Tabby cat">
+      <canvas width="48" height="48"></canvas>
+      <span class="cat-name">TABBY</span>
+    </button>
+    <button class="cat-swatch" data-cat="calico" aria-label="Calico cat">
+      <canvas width="48" height="48"></canvas>
+      <span class="cat-name">CALICO</span>
+    </button>
+    <button class="cat-swatch" data-cat="orange" aria-label="Orange cat">
+      <canvas width="48" height="48"></canvas>
+      <span class="cat-name">ORANGE</span>
+    </button>
+  </div>
+
+  <div class="footer">ARROWS &#9679; SPACE &#9679; NO QUARTER REQUIRED</div>
+</div>
+
+<script>
+/* ============================================================
+   SKI OR DIE  --  retro downhill skier, single file
+   ------------------------------------------------------------
+   Main systems:
+     1. Input           keyboard state, arrow keys + space
+     2. World scroll    world "scrollY" advances with speed;
+                        objects exist in world coords and are
+                        drawn relative to (playerWorldY + offset)
+     3. Spawning        object pool spawned just below viewport
+                        based on distance bands (difficulty)
+     4. Physics         skier x velocity from steering angle,
+                        y velocity from speed; jump arc via "air"
+     5. Collisions      AABB against trees/rocks/flags/jumps/yeti
+     6. Yeti            wakes after threshold, chases and grabs
+     7. Rendering       layered: snow bg -> tracks -> objects ->
+                        skier -> yeti -> particles
+   ============================================================ */
+
+(() => {
+  // ---------- setup ----------
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+
+  const W = canvas.width;   // 360
+  const H = canvas.height;  // 270
+
+  // HUD elements
+  const hudDist    = document.getElementById('hud-dist');
+  const hudScore   = document.getElementById('hud-score');
+  const hudTime    = document.getElementById('hud-time');
+  const hudSpeed   = document.getElementById('hud-speed');
+  const hudWarning = document.getElementById('hud-warning');
+
+  const overlayStart = document.getElementById('overlay-start');
+  const overlayOver  = document.getElementById('overlay-over');
+  const overTitle    = document.getElementById('over-title');
+  const overSub      = document.getElementById('over-sub');
+  const overTime     = document.getElementById('over-time');
+  const overDist     = document.getElementById('over-dist');
+  const overScore    = document.getElementById('over-score');
+  const overBest     = document.getElementById('over-best');
+
+  // Format elapsed seconds as M:SS for the HUD
+  function formatTime(sec) {
+    const s = Math.floor(sec);
+    const m = Math.floor(s / 60);
+    const r = s % 60;
+    return m + ':' + (r < 10 ? '0' : '') + r;
+  }
+
+  // ---------- input ----------
+  // Simple held-key map. Space is edge-triggered for start/retry.
+  const keys = { left:false, right:false, up:false, down:false };
+  let spacePressed = false;
+
+  window.addEventListener('keydown', e => {
+    if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].includes(e.key)) e.preventDefault();
+    if (e.repeat) return;
+    if (e.key === 'ArrowLeft')  keys.left = true;
+    if (e.key === 'ArrowRight') keys.right = true;
+    if (e.key === 'ArrowUp')    keys.up = true;
+    if (e.key === 'ArrowDown')  keys.down = true;
+    if (e.key === ' ')          spacePressed = true;
+  });
+  window.addEventListener('keyup', e => {
+    if (e.key === 'ArrowLeft')  keys.left = false;
+    if (e.key === 'ArrowRight') keys.right = false;
+    if (e.key === 'ArrowUp')    keys.up = false;
+    if (e.key === 'ArrowDown')  keys.down = false;
+  });
+
+  // ---------- cat palettes ----------
+  // Each palette gives a base fur color, a darker accent for shadows
+  // and markings, a belly/chest light, eye color, and a "patch" color
+  // used only by the calico for irregular spots.
+  const CAT_PALETTES = {
+    black:  { base:'#1a1a1e', accent:'#000000', belly:'#2a2a32', eye:'#f7d94a', patch:null,      nose:'#3a2028', stripes:false },
+    tabby:  { base:'#9a7446', accent:'#5c3d1e', belly:'#d6b889', eye:'#6ed26b', patch:null,      nose:'#c06a50', stripes:true  },
+    calico: { base:'#f5f5f0', accent:'#2a2a30', belly:'#ffffff', eye:'#2a8fb8', patch:'#e08a2a', nose:'#d89a82', stripes:false },
+    orange: { base:'#e67a2e', accent:'#b85616', belly:'#f5c28a', eye:'#6ed26b', patch:null,      nose:'#c06a50', stripes:true  },
+  };
+
+  let catColor = localStorage.getItem('skior_cat') || 'tabby';
+  function cat() { return CAT_PALETTES[catColor] || CAT_PALETTES.tabby; }
+
+  function setCatColor(name) {
+    if (!CAT_PALETTES[name]) return;
+    catColor = name;
+    localStorage.setItem('skior_cat', name);
+    document.querySelectorAll('.cat-swatch').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.cat === name);
+    });
+  }
+
+  document.querySelectorAll('.cat-swatch').forEach(btn => {
+    btn.addEventListener('click', () => setCatColor(btn.dataset.cat));
+  });
+  setCatColor(catColor);
+
+  // Render the actual cat sprite into each picker preview using the
+  // same drawCat function the game uses. Done after a microtask so
+  // drawCat is hoisted and accessible.
+  function renderPickerPreviews() {
+    document.querySelectorAll('.cat-swatch').forEach(btn => {
+      const c = btn.querySelector('canvas');
+      if (!c) return;
+      const pctx = c.getContext('2d');
+      pctx.clearRect(0, 0, c.width, c.height);
+      const palette = CAT_PALETTES[btn.dataset.cat];
+      // Render at scale ~2.7 centered; pose=front shows eyes & whiskers.
+      // Y is shifted down so head + ears fit and the body lands lower.
+      drawCat(pctx, c.width / 2, c.height / 2 + 9, 2.7, palette, { pose: 'front' });
+    });
+  }
+  renderPickerPreviews();
+
+  // ---------- game state ----------
+  // State machine: 'title' -> 'play' -> 'over' -> 'play' ...
+  const STATE = { TITLE:'title', PLAY:'play', OVER:'over' };
+  let state = STATE.TITLE;
+
+  let best = Number(localStorage.getItem('skior_best') || 0);
+
+  // The skier sits at a fixed screen Y; the world scrolls past.
+  // worldY = how far down the mountain we've traveled (in px).
+  let worldY = 0;
+  let player, objects, particles, tracks, yeti, stats;
+
+  // Distance at which the yeti wakes. Once awake, it never leaves.
+  const YETI_DISTANCE = 1600; // meters
+
+  function resetGame() {
+    worldY = 0;
+
+    player = {
+      x: W / 2,                 // screen x
+      screenY: H * 0.42,        // fixed screen y while grounded
+      vx: 0,
+      speed: 0.8,               // forward speed (world y per frame) - starts slow
+      targetSpeed: 0.8,
+      angle: 0,                 // -1 hard left, 0 straight, +1 hard right
+      air: 0,                   // >0 means airborne, counts down
+      airHeight: 0,             // render offset for jump arc
+      crashed: false,
+      grabbed: false,
+      width: 12,
+      height: 16,
+    };
+
+    objects = [];     // trees, rocks, flags, jumps, moguls
+    particles = [];   // snow sprays + crash debris
+    tracks = [];      // ski track segments, world-space
+    yeti = null;
+    snowman = null;
+
+    stats = {
+      distance: 0,
+      score: 0,
+      flags: 0,
+      jumps: 0,
+      yetiWarned: false,
+      yetiSpawned: false,
+      snowmanSpawned: false,
+      snowmanAt: 120 + Math.random() * 60,   // 120-180s, rolled per run
+      elapsed: 0,            // seconds since run started
+      shakeT: 0,
+    };
+
+    // Seed a handful of widely-spaced obstacles so the first screens
+    // feel calm. Real spawning takes over via maintainWorld().
+    for (let y = 120; y < 600; y += 90) {
+      spawnObjectsAround(y, 0.2); // forced-low density
+    }
+  }
+
+  // ---------- object spawning ----------
+  // Difficulty is driven by elapsed time AND distance, whichever is
+  // further along. It ramps from 0 at the start to 1 over the first
+  // ~150 seconds, giving the player a calm warm-up and a long climb.
+  function difficulty() {
+    const byTime = stats.elapsed / 150;         // 0 -> 1 over 150s
+    const byDist = stats.distance / 4000;       // 0 -> 1 over 4000m
+    return Math.min(1, Math.max(byTime, byDist));
+  }
+
+  function spawnObjectsAround(worldSpawnY, forcedDensity) {
+    const d = difficulty();
+
+    // Density ramps from ~0.4 (very sparse) up to ~4 at full difficulty.
+    // forcedDensity lets the initial seed start extra calm.
+    const density = forcedDensity != null
+      ? forcedDensity
+      : 0.4 + d * 3.6;
+
+    // Turn fractional density into an integer count probabilistically
+    const count = Math.floor(density) + (Math.random() < (density % 1) ? 1 : 0);
+
+    for (let i = 0; i < count; i++) {
+      const r = Math.random();
+      let type;
+      // Early game: more friendly jumps/flags, fewer hazards.
+      // Late game: more trees and rocks.
+      const treeBias  = 0.30 + d * 0.35;               // 0.30 -> 0.65
+      const rockBias  = treeBias + 0.12 + d * 0.10;    // trees+rocks band
+      const flagBias  = rockBias + 0.15;
+      const jumpBias  = flagBias + 0.10;
+
+      if      (r < treeBias) type = 'tree';
+      else if (r < rockBias) type = 'rock';
+      else if (r < flagBias) type = 'flag';
+      else if (r < jumpBias) type = 'jump';
+      else                   type = 'mogul';
+
+      const obj = {
+        type,
+        x: 10 + Math.random() * (W - 20),
+        y: worldSpawnY + Math.random() * 36,
+        w: 14, h: 14,
+        hit: false,
+      };
+      if (type === 'tree')  { obj.w = 14; obj.h = 20; }  // slightly forgiving collision
+      if (type === 'rock')  { obj.w = 16; obj.h = 10; }  // now a wider log
+      if (type === 'flag')  { obj.w = 8;  obj.h = 16; obj.side = Math.random() < 0.5 ? 'L' : 'R'; }
+      if (type === 'jump')  { obj.w = 30; obj.h = 8;  }
+      if (type === 'mogul') { obj.w = 18; obj.h = 10; }
+
+      objects.push(obj);
+    }
+  }
+
+  // Keep spawning strips as the world scrolls down.
+  // `spawnCursor` tracks the furthest world Y we've populated.
+  // Strip spacing also widens when difficulty is low, which naturally
+  // thins objects out at the start without touching density logic.
+  let spawnCursor = 0;
+  function maintainWorld() {
+    const viewBottomWorld = worldY + H + 100;
+    const d = difficulty();
+    const stripSpacing = 70 - d * 40;   // 70 early -> 30 late
+    while (spawnCursor < viewBottomWorld) {
+      spawnObjectsAround(spawnCursor);
+      spawnCursor += stripSpacing;
+    }
+    // cull objects we've passed far above
+    const cullAbove = worldY - 80;
+    objects = objects.filter(o => o.y > cullAbove);
+    tracks  = tracks.filter(t => t.y > cullAbove);
+    particles = particles.filter(p => p.life > 0);
+  }
+
+  // ---------- collisions ----------
+  function aabb(a, b) {
+    return Math.abs(a.x - b.x) < (a.w + b.w) / 2 &&
+           Math.abs(a.y - b.y) < (a.h + b.h) / 2;
+  }
+
+  // Translate player to a world-space box for collision checks.
+  function playerBox() {
+    return {
+      x: player.x,
+      y: worldY + player.screenY,
+      w: player.width,
+      h: player.height,
+    };
+  }
+
+  // ---------- yeti ----------
+  // Wakes after YETI_DISTANCE. Chases from above, faster than baseline
+  // but slower than a fully-tucked skier, so you can outrun briefly.
+  function spawnYeti() {
+    yeti = {
+      x: W / 2 + (Math.random() < 0.5 ? -40 : 40),
+      y: worldY - 30,       // above the top of the screen
+      w: 16, h: 22,
+      vx: 0,
+      rage: 0,              // animation phase
+      state: 'chase',       // 'chase' | 'grab'
+    };
+    stats.yetiSpawned = true;
+    hudWarning.style.display = 'block';
+  }
+
+  function updateYeti() {
+    if (!yeti) return;
+    yeti.rage += 0.2;
+
+    // Home in on player's x; move down faster than player's speed
+    // in open terrain, slower when player is tucking hard.
+    const targetX = player.x;
+    const dx = targetX - yeti.x;
+    yeti.vx = Math.sign(dx) * Math.min(Math.abs(dx) * 0.04, 1.4);
+    yeti.x += yeti.vx;
+
+    // Yeti's downward speed in world = a bit less than player speed,
+    // so it slowly closes the gap when you're not at max tuck.
+    const yetiWorldSpeed = player.speed + 0.35 - (keys.down ? 0.9 : 0);
+    yeti.y += yetiWorldSpeed;
+
+    // If yeti overtakes player in world Y and they're close in X => grab.
+    const py = worldY + player.screenY;
+    if (yeti.y > py - 6 && Math.abs(yeti.x - player.x) < 12 && !player.grabbed && player.air <= 0) {
+      player.grabbed = true;
+      yeti.state = 'grab';
+      endRun('CAUGHT!', 'THE DOG GOT YA');
+    }
+  }
+
+  // ---------- snowman ----------
+  // After 30 seconds a snowman appears and charges the skier. It is
+  // faster than any tuck, tracks the player's X perfectly, and cannot
+  // be shaken. Its only purpose is to eat you.
+  let snowman = null;
+
+  function spawnSnowman() {
+    // Start just off-screen on whichever side the player is nearer to,
+    // so the charge feels like it's cutting them off.
+    const fromLeft = player.x > W / 2;
+    snowman = {
+      x: fromLeft ? -20 : W + 20,
+      y: worldY + player.screenY - 40,  // roughly level with the skier
+      w: 16, h: 22,
+      bob: 0,
+      chompT: 0,            // chomp animation phase once close
+    };
+    stats.snowmanSpawned = true;
+    stats.shakeT = 14;      // little jolt to announce the entrance
+    hudWarning.textContent = '! SNOWMAN !';
+    hudWarning.style.display = 'block';
+  }
+
+  function updateSnowman() {
+    if (!snowman) return;
+    snowman.bob += 0.4;
+
+    const py = worldY + player.screenY;
+
+    // Charge horizontally toward the player, steady but beatable-looking.
+    const dx = player.x - snowman.x;
+    const chargeSpeed = 1.8;
+    snowman.x += Math.sign(dx) * Math.min(Math.abs(dx), chargeSpeed);
+
+    // Always keep pace with the skier vertically (it can't be outrun).
+    snowman.y = py + Math.sin(snowman.bob) * 1.5;
+
+    // Close enough? Chomp.
+    if (!player.grabbed && Math.abs(snowman.x - player.x) < 10) {
+      player.grabbed = true;
+      snowman.chompT = 20;
+      endRun('CHOMP!', 'EATEN BY A SNOWMAN');
+    }
+  }
+
+  // ---------- gameplay update ----------
+  function update() {
+    if (state !== STATE.PLAY) return;
+
+    // Steering: arrow keys tilt "angle" between -1..+1
+    const steerTarget = (keys.left ? -1 : 0) + (keys.right ? 1 : 0);
+    player.angle += (steerTarget - player.angle) * 0.18;
+
+    // Speed: down tucks (faster), up carves (slower).
+    // Baselines start low and climb with difficulty so the first
+    // moments feel like gliding, not racing.
+    const d = difficulty();
+    const baseMin = 0.6 + d * 0.8;       // 0.6  -> 1.4
+    const baseCruise = 1.0 + d * 1.3;    // 1.0  -> 2.3
+    const baseMax = 1.6 + d * 1.8;       // 1.6  -> 3.4
+    let desired;
+    if (keys.down)     desired = baseMax;
+    else if (keys.up)  desired = baseMin;
+    else               desired = baseCruise;
+    desired -= Math.abs(player.angle) * 0.3;
+
+    player.targetSpeed = desired;
+    // Ease toward target; slower easing = smoother ramp-up from start
+    player.speed += (player.targetSpeed - player.speed) * 0.04;
+
+    // Horizontal motion from steering angle (scaled by speed)
+    player.vx = player.angle * (0.9 + player.speed * 0.25);
+    player.x += player.vx;
+    player.x = Math.max(8, Math.min(W - 8, player.x));
+
+    // Advance world and timers (assume ~60fps -> 1/60s per frame)
+    worldY += player.speed;
+    stats.elapsed += 1 / 60;
+    stats.distance = Math.floor(worldY / 10); // 10px = 1m
+    stats.score    = stats.distance + stats.flags * 50 + stats.jumps * 25;
+
+    // Airborne countdown
+    if (player.air > 0) {
+      player.air -= 1;
+      // parabolic arc: peak in the middle
+      const t = player.air / player.airMax;
+      player.airHeight = Math.sin(t * Math.PI) * 18;
+      if (player.air <= 0) {
+        player.airHeight = 0;
+        // landing puff
+        spawnPuff(player.x, worldY + player.screenY, 6);
+      }
+    }
+
+    // Ski tracks: drop a track segment each frame
+    if (!player.grabbed && player.air <= 0) {
+      tracks.push({
+        x: player.x - 3 + player.angle * 2,
+        y: worldY + player.screenY + 6,
+        a: player.angle,
+        life: 180,
+      });
+      tracks.push({
+        x: player.x + 3 + player.angle * 2,
+        y: worldY + player.screenY + 6,
+        a: player.angle,
+        life: 180,
+      });
+      // occasional snow spray when carving
+      if (Math.abs(player.angle) > 0.6 && Math.random() < 0.4) {
+        spawnPuff(player.x - player.angle * 6, worldY + player.screenY + 8, 2);
+      }
+    }
+
+    // Collisions
+    const pb = playerBox();
+    for (const o of objects) {
+      if (o.hit) continue;
+      const ob = { x:o.x, y:o.y, w:o.w, h:o.h };
+
+      // Jumps & moguls are friendly even while passing overhead
+      if (o.type === 'jump' || o.type === 'mogul') {
+        if (player.air <= 0 && aabb(pb, ob)) {
+          o.hit = true;
+          player.airMax = o.type === 'jump' ? 38 : 22;
+          player.air = player.airMax;
+          stats.jumps++;
+          spawnPuff(player.x, worldY + player.screenY, 10);
+        }
+        continue;
+      }
+
+      // Flags: collect when between the pair side flag, give points
+      if (o.type === 'flag') {
+        if (aabb(pb, ob)) {
+          o.hit = true;
+          stats.flags++;
+          stats.score += 50;
+          spawnPuff(o.x, o.y, 8, '#ffcc00');
+        }
+        continue;
+      }
+
+      // Trees / rocks: only hit when grounded
+      if (player.air <= 0 && aabb(pb, ob)) {
+        o.hit = true;
+        crash(o.type);
+        break;
+      }
+    }
+
+    // Yeti wake-up
+    if (!stats.yetiWarned && stats.distance >= YETI_DISTANCE - 60) {
+      stats.yetiWarned = true;
+      hudWarning.style.display = 'block';
+    }
+    if (!stats.yetiSpawned && stats.distance >= YETI_DISTANCE) {
+      spawnYeti();
+    }
+    updateYeti();
+
+    // Snowman: rolled randomly between 120-180s at run start.
+    // No warning, no escape.
+    if (!stats.snowmanSpawned && stats.elapsed >= stats.snowmanAt) {
+      spawnSnowman();
+    }
+    updateSnowman();
+
+    // Particles
+    for (const p of particles) {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.02;
+      p.life -= 1;
+    }
+
+    // Camera shake decay
+    if (stats.shakeT > 0) stats.shakeT--;
+
+    // Push HUD
+    hudDist.textContent  = stats.distance;
+    hudScore.textContent = stats.score;
+    hudTime.textContent  = formatTime(stats.elapsed);
+    hudSpeed.textContent = player.speed.toFixed(1);
+
+    // Maintain world strips + cull
+    maintainWorld();
+  }
+
+  // ---------- events ----------
+  function spawnPuff(x, y, n = 6, color = '#ffffff') {
+    for (let i = 0; i < n; i++) {
+      particles.push({
+        x, y,
+        vx: (Math.random() - 0.5) * 2.4,
+        vy: -Math.random() * 1.2,
+        life: 18 + Math.random() * 14,
+        color,
+        size: 1 + Math.random() * 1.5,
+      });
+    }
+  }
+
+  function crash(cause) {
+    if (player.crashed) return;
+    player.crashed = true;
+    stats.shakeT = 18;
+    // debris
+    for (let i = 0; i < 18; i++) {
+      particles.push({
+        x: player.x,
+        y: worldY + player.screenY,
+        vx: (Math.random() - 0.5) * 3.5,
+        vy: (Math.random() - 1) * 2.5,
+        life: 40 + Math.random() * 20,
+        color: Math.random() < 0.5 ? '#ffffff' : '#cfe2f5',
+        size: 1 + Math.random() * 2,
+      });
+    }
+    endRun('WIPEOUT', cause === 'tree' ? 'MET A PINE TREE' : 'TRIPPED ON A LOG');
+  }
+
+  function endRun(title, sub) {
+    state = STATE.OVER;
+    if (stats.score > best) {
+      best = stats.score;
+      localStorage.setItem('skior_best', String(best));
+    }
+    overTitle.textContent = title;
+    overSub.textContent   = sub;
+    overTime.textContent  = formatTime(stats.elapsed);
+    overDist.textContent  = stats.distance + ' M';
+    overScore.textContent = stats.score;
+    overBest.textContent  = best;
+    overlayOver.classList.remove('hidden');
+  }
+
+  function startRun() {
+    resetGame();
+    spawnCursor = 0;
+    maintainWorld();
+    hudWarning.textContent = '! DOG !';
+    hudWarning.style.display = 'none';
+    overlayStart.classList.add('hidden');
+    overlayOver.classList.add('hidden');
+    state = STATE.PLAY;
+  }
+
+  // ---------- rendering ----------
+  // World->screen: screenY = obj.worldY - worldY
+  function toScreenY(wy) { return wy - worldY; }
+
+  function drawBackground() {
+    // Snow field with very soft vertical gradient + faint scroll lines
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#f4faff');
+    g.addColorStop(1, '#d8e7f5');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+
+    // Subtle moving snow flecks tied to worldY
+    ctx.fillStyle = 'rgba(140,170,195,0.35)';
+    for (let i = 0; i < 40; i++) {
+      const fx = (i * 97) % W;
+      const fy = ((i * 53) + (worldY * 0.7)) % H;
+      ctx.fillRect(fx, fy, 1, 1);
+    }
+    // Slope shading bands
+    ctx.fillStyle = 'rgba(150,180,205,0.10)';
+    for (let y = -((worldY * 0.5) % 48); y < H; y += 48) {
+      ctx.fillRect(0, y, W, 2);
+    }
+  }
+
+  function drawTracks() {
+    ctx.fillStyle = 'rgba(130,160,185,0.55)';
+    for (const t of tracks) {
+      const sy = toScreenY(t.y);
+      if (sy < -4 || sy > H + 4) continue;
+      ctx.fillRect(Math.round(t.x), Math.round(sy), 1, 2);
+      t.life--;
+    }
+  }
+
+  function drawTree(x, y) {
+    // Layered pine with bushy branches, snow dusting, cast shadow.
+    const pineL = '#2d8a4a';    // sunlit needles
+    const pineM = '#1f6b3a';    // mid tone
+    const pineD = '#0f4424';    // shadow side
+    const pineDD = '#07291a';   // deepest shadow
+    const trunkL = '#5a3a1f';
+    const trunkD = '#2a1708';
+
+    // Cast shadow on snow
+    ctx.fillStyle = 'rgba(40,60,80,0.28)';
+    ctx.fillRect(x - 7, y + 10, 14, 2);
+    ctx.fillRect(x - 4, y + 11, 8, 1);
+
+    // Trunk
+    ctx.fillStyle = trunkD;
+    ctx.fillRect(x - 2, y + 6, 4, 6);
+    ctx.fillStyle = trunkL;
+    ctx.fillRect(x - 2, y + 6, 1, 6);   // left-lit side
+    // trunk base widening
+    ctx.fillStyle = trunkD;
+    ctx.fillRect(x - 3, y + 10, 6, 2);
+
+    // Bottom ring of branches (widest)
+    ctx.fillStyle = pineDD;
+    ctx.fillRect(x - 9, y + 4, 18, 4);
+    ctx.fillStyle = pineD;
+    ctx.fillRect(x - 9, y + 3, 18, 3);
+    ctx.fillStyle = pineM;
+    ctx.fillRect(x - 8, y + 3, 16, 2);
+    ctx.fillStyle = pineL;
+    ctx.fillRect(x - 7, y + 3, 6, 1);
+    // branch tips
+    ctx.fillRect(x - 9, y + 5, 1, 1);
+    ctx.fillRect(x + 8, y + 5, 1, 1);
+
+    // Middle ring
+    ctx.fillStyle = pineDD;
+    ctx.fillRect(x - 7, y,     14, 4);
+    ctx.fillStyle = pineD;
+    ctx.fillRect(x - 7, y - 1, 14, 3);
+    ctx.fillStyle = pineM;
+    ctx.fillRect(x - 6, y - 1, 12, 2);
+    ctx.fillStyle = pineL;
+    ctx.fillRect(x - 5, y - 1, 5, 1);
+
+    // Upper ring
+    ctx.fillStyle = pineDD;
+    ctx.fillRect(x - 5, y - 4, 10, 4);
+    ctx.fillStyle = pineD;
+    ctx.fillRect(x - 5, y - 5, 10, 3);
+    ctx.fillStyle = pineM;
+    ctx.fillRect(x - 4, y - 5, 8, 2);
+    ctx.fillStyle = pineL;
+    ctx.fillRect(x - 3, y - 5, 3, 1);
+
+    // Crown
+    ctx.fillStyle = pineDD;
+    ctx.fillRect(x - 3, y - 8, 6, 3);
+    ctx.fillStyle = pineD;
+    ctx.fillRect(x - 3, y - 9, 6, 3);
+    ctx.fillStyle = pineM;
+    ctx.fillRect(x - 2, y - 9, 4, 2);
+    ctx.fillStyle = pineL;
+    ctx.fillRect(x - 2, y - 9, 2, 1);
+
+    // Tip
+    ctx.fillStyle = pineD;
+    ctx.fillRect(x - 1, y - 11, 2, 2);
+    ctx.fillStyle = pineM;
+    px(x - 1, y - 11, pineM);
+    ctx.fillStyle = pineL;
+    px(x - 1, y - 12, pineL);
+
+    // Snow dusting on branches
+    ctx.fillStyle = '#ffffff';
+    px(x - 1, y - 12, '#ffffff');
+    ctx.fillRect(x - 2, y - 9, 2, 1);
+    px(x + 1, y - 6, '#ffffff');
+    px(x - 3, y - 5, '#ffffff');
+    ctx.fillRect(x + 3, y - 4, 2, 1);
+    px(x - 5, y - 1, '#ffffff');
+    ctx.fillRect(x + 1, y,  2, 1);
+    px(x - 7, y + 3, '#ffffff');
+    ctx.fillRect(x + 4, y + 3, 3, 1);
+    px(x - 3, y + 5, '#ffffff');
+  }
+
+  function drawRock(x, y) {
+    // A fallen log lying across the slope: horizontal cylinder with
+    // wood grain on top, rings on the ends, and a cast shadow.
+    // (Variable name "drawRock" kept because collision type is 'rock'.)
+    const woodDk = '#3a2212';
+    const wood   = '#6b3f1e';
+    const woodLt = '#946028';
+    const bark   = '#2a1708';
+
+    // shadow under the log
+    ctx.fillStyle = 'rgba(40,60,80,0.3)';
+    ctx.fillRect(x - 9, y + 4, 18, 2);
+
+    // main log body (horizontal)
+    ctx.fillStyle = wood;
+    ctx.fillRect(x - 8, y - 2, 16, 6);
+    // top highlight (sunlit side)
+    ctx.fillStyle = woodLt;
+    ctx.fillRect(x - 7, y - 3, 14, 2);
+    // darker underside
+    ctx.fillStyle = woodDk;
+    ctx.fillRect(x - 8, y + 3, 16, 1);
+
+    // bark texture: a few short horizontal grooves
+    ctx.fillStyle = bark;
+    ctx.fillRect(x - 6, y - 1, 3, 1);
+    ctx.fillRect(x - 1, y,     4, 1);
+    ctx.fillRect(x + 4, y + 1, 2, 1);
+    ctx.fillRect(x - 5, y + 2, 2, 1);
+
+    // end caps (cross-section with rings)
+    ctx.fillStyle = woodLt;
+    ctx.fillRect(x - 9, y - 2, 1, 6);
+    ctx.fillRect(x + 8, y - 2, 1, 6);
+    // rings on left end
+    ctx.fillStyle = woodDk;
+    px(x - 9, y,     woodDk);
+    px(x - 9, y + 2, woodDk);
+    // rings on right end
+    px(x + 8, y,     woodDk);
+    px(x + 8, y + 2, woodDk);
+
+    // snow cap on top
+    ctx.fillStyle = '#eaf4ff';
+    ctx.fillRect(x - 6, y - 4, 12, 1);
+    ctx.fillRect(x - 4, y - 3, 2, 1);
+    ctx.fillRect(x + 1, y - 3, 3, 1);
+
+    // moss patches (small green specks)
+    ctx.fillStyle = '#4a6b2a';
+    px(x - 3, y + 1, '#4a6b2a');
+    px(x + 5, y + 2, '#4a6b2a');
+  }
+
+  function drawFlag(x, y, side) {
+    ctx.fillStyle = '#222';
+    ctx.fillRect(x, y - 8, 1, 10);
+    ctx.fillStyle = side === 'L' ? '#ff3b30' : '#ffcc00';
+    ctx.fillRect(x + 1, y - 8, 5, 4);
+    ctx.fillStyle = 'rgba(0,0,0,0.2)';
+    ctx.fillRect(x - 2, y + 2, 5, 1);
+  }
+
+  function drawJump(x, y) {
+    // ramp: light top, dark shadow behind
+    ctx.fillStyle = 'rgba(100,130,160,0.45)';
+    ctx.fillRect(x - 14, y + 2, 28, 3);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(x - 14, y - 2, 28, 4);
+    ctx.fillStyle = '#b6cde0';
+    ctx.fillRect(x - 12, y - 4, 24, 2);
+    ctx.fillStyle = '#8fb0c8';
+    ctx.fillRect(x - 10, y - 5, 20, 1);
+  }
+
+  function drawMogul(x, y) {
+    ctx.fillStyle = 'rgba(100,130,160,0.35)';
+    ctx.fillRect(x - 8, y + 2, 16, 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(x - 8, y - 1, 16, 3);
+    ctx.fillStyle = '#d8e7f5';
+    ctx.fillRect(x - 6, y - 3, 12, 2);
+  }
+
+  function drawObjects() {
+    // Sort by world Y so things layer correctly
+    const sorted = objects.slice().sort((a, b) => a.y - b.y);
+    for (const o of sorted) {
+      const sy = toScreenY(o.y);
+      if (sy < -20 || sy > H + 20) continue;
+      const sx = Math.round(o.x);
+      const y  = Math.round(sy);
+
+      switch (o.type) {
+        case 'tree':  drawTree(sx, y); break;
+        case 'rock':  drawRock(sx, y); break;
+        case 'flag':  drawFlag(sx, y, o.side); break;
+        case 'jump':  drawJump(sx, y); break;
+        case 'mogul': drawMogul(sx, y); break;
+      }
+    }
+  }
+
+  // Keep the pixel helper for non-cat sprites (trees, logs, dog, snowman).
+  function px(x, y, color) {
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, 1, 1);
+  }
+
+  /* ============================================================
+     drawCat(targetCtx, cx, cy, scale, palette, options)
+     ------------------------------------------------------------
+     Procedural cat sprite built entirely from arcs and rects.
+     Designed to read clearly as a cat at game size (scale=1 ~ 28px
+     across) and scale cleanly up for the palette picker previews.
+
+     Composition: a real cat seated/skiing, viewed face-on.
+       - large round head, slightly wider than tall, with a chin taper
+       - pointed triangular ears with pink inner triangle
+       - chest/body egg, narrower at top, wider at the haunches
+       - tail visible curling out to one side
+       - front paws tucked under the chest
+       - whiskers + nose + mouth + eyes/goggles
+
+     options:
+       lean     -1..+1   tilts body, swings tail
+       tucked   bool     head lowers, body compresses
+       airborne bool     tail fluffs upward
+       crashed  bool     splayed pose, X eyes
+       pose     'front'|'skier'  picker shows eyes; skier shows goggles
+     ============================================================ */
+  function drawCat(g, cx, cy, scale, p, opts = {}) {
+    const lean     = opts.lean || 0;
+    const tucked   = !!opts.tucked;
+    const crashed  = !!opts.crashed;
+    const airborne = !!opts.airborne;
+    const pose     = opts.pose || 'skier';
+
+    g.save();
+    g.translate(cx, cy);
+    g.scale(scale, scale);
+
+    // Helpers
+    const ellipse = (x, y, rx, ry, fill, stroke, lw) => {
+      g.beginPath();
+      g.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+      if (fill)   { g.fillStyle   = fill;   g.fill(); }
+      if (stroke) { g.strokeStyle = stroke; g.lineWidth = lw || 0.7; g.stroke(); }
+    };
+    const tri = (ax, ay, bx, by, x3, y3, fill) => {
+      g.beginPath();
+      g.moveTo(ax, ay); g.lineTo(bx, by); g.lineTo(x3, y3); g.closePath();
+      g.fillStyle = fill; g.fill();
+    };
+
+    // ---- crashed pose ----
+    if (crashed) {
+      // belly up
+      ellipse(0, 3, 7, 4.5, p.belly, p.accent);
+      // splayed legs
+      ellipse(-6, 1, 2, 1.6, p.base, p.accent);
+      ellipse( 6, 1, 2, 1.6, p.base, p.accent);
+      ellipse(-5, 5, 1.8, 1.4, p.base, p.accent);
+      ellipse( 5, 5, 1.8, 1.4, p.base, p.accent);
+      // head tilted back
+      ellipse(0, -4, 5, 4.2, p.base, p.accent);
+      // ears flopped
+      tri(-4, -5, -3, -8, -1.5, -5, p.accent);
+      tri( 4, -5,  3, -8,  1.5, -5, p.accent);
+      // X eyes
+      g.strokeStyle = '#000'; g.lineWidth = 0.9;
+      g.beginPath();
+      g.moveTo(-2.8, -5); g.lineTo(-1.4, -3.5);
+      g.moveTo(-1.4, -5); g.lineTo(-2.8, -3.5);
+      g.moveTo( 1.4, -5); g.lineTo( 2.8, -3.5);
+      g.moveTo( 2.8, -5); g.lineTo( 1.4, -3.5); g.stroke();
+      // tongue
+      g.fillStyle = '#ff6b8a';
+      g.fillRect(-0.6, -2.2, 1.6, 1.3);
+      // stars
+      g.fillStyle = '#ffcc00';
+      [[-7,-9],[6,-10],[2,-12]].forEach(([x,y]) => {
+        g.beginPath(); g.arc(x, y, 0.7, 0, Math.PI*2); g.fill();
+      });
+      g.restore();
+      return;
+    }
+
+    // ============== seated/skiing pose ==============
+    const tailDir = -Math.sign(lean) || 1;
+    const bodyTilt = lean * 0.10;
+
+    // Layout constants. Origin (0,0) sits at chest center.
+    const bodyW = 5.5;
+    const bodyH = 5.2;
+    const bodyY = 3.5;
+    const headR = 4.6;        // head radius (head is slightly wider than tall)
+    const headRy = 4.2;
+    const headY = -3.2 + (tucked ? 0.8 : 0);
+
+    // ---- TAIL (drawn first so body covers its base) ----
+    g.save();
+    g.rotate(bodyTilt);
+    const tailFluff = airborne ? -3.5 : 0;
+    // outer (accent) tail
+    g.strokeStyle = p.accent;
+    g.lineWidth = 3.6;
+    g.lineCap = 'round';
+    g.beginPath();
+    g.moveTo(0, bodyY + 1);
+    g.quadraticCurveTo(
+      tailDir * 5, bodyY + 4 + tailFluff * 0.4,
+      tailDir * 8, bodyY + 0 + tailFluff
+    );
+    g.stroke();
+    // inner (base color) tail, slightly thinner
+    g.strokeStyle = p.base;
+    g.lineWidth = 2.6;
+    g.stroke();
+    // tabby tail rings
+    if (p.stripes) {
+      g.strokeStyle = p.accent;
+      g.lineWidth = 0.8;
+      [0.35, 0.6, 0.85].forEach(t => {
+        const tx = tailDir * (5 * t * 1.6);
+        const ty = bodyY + 4 * t * (1 - t) * 4 + tailFluff * t;
+        g.beginPath();
+        g.moveTo(tx - 1.3, ty - 0.5);
+        g.lineTo(tx + 1.3, ty + 0.5);
+        g.stroke();
+      });
+    }
+    g.restore();
+
+    // ---- BODY ----
+    g.save();
+    g.rotate(bodyTilt);
+    // Body silhouette: an upright egg, narrower at the shoulders,
+    // broader at the haunches. Drawn as two stacked ellipses with
+    // a unifying belly.
+    // shoulders
+    ellipse(0, bodyY - 1.5, bodyW * 0.78, bodyH * 0.55, p.accent);
+    ellipse(0, bodyY - 1.5, bodyW * 0.78 - 0.6, bodyH * 0.55 - 0.5, p.base);
+    // haunches (wider)
+    ellipse(0, bodyY + 1.2, bodyW, bodyH * 0.7, p.accent);
+    ellipse(0, bodyY + 1.2, bodyW - 0.6, bodyH * 0.7 - 0.5, p.base);
+    // belly/chest light patch (vertical oval down the front)
+    ellipse(0, bodyY + 0.8, bodyW * 0.45, bodyH * 0.7, p.belly);
+
+    // Markings clipped to body silhouette
+    g.save();
+    g.beginPath();
+    g.ellipse(0, bodyY - 1.5, bodyW * 0.78, bodyH * 0.55, 0, 0, Math.PI*2);
+    g.ellipse(0, bodyY + 1.2, bodyW, bodyH * 0.7, 0, 0, Math.PI*2);
+    g.clip('evenodd');
+
+    if (p.stripes) {
+      g.strokeStyle = p.accent;
+      g.lineWidth = 0.8;
+      g.beginPath();
+      // Symmetric mackerel stripes: short curves arching down each side
+      [-2, 0, 2].forEach(yo => {
+        g.moveTo(-bodyW, bodyY + yo);
+        g.quadraticCurveTo(-bodyW * 0.5, bodyY + yo + 0.6, -bodyW * 0.15, bodyY + yo);
+        g.moveTo(bodyW, bodyY + yo);
+        g.quadraticCurveTo(bodyW * 0.5, bodyY + yo + 0.6, bodyW * 0.15, bodyY + yo);
+      });
+      g.stroke();
+    }
+    if (p.patch) {
+      g.fillStyle = p.patch;
+      g.beginPath(); g.ellipse(-2.3, bodyY + 0.4, 2, 1.6, 0.2, 0, Math.PI*2); g.fill();
+      g.beginPath(); g.ellipse( 2.6, bodyY + 2,   1.8, 1.4, -0.3, 0, Math.PI*2); g.fill();
+      g.fillStyle = p.accent;
+      g.beginPath(); g.ellipse( 2.4, bodyY - 1.5, 1.4, 1, 0, 0, Math.PI*2); g.fill();
+      g.beginPath(); g.ellipse(-3, bodyY + 2.5,   1.1, 0.9, 0, 0, Math.PI*2); g.fill();
+    }
+    g.restore();
+
+    // Front paws under the chest (visible when grounded and not tucked)
+    if (!tucked) {
+      // shadow notch where legs meet body
+      g.fillStyle = p.accent;
+      g.fillRect(-3.2, bodyY + 4.2, 1.8, 0.6);
+      g.fillRect( 1.4, bodyY + 4.2, 1.8, 0.6);
+      // paws themselves
+      ellipse(-2.3, bodyY + 5.2, 1.5, 1.2, p.base, p.accent, 0.5);
+      ellipse( 2.3, bodyY + 5.2, 1.5, 1.2, p.base, p.accent, 0.5);
+      // toe lines
+      g.strokeStyle = p.accent;
+      g.lineWidth = 0.4;
+      g.beginPath();
+      g.moveTo(-2.3, bodyY + 5.7); g.lineTo(-2.3, bodyY + 6.2);
+      g.moveTo(-2.9, bodyY + 5.6); g.lineTo(-2.9, bodyY + 6.0);
+      g.moveTo(-1.7, bodyY + 5.6); g.lineTo(-1.7, bodyY + 6.0);
+      g.moveTo( 2.3, bodyY + 5.7); g.lineTo( 2.3, bodyY + 6.2);
+      g.moveTo( 1.7, bodyY + 5.6); g.lineTo( 1.7, bodyY + 6.0);
+      g.moveTo( 2.9, bodyY + 5.6); g.lineTo( 2.9, bodyY + 6.0);
+      g.stroke();
+    }
+    g.restore(); // end body tilt
+
+    // ---- HEAD ----
+    // Ears: tall isoceles triangles with pink inner triangle.
+    const earOut = p.accent;
+    const earIn  = '#f0a0a6';
+    // Left ear
+    tri(-headR + 0.5, headY - 1.5, -3, headY - 7.2, -1, headY - 2.5, earOut);
+    tri(-3.8, headY - 2.5, -3, headY - 5.8, -1.8, headY - 2.5, earIn);
+    // Right ear
+    tri( headR - 0.5, headY - 1.5,  3, headY - 7.2,  1, headY - 2.5, earOut);
+    tri( 3.8, headY - 2.5,  3, headY - 5.8,  1.8, headY - 2.5, earIn);
+
+    // Head: wider than tall, with a slight chin taper drawn as a smaller
+    // triangle at the bottom to break the perfect-circle look.
+    ellipse(0, headY, headR, headRy, p.accent);
+    ellipse(0, headY, headR - 0.6, headRy - 0.6, p.base);
+    // Cheek/chin tuft (light belly color)
+    ellipse(0, headY + 2.5, 2.6, 1.5, p.belly);
+
+    // Patch markings on the head, clipped to the head shape
+    g.save();
+    g.beginPath();
+    g.ellipse(0, headY, headR - 0.4, headRy - 0.4, 0, 0, Math.PI*2);
+    g.clip();
+
+    if (p.stripes) {
+      g.strokeStyle = p.accent;
+      g.lineWidth = 0.7;
+      // forehead M
+      g.beginPath();
+      g.moveTo(-1.8, headY - 1.8); g.lineTo(-1.2, headY + 0.2);
+      g.moveTo( 0,   headY - 2.2); g.lineTo( 0,   headY + 0.2);
+      g.moveTo( 1.8, headY - 1.8); g.lineTo( 1.2, headY + 0.2);
+      g.stroke();
+      // cheek stripes
+      g.beginPath();
+      g.moveTo(-headR, headY + 1); g.quadraticCurveTo(-2.5, headY + 1.5, -1.5, headY + 1.2);
+      g.moveTo( headR, headY + 1); g.quadraticCurveTo( 2.5, headY + 1.5,  1.5, headY + 1.2);
+      g.stroke();
+    }
+    if (p.patch) {
+      // calico face: orange patch over one eye area, accent patch on opposite
+      g.fillStyle = p.patch;
+      g.beginPath(); g.ellipse(-2, headY - 0.5, 2.4, 2.2, 0.15, 0, Math.PI*2); g.fill();
+      g.fillStyle = p.accent;
+      g.beginPath(); g.ellipse( 2.4, headY - 1.2, 1.6, 1.5, 0, 0, Math.PI*2); g.fill();
+    }
+    g.restore();
+
+    // Goggles (skier pose) or eyes (front pose)
+    const eyeY = headY - 0.2;
+    if (pose === 'skier') {
+      // strap across the head
+      g.fillStyle = '#0b1320';
+      g.fillRect(-headR + 0.3, eyeY - 0.6, headR * 2 - 0.6, 1.8);
+      // lens housings
+      g.fillStyle = '#0b1320';
+      g.beginPath(); g.arc(-2.1, eyeY + 0.3, 1.7, 0, Math.PI*2); g.fill();
+      g.beginPath(); g.arc( 2.1, eyeY + 0.3, 1.7, 0, Math.PI*2); g.fill();
+      // lenses tinted with eye color
+      g.fillStyle = p.eye;
+      g.beginPath(); g.arc(-2.1, eyeY + 0.3, 1.15, 0, Math.PI*2); g.fill();
+      g.beginPath(); g.arc( 2.1, eyeY + 0.3, 1.15, 0, Math.PI*2); g.fill();
+      // shines
+      g.fillStyle = '#ffffff';
+      g.beginPath(); g.arc(-2.5, eyeY - 0.1, 0.45, 0, Math.PI*2); g.fill();
+      g.beginPath(); g.arc( 1.7, eyeY - 0.1, 0.45, 0, Math.PI*2); g.fill();
+    } else {
+      // Realistic cat eyes: almond shaped sclera, colored iris, slit pupil
+      // sclera (white)
+      g.fillStyle = '#ffffff';
+      g.beginPath(); g.ellipse(-2.1, eyeY + 0.3, 1.3, 1.5, 0, 0, Math.PI*2); g.fill();
+      g.beginPath(); g.ellipse( 2.1, eyeY + 0.3, 1.3, 1.5, 0, 0, Math.PI*2); g.fill();
+      // iris fills most of the eye
+      g.fillStyle = p.eye;
+      g.beginPath(); g.ellipse(-2.1, eyeY + 0.3, 1.1, 1.35, 0, 0, Math.PI*2); g.fill();
+      g.beginPath(); g.ellipse( 2.1, eyeY + 0.3, 1.1, 1.35, 0, 0, Math.PI*2); g.fill();
+      // vertical slit pupil
+      g.fillStyle = '#000';
+      g.beginPath(); g.ellipse(-2.1, eyeY + 0.3, 0.28, 1.2, 0, 0, Math.PI*2); g.fill();
+      g.beginPath(); g.ellipse( 2.1, eyeY + 0.3, 0.28, 1.2, 0, 0, Math.PI*2); g.fill();
+      // catch-light highlight
+      g.fillStyle = '#ffffff';
+      g.beginPath(); g.arc(-1.7, eyeY - 0.2, 0.32, 0, Math.PI*2); g.fill();
+      g.beginPath(); g.arc( 2.5, eyeY - 0.2, 0.32, 0, Math.PI*2); g.fill();
+      // soft eye outline
+      g.strokeStyle = p.accent;
+      g.lineWidth = 0.4;
+      g.beginPath(); g.ellipse(-2.1, eyeY + 0.3, 1.3, 1.5, 0, 0, Math.PI*2); g.stroke();
+      g.beginPath(); g.ellipse( 2.1, eyeY + 0.3, 1.3, 1.5, 0, 0, Math.PI*2); g.stroke();
+    }
+
+    // Nose: small upside-down triangle with rounded bottom
+    g.fillStyle = p.nose;
+    g.beginPath();
+    g.moveTo(-0.8, headY + 2.1);
+    g.lineTo( 0.8, headY + 2.1);
+    g.lineTo( 0,   headY + 3.0);
+    g.closePath();
+    g.fill();
+
+    // Mouth: small "y" shape under the nose
+    g.strokeStyle = p.accent;
+    g.lineWidth = 0.55;
+    g.lineCap = 'round';
+    g.beginPath();
+    g.moveTo(0, headY + 3.0);
+    g.lineTo(0, headY + 3.5);
+    g.moveTo(0, headY + 3.5);
+    g.quadraticCurveTo(-0.7, headY + 3.9, -1.4, headY + 3.6);
+    g.moveTo(0, headY + 3.5);
+    g.quadraticCurveTo( 0.7, headY + 3.9,  1.4, headY + 3.6);
+    g.stroke();
+
+    // Whiskers: 3 per side, anchored at the muzzle, swept slightly back
+    g.strokeStyle = 'rgba(20,20,20,0.55)';
+    g.lineWidth = 0.35;
+    g.beginPath();
+    // left
+    g.moveTo(-1.3, headY + 2.6); g.quadraticCurveTo(-4, headY + 2.0, -6.5, headY + 1.6);
+    g.moveTo(-1.3, headY + 2.9); g.quadraticCurveTo(-4, headY + 2.9, -6.7, headY + 2.9);
+    g.moveTo(-1.3, headY + 3.2); g.quadraticCurveTo(-4, headY + 3.6, -6.4, headY + 4.0);
+    // right
+    g.moveTo( 1.3, headY + 2.6); g.quadraticCurveTo( 4, headY + 2.0,  6.5, headY + 1.6);
+    g.moveTo( 1.3, headY + 2.9); g.quadraticCurveTo( 4, headY + 2.9,  6.7, headY + 2.9);
+    g.moveTo( 1.3, headY + 3.2); g.quadraticCurveTo( 4, headY + 3.6,  6.4, headY + 4.0);
+    g.stroke();
+
+    g.restore();
+  }
+
+  function drawSkier() {
+    const sx = player.x;
+    const sy = player.screenY - player.airHeight;
+
+    // Shadow (bigger when higher in the air)
+    const shadowW = 16 + player.airHeight * 0.35;
+    ctx.fillStyle = 'rgba(60,90,120,0.35)';
+    ctx.beginPath();
+    ctx.ellipse(sx, player.screenY + 11, shadowW/2, 2, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    const p = cat();
+    const lean = player.angle;
+    const tucked = keys.down;
+    const airborne = player.air > 0;
+
+    // Skis render under the cat. Angle them with the lean.
+    if (!player.crashed) {
+      const skiShift = lean * 2;
+      const skiY = sy + 10;
+      ctx.save();
+      ctx.translate(sx - skiShift, skiY);
+      ctx.rotate(lean * 0.12);
+      // shadow
+      ctx.fillStyle = 'rgba(0,0,0,0.25)';
+      ctx.fillRect(-7, 1, 14, 1);
+      // skis
+      ctx.fillStyle = '#2a1a0e';
+      ctx.fillRect(-7, -1, 4, 11);
+      ctx.fillRect( 3, -1, 4, 11);
+      // tips (lifted)
+      ctx.fillStyle = '#5a3a1f';
+      ctx.fillRect(-7, -1, 4, 1.5);
+      ctx.fillRect( 3, -1, 4, 1.5);
+      // bindings
+      ctx.fillStyle = '#8a6538';
+      ctx.fillRect(-6, 4, 2, 1);
+      ctx.fillRect( 4, 4, 2, 1);
+      ctx.restore();
+    } else {
+      // Broken skis splayed
+      ctx.fillStyle = '#3a2418';
+      ctx.fillRect(sx - 12, sy + 10, 9, 2);
+      ctx.fillRect(sx + 3,  sy + 10, 9, 2);
+    }
+
+    // Draw the cat
+    drawCat(ctx, sx, sy, 1, p, {
+      lean,
+      tucked,
+      airborne,
+      crashed: player.crashed,
+      pose: 'skier',
+    });
+
+    // Ski poles (cat holds them out when not tucked and grounded)
+    if (!tucked && !airborne && !player.crashed) {
+      ctx.strokeStyle = '#c8a060';
+      ctx.lineWidth = 1;
+      ctx.lineCap = 'butt';
+      ctx.beginPath();
+      ctx.moveTo(sx - 7 - lean, sy - 1); ctx.lineTo(sx - 8 - lean, sy + 10);
+      ctx.moveTo(sx + 7 - lean, sy - 1); ctx.lineTo(sx + 8 - lean, sy + 10);
+      ctx.stroke();
+      // grips
+      ctx.fillStyle = '#ff3b30';
+      ctx.fillRect(sx - 7.5 - lean, sy - 2, 1.5, 1.5);
+      ctx.fillRect(sx + 6.5 - lean, sy - 2, 1.5, 1.5);
+      // baskets
+      ctx.fillStyle = '#444';
+      ctx.fillRect(sx - 9.5 - lean, sy + 9, 3, 1);
+      ctx.fillRect(sx + 6.5 - lean, sy + 9, 3, 1);
+    }
+  }
+
+  function drawYeti() {
+    // The chaser is a dog. (Variable names kept as "yeti" for continuity
+    // with the rest of the code -- it's the same chase mechanic.)
+    if (!yeti) return;
+    const sy = toScreenY(yeti.y);
+    if (sy < -40 || sy > H + 40) return;
+    const sx = Math.round(yeti.x);
+    const y  = Math.round(sy);
+
+    // Bounding run-cycle bob
+    const step = Math.sin(yeti.rage) > 0 ? 1 : -1;
+    const bob  = Math.round(Math.sin(yeti.rage * 2) * 1);
+
+    // Dog colors: brown doberman-ish palette so it reads well on snow
+    const fur   = '#6b3f1f';
+    const furLt = '#8a5a32';
+    const furDk = '#3d2410';
+    const tan   = '#c99060';
+    const tongue = '#ff6b8a';
+
+    // Shadow
+    ctx.fillStyle = 'rgba(60,90,120,0.35)';
+    ctx.fillRect(sx - 8, y + 12, 16, 2);
+
+    // Back legs (running)
+    ctx.fillStyle = furDk;
+    ctx.fillRect(sx - 6, y + 8 + (step > 0 ? 0 : 2), 2, 4);
+    ctx.fillRect(sx + 4, y + 8 + (step > 0 ? 2 : 0), 2, 4);
+    // Front legs (opposite phase)
+    ctx.fillRect(sx - 4, y + 8 + (step > 0 ? 2 : 0), 2, 4);
+    ctx.fillRect(sx + 2, y + 8 + (step > 0 ? 0 : 2), 2, 4);
+    // paws
+    ctx.fillStyle = tan;
+    ctx.fillRect(sx - 6, y + 11 + (step > 0 ? 0 : 2), 2, 1);
+    ctx.fillRect(sx + 4, y + 11 + (step > 0 ? 2 : 0), 2, 1);
+    ctx.fillRect(sx - 4, y + 11 + (step > 0 ? 2 : 0), 2, 1);
+    ctx.fillRect(sx + 2, y + 11 + (step > 0 ? 0 : 2), 2, 1);
+
+    // Body (barrel shape)
+    ctx.fillStyle = fur;
+    ctx.fillRect(sx - 7, y + 2 + bob, 14, 7);
+    ctx.fillStyle = furLt;
+    ctx.fillRect(sx - 6, y + 2 + bob, 12, 2);   // back highlight
+    ctx.fillStyle = furDk;
+    ctx.fillRect(sx - 7, y + 8 + bob, 14, 1);   // underbelly shadow
+    // Chest tan
+    ctx.fillStyle = tan;
+    ctx.fillRect(sx - 2, y + 6 + bob, 4, 3);
+
+    // Tail wagging (left/right per step)
+    ctx.fillStyle = fur;
+    ctx.fillRect(sx + 6, y + 2 + bob, 2, 2);
+    ctx.fillRect(sx + 7, y + (step > 0 ? 0 : 4) + bob, 2, 2);
+
+    // Head (tilted down, lunging)
+    ctx.fillStyle = fur;
+    ctx.fillRect(sx - 5, y - 3 + bob, 10, 6);
+    ctx.fillStyle = furLt;
+    ctx.fillRect(sx - 5, y - 3 + bob, 10, 1);
+    // Snout
+    ctx.fillStyle = fur;
+    ctx.fillRect(sx - 2, y + 3 + bob, 6, 3);
+    ctx.fillStyle = furDk;
+    ctx.fillRect(sx + 3, y + 4 + bob, 1, 1);   // nose
+    ctx.fillRect(sx + 4, y + 3 + bob, 1, 1);
+    // Open mouth, tongue lolling
+    ctx.fillStyle = '#1a0a0a';
+    ctx.fillRect(sx,     y + 5 + bob, 3, 1);
+    ctx.fillStyle = tongue;
+    ctx.fillRect(sx + 1, y + 6 + bob, 2, 1);
+    // Teeth
+    ctx.fillStyle = '#ffffff';
+    px(sx + 2, y + 5 + bob, '#ffffff');
+
+    // Eyes: angry, red
+    ctx.fillStyle = '#ff3b30';
+    ctx.fillRect(sx - 3, y + bob, 2, 2);
+    ctx.fillRect(sx + 1, y + bob, 2, 2);
+    // pupils
+    ctx.fillStyle = '#000';
+    px(sx - 2, y + 1 + bob, '#000');
+    px(sx + 2, y + 1 + bob, '#000');
+    // angry brow
+    ctx.fillStyle = furDk;
+    ctx.fillRect(sx - 4, y - 1 + bob, 3, 1);
+    ctx.fillRect(sx + 2, y - 1 + bob, 3, 1);
+
+    // Floppy ears
+    ctx.fillStyle = furDk;
+    ctx.fillRect(sx - 6, y - 3 + bob, 2, 4);
+    ctx.fillRect(sx + 4, y - 3 + bob, 2, 4);
+    ctx.fillStyle = fur;
+    px(sx - 6, y + bob, fur);
+    px(sx + 5, y + bob, fur);
+
+    // Red collar
+    ctx.fillStyle = '#c8102e';
+    ctx.fillRect(sx - 3, y + 2 + bob, 6, 1);
+    ctx.fillStyle = '#ffcc00';
+    px(sx, y + 2 + bob, '#ffcc00');  // tag
+  }
+
+  function drawSnowman() {
+    if (!snowman) return;
+    const sy = toScreenY(snowman.y);
+    if (sy < -50 || sy > H + 50) return;
+    const sx = Math.round(snowman.x);
+    const y  = Math.round(sy);
+
+    // tiny waddle bob
+    const bob = Math.round(Math.sin(snowman.bob) * 1);
+
+    // shadow
+    ctx.fillStyle = 'rgba(60,90,120,0.35)';
+    ctx.fillRect(sx - 7, y + 12, 14, 2);
+
+    // bottom snowball
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(sx - 7, y + 3 + bob, 14, 9);
+    ctx.fillStyle = '#dfe9f2';
+    ctx.fillRect(sx - 7, y + 10 + bob, 14, 2);
+    // coal buttons
+    ctx.fillStyle = '#0b1320';
+    ctx.fillRect(sx - 1, y + 6 + bob, 1, 1);
+    ctx.fillRect(sx - 1, y + 9 + bob, 1, 1);
+
+    // middle snowball
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(sx - 5, y - 4 + bob, 10, 8);
+    ctx.fillStyle = '#dfe9f2';
+    ctx.fillRect(sx - 5, y + 2 + bob, 10, 2);
+
+    // stick arms (outstretched toward the player)
+    ctx.fillStyle = '#5a3a1f';
+    const reachDir = player.x > snowman.x ? 1 : -1;
+    ctx.fillRect(sx + (reachDir > 0 ? 5 : -9), y - 2 + bob, 4, 1);
+    ctx.fillRect(sx + (reachDir > 0 ? 8 : -10), y - 4 + bob, 1, 3);
+    ctx.fillStyle = '#5a3a1f';
+    ctx.fillRect(sx + (reachDir > 0 ? -9 : 5), y - 1 + bob, 4, 1);
+
+    // head snowball
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(sx - 4, y - 10 + bob, 8, 6);
+
+    // coal eyes (angry, leaning in)
+    ctx.fillStyle = '#0b1320';
+    ctx.fillRect(sx - 3, y - 8 + bob, 2, 2);
+    ctx.fillRect(sx + 1, y - 8 + bob, 2, 2);
+
+    // carrot nose pointing toward the player
+    ctx.fillStyle = '#ff7a18';
+    if (reachDir > 0) {
+      ctx.fillRect(sx + 1, y - 6 + bob, 4, 1);
+      ctx.fillRect(sx + 1, y - 5 + bob, 2, 1);
+    } else {
+      ctx.fillRect(sx - 5, y - 6 + bob, 4, 1);
+      ctx.fillRect(sx - 3, y - 5 + bob, 2, 1);
+    }
+
+    // mouth: chomping if about to eat, otherwise a sinister grin
+    if (snowman.chompT > 0) {
+      snowman.chompT--;
+      const open = snowman.chompT % 8 < 4 ? 3 : 1;
+      ctx.fillStyle = '#0b1320';
+      ctx.fillRect(sx - 2, y - 3 + bob, 5, open);
+      // teeth
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(sx - 1, y - 3 + bob, 1, 1);
+      ctx.fillRect(sx + 1, y - 3 + bob, 1, 1);
+    } else {
+      ctx.fillStyle = '#0b1320';
+      ctx.fillRect(sx - 2, y - 3 + bob, 1, 1);
+      ctx.fillRect(sx - 1, y - 2 + bob, 1, 1);
+      ctx.fillRect(sx,     y - 2 + bob, 1, 1);
+      ctx.fillRect(sx + 1, y - 2 + bob, 1, 1);
+      ctx.fillRect(sx + 2, y - 3 + bob, 1, 1);
+    }
+
+    // top hat
+    ctx.fillStyle = '#0b1320';
+    ctx.fillRect(sx - 5, y - 11 + bob, 10, 1);   // brim
+    ctx.fillRect(sx - 3, y - 15 + bob, 6, 4);    // crown
+    ctx.fillStyle = '#ff3b30';
+    ctx.fillRect(sx - 3, y - 12 + bob, 6, 1);    // band
+  }
+
+  function drawParticles() {
+    for (const p of particles) {
+      const sy = toScreenY(p.y);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(Math.round(p.x), Math.round(sy), Math.max(1, Math.floor(p.size)), Math.max(1, Math.floor(p.size)));
+    }
+  }
+
+  function render() {
+    // camera shake
+    const sx = stats.shakeT ? (Math.random() - 0.5) * 3 : 0;
+    const sy = stats.shakeT ? (Math.random() - 0.5) * 3 : 0;
+    ctx.save();
+    ctx.translate(sx, sy);
+
+    drawBackground();
+    drawTracks();
+    drawObjects();
+    drawParticles();
+    drawSkier();
+    drawYeti();
+    drawSnowman();
+
+    // Vignette at edges (subtle)
+    const vg = ctx.createRadialGradient(W/2, H/2, 80, W/2, H/2, 220);
+    vg.addColorStop(0, 'rgba(0,0,0,0)');
+    vg.addColorStop(1, 'rgba(0,0,0,0.35)');
+    ctx.fillStyle = vg;
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.restore();
+  }
+
+  // ---------- main loop ----------
+  function loop() {
+    // Edge-triggered space handling for start/retry
+    if (spacePressed) {
+      spacePressed = false;
+      if (state === STATE.TITLE || state === STATE.OVER) {
+        startRun();
+      }
+    }
+
+    update();
+    render();
+    requestAnimationFrame(loop);
+  }
+
+  // Kick things off
+  resetGame();
+  // Pre-render title scene
+  render();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
