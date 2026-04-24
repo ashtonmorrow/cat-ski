@@ -16,6 +16,12 @@
 <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
 <meta name="theme-color" content="#0b1320">
 
+<!-- PWA manifest (makes the game installable to home screen) -->
+<link rel="manifest" href="/manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Cat Ski">
+
 <!-- Open Graph (iMessage, Slack, Discord, Facebook, LinkedIn, WhatsApp) -->
 <meta property="og:title" content="CAT SKI // 1989">
 <meta property="og:description" content="Waste a couple minutes of your life with this free game.">
@@ -390,6 +396,16 @@
     color: var(--accent);
   }
 
+  /* Install button — yellow accent border so it's noticeable without
+     screaming. Hidden by default, revealed by JS when installable. */
+  .install-btn {
+    border-color: var(--accent-2) !important;
+    color: var(--accent-2) !important;
+  }
+  .install-btn:hover {
+    background: rgba(255, 204, 0, 0.15);
+  }
+
   /* ---------- Virtual thumbstick (mobile) ----------
      Lives at viewport level (position: fixed), not inside the game
      area, so it never covers the cat / obstacles. Hidden unless
@@ -626,6 +642,18 @@
       </div>
     </div>
 
+    <!-- iOS install instructions (no programmatic prompt on Safari) -->
+    <div class="overlay hidden" id="overlay-install-ios">
+      <div class="panel">
+        <h1>INSTALL</h1>
+        <h2>ADD TO HOME SCREEN</h2>
+        <p>1. Tap the <strong>Share</strong> icon in Safari</p>
+        <p>2. Scroll down</p>
+        <p>3. Tap <strong>Add to Home Screen</strong></p>
+        <div class="hint"><span class="blink">&gt;</span> TAP TO CLOSE</div>
+      </div>
+    </div>
+
     <!-- Pause screen -->
     <div class="overlay hidden" id="overlay-paused">
       <div class="panel">
@@ -724,6 +752,12 @@
       <button class="diff-swatch lang-swatch" data-lang="en" aria-label="English">EN</button>
       <button class="diff-swatch lang-swatch" data-lang="es" aria-label="Spanish">ES</button>
     </div>
+    <!-- INSTALL button: hidden by default. Shown via JS when the browser
+         fires beforeinstallprompt (Chrome/Edge/Android) OR the user is
+         on iOS Safari and not yet in standalone mode. -->
+    <div class="sub-picker" id="install-group" hidden>
+      <button class="diff-swatch install-btn" id="btn-install" type="button">INSTALL APP</button>
+    </div>
   </div>
 
   <div class="footer">ARROWS &#9679; SPACE &#9679; NO QUARTER REQUIRED</div>
@@ -752,6 +786,16 @@
   <button class="trick-btn" data-trick="twist" type="button">TWIST</button>
   <button class="trick-btn" data-trick="nap"   type="button">NAP</button>
 </div>
+
+<!-- Service worker registration — enables offline play via sw.js.
+     Registered after 'load' so it doesn't delay first paint. -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => { /* non-fatal */ });
+    });
+  }
+</script>
 
 <script>
 /* ============================================================
@@ -898,6 +942,71 @@
     btn.addEventListener('click', () => setControlMode(btn.dataset.ctrl));
   });
   setControlMode(controlMode);
+
+  // ---------- install prompt (PWA) ----------
+  // Chrome/Edge/Android: the browser fires 'beforeinstallprompt' when
+  // the app meets install criteria. We capture it, then reveal the
+  // INSTALL button; clicking it calls .prompt() to show the native
+  // system dialog.
+  //
+  // iOS Safari: no such event exists. If we detect iOS + not already
+  // running as standalone, we show the INSTALL button anyway, but on
+  // click we show an overlay with manual "Add to Home Screen" steps.
+  //
+  // If the app is ALREADY installed (standalone display-mode or
+  // navigator.standalone on iOS), the button stays hidden.
+  let deferredInstall = null;
+  const installGroup  = document.getElementById('install-group');
+  const btnInstall    = document.getElementById('btn-install');
+  const overlayIosInstall = document.getElementById('overlay-install-ios');
+
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+                    || window.navigator.standalone === true;
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+  function revealInstall() {
+    if (!installGroup || isStandalone) return;
+    installGroup.hidden = false;
+  }
+  function hideInstall() {
+    if (!installGroup) return;
+    installGroup.hidden = true;
+  }
+
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredInstall = e;
+    revealInstall();
+  });
+
+  // Hide the button after a successful install
+  window.addEventListener('appinstalled', () => {
+    deferredInstall = null;
+    hideInstall();
+  });
+
+  // iOS: no event fires, so reveal the button by heuristic
+  if (isIOS && !isStandalone) revealInstall();
+
+  if (btnInstall) {
+    btnInstall.addEventListener('click', async () => {
+      if (deferredInstall) {
+        // Native prompt path (Chrome/Edge/Android)
+        deferredInstall.prompt();
+        const { outcome } = await deferredInstall.userChoice;
+        deferredInstall = null;
+        if (outcome === 'accepted') hideInstall();
+      } else if (isIOS) {
+        // iOS fallback: show instructions
+        overlayIosInstall.classList.remove('hidden');
+      }
+    });
+  }
+  if (overlayIosInstall) {
+    overlayIosInstall.addEventListener('click', () => {
+      overlayIosInstall.classList.add('hidden');
+    });
+  }
 
   // ---------- localized flavor text ----------
   // Each end-of-run event has its own pool of titles + subtitles. The
