@@ -65,18 +65,25 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   html, body {
-    height: 100%;
     background: var(--ink);
     color: var(--snow);
     font-family: 'VT323', monospace;
-    overflow: hidden;
   }
 
   body {
+    /* min-height (not height) so body grows when content exceeds the
+       viewport, letting the page scroll naturally. place-items: center
+       centers short content horizontally and vertically, but when
+       content is taller than the viewport it aligns to the top of the
+       scrollable area instead of being clipped top-and-bottom. */
+    min-height: 100vh;
     display: grid;
     place-items: center;
+    padding: 12px 0;
     background:
       radial-gradient(ellipse at 50% 0%, #24384f 0%, #0b1320 60%, #050910 100%);
+    background-attachment: fixed;
+    overflow-x: hidden;
   }
 
   .frame {
