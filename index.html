@@ -581,8 +581,8 @@
       <div class="panel">
         <h1><span class="alt">CAT</span> SKI</h1>
         <h2>DOWNHILL 89</h2>
-        <p>Dodge trees. Launch jumps. Grab flags.</p>
-        <p>Don't look behind you.</p>
+        <p id="start-line-1">Dodge trees. Launch jumps. Grab flags.</p>
+        <p id="start-line-2">Don't look behind you.</p>
         <div class="keys">
           <kbd id="key-steer">&larr;&nbsp;&rarr;</kbd><span>STEER</span>
           <kbd id="key-fast">&darr;</kbd><span>TUCK / FASTER</span>
@@ -598,7 +598,7 @@
     <div class="overlay hidden" id="overlay-paused">
       <div class="panel">
         <h1>PAUSED</h1>
-        <p>Take a breath.</p>
+        <p id="paused-line">Take a breath.</p>
         <div class="hint" id="paused-hint"><span class="blink">&gt;</span> SPACE TO RESUME</div>
       </div>
     </div>
@@ -674,8 +674,8 @@
     </div>
   </div>
 
-  <!-- Game controls (pause/restart) + sound toggle, on one row. Pause/
-       restart are also on keyboard shortcuts: P / Esc pauses, R restarts. -->
+  <!-- Game controls (pause/restart) + sound toggle + language, on one row.
+       Pause/restart are also on keyboard shortcuts: P/Esc pauses, R restarts. -->
   <div class="cat-picker diff-picker combo-picker">
     <div class="sub-picker" role="group" aria-label="Game controls">
       <span class="cat-picker-label">GAME</span>
@@ -686,6 +686,11 @@
       <span class="cat-picker-label">SOUND</span>
       <button class="diff-swatch sound-swatch" data-sound="on"  aria-label="Sound on">ON</button>
       <button class="diff-swatch sound-swatch" data-sound="off" aria-label="Sound off">OFF</button>
+    </div>
+    <div class="sub-picker" role="radiogroup" aria-label="Language">
+      <span class="cat-picker-label">LANG</span>
+      <button class="diff-swatch lang-swatch" data-lang="en" aria-label="English">EN</button>
+      <button class="diff-swatch lang-swatch" data-lang="es" aria-label="Spanish">ES</button>
     </div>
   </div>
 
@@ -894,11 +899,11 @@
     const overHint   = document.querySelector('#overlay-over  .hint');
     const pausedHint = document.getElementById('paused-hint');
     if (startHint) startHint.innerHTML =
-      '<span class="blink">&gt;</span> ' + (on ? 'TAP TO START' : 'PRESS SPACE TO START');
+      '<span class="blink">&gt;</span> ' + hintText(on ? 'startTap' : 'startKeys');
     if (overHint)  overHint.innerHTML =
-      '<span class="blink">&gt;</span> ' + (on ? 'TAP TO TRY AGAIN' : 'SPACE TO TRY AGAIN');
+      '<span class="blink">&gt;</span> ' + hintText(on ? 'retryTap' : 'retryKeys');
     if (pausedHint) pausedHint.innerHTML =
-      '<span class="blink">&gt;</span> ' + (on ? 'TAP TO RESUME' : 'SPACE TO RESUME');
+      '<span class="blink">&gt;</span> ' + hintText(on ? 'resumeTap' : 'resumeKeys');
   }
 
   function setTouchMode(name) {
@@ -1168,6 +1173,30 @@
   });
   setAudioEnabled(audioEnabled);
 
+  // ---------- language picker ----------
+  function refreshFlavorText() {
+    // Roll new start screen lines in the current language
+    const l1 = document.getElementById('start-line-1');
+    const l2 = document.getElementById('start-line-2');
+    if (l1) l1.textContent = pickList('start1');
+    if (l2) l2.textContent = pickList('start2');
+    // Update hint text on all overlays (start/over/paused)
+    if (typeof applyTouchState === 'function') applyTouchState();
+  }
+  function setLang(name) {
+    if (!MESSAGES[name]) return;
+    lang = name;
+    localStorage.setItem('skior_lang', name);
+    document.querySelectorAll('.lang-swatch').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.lang === name);
+    });
+    refreshFlavorText();
+  }
+  document.querySelectorAll('.lang-swatch').forEach(btn => {
+    btn.addEventListener('click', () => setLang(btn.dataset.lang));
+  });
+  setLang(lang);
+
   // ---------- mobile trick buttons ----------
   // One handler per button; delegates to startTrick(name). Using
   // pointerdown (not click) so the response feels immediate and the
@@ -1262,6 +1291,184 @@
   let difficultyMode = localStorage.getItem('skior_difficulty') || 'easy';
   if (!DIFFICULTIES[difficultyMode]) difficultyMode = 'easy';
   function diff() { return DIFFICULTIES[difficultyMode]; }
+
+  // ---------- localized flavor text ----------
+  // Each end-of-run event has its own pool of titles + subtitles. The
+  // system picks one at random per event, avoiding the one it picked
+  // last time so the same line never fires back-to-back. Start screen
+  // and pause screen lines rotate too.
+  //
+  // Spanish is rioplatense (Argentinian) — deliberately, to give the
+  // translation personality. Cultural note: in Spanish-speaking cat
+  // lore, cats have SEVEN lives, not nine.
+  const MESSAGES = {
+    en: {
+      tree: {
+        titles: ['WIPEOUT', 'SPLAT!', 'TIMBER!', 'KABLAM!'],
+        subs: [
+          'MET A PINE TREE',
+          'HUGGED A TRUNK',
+          'THE TREE WON',
+          'USED UP LIFE #1',
+          'WHO PLANTED THAT?',
+          'TREE: 1 — CAT: 0',
+        ],
+      },
+      log: {
+        titles: ['WIPEOUT', 'SPLAT!', 'TIMBER!'],
+        subs: [
+          'TRIPPED ON A LOG',
+          'BECAME FIREWOOD',
+          'LOGGED OFF',
+          'SHOULDA LOOKED DOWN',
+          'BONKED A BIRCH',
+          'SPLINTERED',
+        ],
+      },
+      dog: {
+        titles: ['CAUGHT!', 'GOTCHA!', 'NABBED!', 'BUSTED'],
+        subs: [
+          'THE DOG GOT YA',
+          'SOMETIMES SPIKE GETS JERRY',
+          'BAD KITTY!',
+          'SHOULDA ZIGGED',
+          'TREED BY A DOG',
+          'WOOF > MEOW',
+        ],
+      },
+      snowman: {
+        titles: ['CHOMP!', 'CRUNCH!', 'GULP!', 'NOM NOM'],
+        subs: [
+          'EATEN BY A SNOWMAN',
+          'FROSTY WANTED SECONDS',
+          'NINE LIVES WASN\'T ENOUGH',
+          'THE CARROT WAS A WARNING',
+          'COLD TAKE',
+          'SNOWMAN: HUNGRY. CAT: TOAST',
+        ],
+      },
+      start1: [
+        'Dodge trees. Launch jumps. Grab flags.',
+        'Dodge pines. Catch flags. Don\'t get eaten.',
+        'Eight lives to spare. Waste them all.',
+        'Snow\'s soft. Trees are not.',
+      ],
+      start2: [
+        'Don\'t look behind you.',
+        'Curiosity killed this cat.',
+        'Watch for the dog.',
+        'The snowman comes without warning.',
+      ],
+      paused: [
+        'Take a breath.',
+        'Lick a paw.',
+        'Cat nap.',
+        'Nine lives accepting applications.',
+      ],
+      hints: {
+        startKeys:  'PRESS SPACE TO START',
+        startTap:   'TAP TO START',
+        resumeKeys: 'SPACE TO RESUME',
+        resumeTap:  'TAP TO RESUME',
+        retryKeys:  'SPACE TO TRY AGAIN',
+        retryTap:   'TAP TO TRY AGAIN',
+      },
+    },
+    es: {
+      tree: {
+        titles: ['¡PLAF!', '¡TIMBER!', '¡KABLAM!', 'WIPEOUT'],
+        subs: [
+          'SE COMIÓ UN ÁRBOL',
+          'CHE, BOLUDO — ESE PINO',
+          'EL PINO GANÓ ESTA VEZ',
+          'SIEMPRE HAY UN PINO DE MÁS',
+        ],
+      },
+      log: {
+        titles: ['¡PLAF!', '¡TIMBER!', 'WIPEOUT'],
+        subs: [
+          'TROPEZÓ CON UN TRONCO',
+          'NO VIO EL TRONCO, BOLUDO',
+          'HICIERON LEÑA DEL GATO',
+          'LO DESPERTÓ UN TRONCO',
+        ],
+      },
+      dog: {
+        titles: ['¡AGARRADO!', '¡TE CAZÓ!', '¡NOCAUT!', 'CHAU GATO'],
+        subs: [
+          'TE AGARRÓ EL PERRO',
+          'EL PERRO ESTÁ FELIZ',
+          'CHE, QUÉ PAPELÓN',
+          'LO CAZÓ UN PERRO — UN GATO',
+        ],
+      },
+      snowman: {
+        titles: ['¡ÑAM!', '¡CRUNCH!', '¡GLUP!', 'ÑAM ÑAM'],
+        subs: [
+          'LO COMIÓ UN MUÑECO DE NIEVE',
+          'FRIO, PERO FATAL',
+          'EL MUÑECO TENÍA HAMBRE',
+          'NI LAS SIETE VIDAS LO SALVARON',
+        ],
+      },
+      start1: [
+        'Esquivá pinos. Agarrá banderas.',
+        'Esquivá pinos. Cuidado con el perro.',
+        'Siete vidas. A gastarlas todas.',
+        'La nieve es blanda. Los árboles no.',
+      ],
+      start2: [
+        'No mires atrás.',
+        'La curiosidad mató al gato.',
+        'Ojo con el perro.',
+        'El muñeco llega sin aviso.',
+      ],
+      paused: [
+        'Tomá aire.',
+        'Lamete una pata.',
+        'Una siestita.',
+        'Siete vidas recibiendo CVs.',
+      ],
+      hints: {
+        startKeys:  'PRESIONÁ SPACE',
+        startTap:   'TOCÁ PARA EMPEZAR',
+        resumeKeys: 'SPACE PARA SEGUIR',
+        resumeTap:  'TOCÁ PARA SEGUIR',
+        retryKeys:  'SPACE PARA REINTENTAR',
+        retryTap:   'TOCÁ PARA REINTENTAR',
+      },
+    },
+  };
+
+  let lang = localStorage.getItem('skior_lang') || 'en';
+  if (!MESSAGES[lang]) lang = 'en';
+
+  // Remember last selection per array so we never fire the same line
+  // twice in a row. Keyed by 'category.field' e.g. 'dog.subs'.
+  const lastPicked = {};
+  function pickFrom(pool, key) {
+    if (!pool || pool.length === 0) return '';
+    if (pool.length === 1) return pool[0];
+    let choice;
+    do {
+      choice = pool[Math.floor(Math.random() * pool.length)];
+    } while (choice === lastPicked[key] && pool.length > 1);
+    lastPicked[key] = choice;
+    return choice;
+  }
+  // Fallback to English if a Spanish category is missing.
+  function msg(category, field) {
+    const pack = MESSAGES[lang][category] || MESSAGES.en[category];
+    const pool = pack && pack[field] ? pack[field] : (MESSAGES.en[category] && MESSAGES.en[category][field]);
+    return pickFrom(pool, lang + '.' + category + '.' + field);
+  }
+  function pickList(key) {
+    const pool = MESSAGES[lang][key] || MESSAGES.en[key];
+    return pickFrom(pool, lang + '.' + key);
+  }
+  function hintText(key) {
+    return (MESSAGES[lang].hints && MESSAGES[lang].hints[key]) || MESSAGES.en.hints[key] || '';
+  }
 
   function setDifficulty(name) {
     if (!DIFFICULTIES[name]) return;
@@ -1477,7 +1684,7 @@
       yeti.state = 'grab';
       sfx.chomp();
       silenceSwoosh();
-      endRun('CAUGHT!', 'THE DOG GOT YA');
+      endRun(msg('dog', 'titles'), msg('dog', 'subs'));
     }
   }
 
@@ -1524,7 +1731,7 @@
       snowman.chompT = 20;
       sfx.chomp();
       silenceSwoosh();
-      endRun('CHOMP!', 'EATEN BY A SNOWMAN');
+      endRun(msg('snowman', 'titles'), msg('snowman', 'subs'));
     }
   }
 
@@ -1797,7 +2004,8 @@
         size: 1 + Math.random() * 2,
       });
     }
-    endRun('WIPEOUT', cause === 'tree' ? 'MET A PINE TREE' : 'TRIPPED ON A LOG');
+    const cat = cause === 'tree' ? 'tree' : 'log';
+    endRun(msg(cat, 'titles'), msg(cat, 'subs'));
   }
 
   function endRun(title, sub) {
@@ -1839,6 +2047,9 @@
     overlayPaused.classList.remove('hidden');
     btnPause.classList.add('paused');
     btnPause.textContent = 'RESUME';
+    // Roll a fresh pause line so every pause feels different
+    const pLine = document.getElementById('paused-line');
+    if (pLine) pLine.textContent = pickList('paused');
     silenceSwoosh();
     // Release any held direction keys so the player doesn't keep tucking
     // through the pause (especially since touch users can't release).
