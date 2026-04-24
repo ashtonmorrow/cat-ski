@@ -1201,9 +1201,13 @@
   function isTouchActive() {
     if (touchMode === 'on')  return true;
     if (touchMode === 'off') return false;
-    const narrow = window.matchMedia('(max-width: 820px)').matches;
-    const coarse = window.matchMedia('(pointer: coarse)').matches;
-    return narrow || coarse;
+    // AUTO: use pointer capability as the single reliable signal for
+    // "this is a touch device." Narrow viewport alone doesn't imply
+    // touch — a desktop with a narrow browser window shouldn't get a
+    // thumbstick. coarse pointer catches phones and iPads (via the
+    // (pointer: coarse) CSS media query, which reflects the primary
+    // input device).
+    return window.matchMedia('(pointer: coarse)').matches;
   }
 
   // Swap the hint text on start/gameover panels between keyboard and touch.
@@ -1215,9 +1219,12 @@
   // horizontal overflow.
   function applyTouchState() {
     const on = isTouchActive();
-    const narrow = window.innerWidth < 820;
+    // mobile-layout follows touch state only. A desktop user with a
+    // narrow-ish window but TOUCH=OFF should still see the framed 720x540
+    // desktop look — the game fits any desktop window, and conflating
+    // "narrow viewport" with "should be full-bleed" was wrong.
     document.body.classList.toggle('touch-active', on);
-    document.body.classList.toggle('mobile-layout', on || narrow);
+    document.body.classList.toggle('mobile-layout', on);
     const startHint  = document.querySelector('#overlay-start .hint');
     const overHint   = document.querySelector('#overlay-over  .hint');
     const pausedHint = document.getElementById('paused-hint');
