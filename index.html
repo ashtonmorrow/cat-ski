@@ -103,6 +103,11 @@
     flex: 1;
     text-align: center;
   }
+  .bezel-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
   .bezel-title .dot {
     color: var(--accent);
     animation: blink 1.2s steps(2,end) infinite;
@@ -577,9 +582,12 @@
 
 <div class="frame">
   <div class="bezel-title">
-    <a href="https://mike-lee.me/"     class="bezel-link" target="_blank" rel="noopener noreferrer">HOME</a>
+    <a href="https://mike-lee.me/" class="bezel-link" target="_blank" rel="noopener noreferrer">HOME</a>
     <span class="bezel-center">CAT SKI <span class="dot">&#9632;</span> 1989</span>
-    <a href="https://go.mike-lee.me/"  class="bezel-link" target="_blank" rel="noopener noreferrer">APP</a>
+    <span class="bezel-right">
+      <a href="https://go.mike-lee.me/" class="bezel-link" target="_blank" rel="noopener noreferrer">APP</a>
+      <a href="https://app.stray.tips/share/animal/f475e984-b982-4b7f-a913-79fb28ae8bb8" class="bezel-link" target="_blank" rel="noopener noreferrer">STRAY</a>
+    </span>
   </div>
 
   <div class="screen-wrap" id="screen">
