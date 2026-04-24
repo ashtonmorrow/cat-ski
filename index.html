@@ -444,22 +444,22 @@
   body.mobile-layout .panel .hint { font-size: 10px; margin-top: 12px; }
   body.mobile-layout .footer { font-size: 7px; padding: 8px 0; }
 
-  /* Credit line — small, unobtrusive, subtle hover on the link */
+  /* Credit line — small but visible, dotted underline on the link */
   .credit {
-    margin-top: 10px;
+    margin-top: 12px;
     text-align: center;
     font-family: 'VT323', monospace;
-    font-size: 13px;
+    font-size: 15px;
     letter-spacing: 1px;
-    color: #4e6b8a;
+    color: var(--snow-dim);
   }
   .credit a {
-    color: #7aa7c7;
+    color: var(--accent-2);
     text-decoration: none;
-    border-bottom: 1px dotted #4e6b8a;
+    border-bottom: 1px dotted var(--accent-2);
   }
-  .credit a:hover { color: var(--snow-dim); border-bottom-color: var(--snow-dim); }
-  body.mobile-layout .credit { font-size: 12px; padding: 8px 10px 14px; }
+  .credit a:hover { color: #fff; border-bottom-color: #fff; }
+  body.mobile-layout .credit { font-size: 14px; padding: 10px 10px 18px; }
 
   /* ---------- Mobile controls toggle ----------
      Hides all the pickers by default when in mobile-layout, so the
