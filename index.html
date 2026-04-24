@@ -134,8 +134,19 @@
 
   .screen-wrap {
     position: relative;
-    width: 720px;
-    height: 540px;
+    /* Responsive: scale the 4:3 game area to the viewport with sensible
+       bounds on both sides.
+         85vw           -> cap to 85% viewport width (room for vignette)
+         70vh * 4 / 3   -> never taller than 70% viewport height (room
+                           for bezel-title + pickers below)
+         960px          -> cap so pixel art doesn't blow out too much
+                           (internal canvas is 360x270; 960 is ~2.67x)
+       aspect-ratio locks the 4:3 shape, height auto computes from it.
+       The game scales smoothly across monitor sizes AND browser zoom. */
+    width: min(85vw, calc(70vh * 4 / 3), 960px);
+    aspect-ratio: 4 / 3;
+    height: auto;
+    max-width: 100%;
     border-radius: 4px;
     overflow: hidden;
     background: #000;
