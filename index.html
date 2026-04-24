@@ -440,6 +440,40 @@
     margin-left: -28px;
     margin-top: -28px;
   }
+
+  /* ---------- Mobile controls toggle ----------
+     Hides all the pickers by default when in mobile-layout, so the
+     game dominates the viewport. A full-width strip below the game
+     expands them on demand. Bezel-title stays visible for branding. */
+  .controls-toggle { display: none; }
+  body.mobile-layout .controls-toggle {
+    display: block;
+    width: 100%;
+    padding: 14px 10px;
+    background: #0e1826;
+    border: 2px solid #1d2a3c;
+    border-left: none;
+    border-right: none;
+    color: var(--snow-dim);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    text-align: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body.mobile-layout .controls-toggle:active {
+    background: #162232;
+    color: var(--snow);
+  }
+  /* Default collapsed: hide pickers + footer in mobile-layout */
+  body.mobile-layout .cat-picker,
+  body.mobile-layout .footer {
+    display: none;
+  }
+  /* Expanded: restore them */
+  body.mobile-layout.controls-expanded .cat-picker { display: flex; }
+  body.mobile-layout.controls-expanded .footer     { display: block; }
 </style>
 </head>
 <body>
@@ -501,6 +535,13 @@
 
     <div class="crt"></div>
   </div>
+
+  <!-- Collapse/expand bar for mobile. Only visible in mobile-layout;
+       default state is collapsed so the game dominates the phone
+       screen. Tap to toggle the picker controls below. -->
+  <button class="controls-toggle" id="controls-toggle" aria-expanded="false" type="button">
+    &#9660; SHOW CONTROLS
+  </button>
 
   <!-- Cat color picker: each button shows the actual rendered cat -->
   <div class="cat-picker" role="radiogroup" aria-label="Cat color">
@@ -785,6 +826,16 @@
   const overlayTap = () => { spacePressed = true; };
   document.getElementById('overlay-start').addEventListener('click', overlayTap);
   document.getElementById('overlay-over').addEventListener('click', overlayTap);
+
+  // ---------- controls collapse toggle ----------
+  // On mobile-layout, pickers are hidden by default so the game fills
+  // the phone screen. This button expands/collapses them on demand.
+  const ctrlToggle = document.getElementById('controls-toggle');
+  ctrlToggle.addEventListener('click', () => {
+    const expanded = document.body.classList.toggle('controls-expanded');
+    ctrlToggle.innerHTML = expanded ? '&#9650; HIDE CONTROLS' : '&#9660; SHOW CONTROLS';
+    ctrlToggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+  });
 
   // ---------- cat palettes ----------
   // Each palette gives a base fur color, a darker accent for shadows
