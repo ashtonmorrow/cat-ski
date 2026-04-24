@@ -87,18 +87,38 @@
   }
 
   .bezel-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
     font-family: 'Press Start 2P', monospace;
     font-size: 11px;
     letter-spacing: 2px;
     color: var(--snow-dim);
-    text-align: center;
     margin-bottom: 10px;
+    padding: 0 4px;
     text-shadow: 0 0 6px rgba(122,167,199,.6);
+  }
+  .bezel-center {
+    flex: 1;
+    text-align: center;
   }
   .bezel-title .dot {
     color: var(--accent);
     animation: blink 1.2s steps(2,end) infinite;
   }
+  .bezel-link {
+    font-size: 8px;
+    letter-spacing: 2px;
+    color: var(--snow-dim);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    padding: 4px 2px;
+    text-shadow: none;
+    transition: color 120ms;
+  }
+  .bezel-link:hover { color: var(--accent-2); }
+  .bezel-link:active { color: var(--accent); }
   @keyframes blink { 50% { opacity: 0; } }
 
   .screen-wrap {
@@ -556,7 +576,11 @@
 <body>
 
 <div class="frame">
-  <div class="bezel-title">CAT SKI <span class="dot">&#9632;</span> 1989</div>
+  <div class="bezel-title">
+    <a href="https://mike-lee.me/"     class="bezel-link" target="_blank" rel="noopener noreferrer">HOME</a>
+    <span class="bezel-center">CAT SKI <span class="dot">&#9632;</span> 1989</span>
+    <a href="https://go.mike-lee.me/"  class="bezel-link" target="_blank" rel="noopener noreferrer">APP</a>
+  </div>
 
   <div class="screen-wrap" id="screen">
     <canvas id="game" width="360" height="270"></canvas>
