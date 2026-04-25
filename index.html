@@ -1704,13 +1704,80 @@
 
   // ---------- mountain themes ----------
   // Pure cosmetic. Each theme defines a palette for the sky, slope,
-  // trees, and which dog breed chases the cat. Themes don't affect
+  // trees, dog breed, plus three named-peak silhouettes drawn in the
+  // picker swatch (and reusable elsewhere later). Themes don't affect
   // gameplay difficulty — that's the slider's job.
   //
   // IMPORTANT: declared here, before renderPickerPreviews and the
   // setTheme(mtnTheme) init call below. Function declarations are
   // hoisted but const/let are in TDZ until executed in order, so
   // anything that reads THEMES or mtnTheme must come after this block.
+
+  // Mountain silhouettes as normalized polygon points. Origin (0,0) is
+  // the bottom-left of the mountain's bounding box; (1,1) is top-right.
+  // y=0 = base of the mountain, y=1 = peak. Each shape also carries an
+  // aspect ratio so the renderer can pick proportions matching the
+  // real mountain (e.g. Annapurna is wide; Matterhorn is taller-than-wide).
+  const MOUNTAIN_SHAPES = {
+    // Alps
+    matterhorn: { aspect: 0.85, points: [
+      [0,0],[0.30,0.45],[0.42,0.65],[0.55,0.95],[0.62,0.95],
+      [0.66,0.86],[0.62,0.74],[0.72,0.55],[0.86,0.30],[1,0],
+    ] },
+    montblanc: { aspect: 1.5, points: [
+      [0,0],[0.10,0.30],[0.25,0.55],[0.40,0.78],[0.50,0.85],
+      [0.60,0.85],[0.72,0.78],[0.85,0.50],[0.95,0.25],[1,0],
+    ] },
+    eiger: { aspect: 0.7, points: [
+      [0,0],[0.10,0.25],[0.30,0.55],[0.45,0.85],[0.55,0.95],
+      [0.62,0.95],[0.62,0.30],[1,0],
+    ] },
+    // Rockies
+    teton: { aspect: 0.75, points: [
+      [0,0],[0.15,0.30],[0.28,0.55],[0.40,0.78],[0.50,1.0],
+      [0.58,0.82],[0.65,0.65],[0.78,0.40],[0.92,0.18],[1,0],
+    ] },
+    longspeak: { aspect: 1.05, points: [
+      [0,0],[0.12,0.30],[0.28,0.62],[0.40,0.85],[0.40,0.95],
+      [0.65,0.95],[0.65,0.55],[0.82,0.25],[1,0],
+    ] },
+    pikespeak: { aspect: 1.55, points: [
+      [0,0],[0.10,0.25],[0.22,0.50],[0.35,0.70],[0.45,0.82],
+      [0.55,0.85],[0.65,0.82],[0.78,0.65],[0.90,0.30],[1,0],
+    ] },
+    // Himalayas
+    everest: { aspect: 1.2, points: [
+      [0,0],[0.10,0.30],[0.20,0.50],[0.32,0.70],[0.40,0.85],
+      [0.48,0.95],[0.56,0.95],[0.65,0.82],[0.75,0.65],[0.88,0.40],[1,0],
+    ] },
+    k2: { aspect: 0.78, points: [
+      [0,0],[0.10,0.25],[0.20,0.55],[0.35,0.80],[0.46,0.95],
+      [0.54,0.95],[0.65,0.80],[0.80,0.55],[0.92,0.25],[1,0],
+    ] },
+    annapurna: { aspect: 2.0, points: [
+      [0,0],[0.08,0.30],[0.18,0.55],[0.25,0.70],[0.32,0.85],
+      [0.38,0.92],[0.42,0.85],[0.48,0.75],[0.52,0.80],[0.56,0.90],
+      [0.62,0.85],[0.68,0.78],[0.72,0.82],[0.78,0.92],[0.85,0.78],
+      [0.92,0.55],[1,0],
+    ] },
+  };
+
+  // Renders a mountain polygon. (x, baseY) is the bottom-left anchor in
+  // canvas pixels; height is the canvas-pixel height of the silhouette.
+  function drawMountain(g, shape, x, baseY, height, color) {
+    const w = height * shape.aspect;
+    g.fillStyle = color;
+    g.beginPath();
+    shape.points.forEach((p, i) => {
+      const px = x + p[0] * w;
+      const py = baseY - p[1] * height;
+      if (i === 0) g.moveTo(px, py);
+      else g.lineTo(px, py);
+    });
+    g.closePath();
+    g.fill();
+  }
+
   const THEMES = {
     alps: {
       name: 'ALPS',
@@ -1720,24 +1787,31 @@
       band:   'rgba(150,180,205,0.10)',
       tree:   { L: '#2d8a4a', M: '#1f6b3a', D: '#0f4424', DD: '#07291a' },
       dog:    'shepherd',
+      // (back, mid, front) layered for parallax depth in the picker
+      peaks:  ['montblanc', 'matterhorn', 'eiger'],
+      peakColors: ['#7d8a99', '#525e6c', '#1f2632'],
     },
     rockies: {
       name: 'ROCKIES',
-      sky:    { top: '#fff3e0', bottom: '#f0d8b8' },   // warm dawn
+      sky:    { top: '#fff3e0', bottom: '#f0d8b8' },
       slope:  '#f5ecd8',
       fleck:  'rgba(180,160,130,0.30)',
       band:   'rgba(160,130,100,0.10)',
       tree:   { L: '#4cae5e', M: '#2f8042', D: '#1a4828', DD: '#0d2a18' },
       dog:    'pitbull',
+      peaks:  ['pikespeak', 'longspeak', 'teton'],
+      peakColors: ['#a08a72', '#6f5b48', '#2a1f17'],
     },
     himalayas: {
       name: 'HIMALAYAS',
-      sky:    { top: '#dde6f5', bottom: '#a0b0c8' },   // austere cool
+      sky:    { top: '#dde6f5', bottom: '#a0b0c8' },
       slope:  '#f2f6fc',
       fleck:  'rgba(110,140,170,0.40)',
       band:   'rgba(100,120,150,0.12)',
       tree:   { L: '#6b7a5a', M: '#4a5644', D: '#2c3328', DD: '#15180f' },
       dog:    'doggo',
+      peaks:  ['annapurna', 'k2', 'everest'],
+      peakColors: ['#8390a0', '#4f5662', '#1a1f28'],
     },
   };
 
@@ -1777,9 +1851,10 @@
     });
   }
 
-  // Mini scene rendered into a 48x48 swatch. Sky/slope gradient, a far
-  // mountain silhouette as a triangle, and a single tree to suggest the
-  // theme's vegetation density and color.
+  // Mini scene rendered into a 48x48 swatch. Sky/slope gradient,
+  // three layered named peaks unique to the theme (Matterhorn et al.
+  // for Alps; Pikes/Longs/Teton for Rockies; Annapurna/K2/Everest
+  // for Himalayas), and a tree to suggest the theme's vegetation tone.
   function drawThemePreview(g, w, h, T) {
     // Sky gradient
     const grad = g.createLinearGradient(0, 0, 0, h);
@@ -1787,24 +1862,33 @@
     grad.addColorStop(1, T.sky.bottom);
     g.fillStyle = grad;
     g.fillRect(0, 0, w, h);
-    // Distant mountain triangle (uses tree-darkest as silhouette)
-    g.fillStyle = T.tree.D;
-    g.beginPath();
-    g.moveTo(0, h * 0.65);
-    g.lineTo(w * 0.45, h * 0.20);
-    g.lineTo(w * 0.65, h * 0.45);
-    g.lineTo(w * 0.85, h * 0.30);
-    g.lineTo(w, h * 0.55);
-    g.lineTo(w, h * 0.7);
-    g.lineTo(0, h * 0.7);
-    g.closePath();
-    g.fill();
+
+    // Three peaks layered back-to-front. Each is positioned across the
+    // swatch at thirds with slight offsets, sized differently for depth.
+    const horizon = h * 0.74;
+    // Back peak — shorter, leftward, lightest tone
+    const s0 = MOUNTAIN_SHAPES[T.peaks[0]];
+    const h0 = h * 0.42;
+    const w0 = h0 * s0.aspect;
+    drawMountain(g, s0, -w * 0.12, horizon, h0, T.peakColors[0]);
+    // Mid peak — taller, center, mid tone (the "hero" peak)
+    const s1 = MOUNTAIN_SHAPES[T.peaks[1]];
+    const h1 = h * 0.62;
+    const w1 = h1 * s1.aspect;
+    drawMountain(g, s1, (w - w1) * 0.5, horizon, h1, T.peakColors[1]);
+    // Front peak — tallest, rightward, darkest tone, partially visible
+    const s2 = MOUNTAIN_SHAPES[T.peaks[2]];
+    const h2 = h * 0.55;
+    const w2 = h2 * s2.aspect;
+    drawMountain(g, s2, w * 0.55, horizon, h2, T.peakColors[2]);
+
     // Slope
     g.fillStyle = T.slope;
-    g.fillRect(0, h * 0.7, w, h * 0.3);
-    // Tree
-    const tx = Math.floor(w * 0.7);
-    const ty = Math.floor(h * 0.78);
+    g.fillRect(0, horizon, w, h - horizon);
+
+    // Single tree on the slope to suggest vegetation tone
+    const tx = Math.floor(w * 0.22);
+    const ty = Math.floor(h * 0.84);
     g.fillStyle = T.tree.D;
     g.fillRect(tx - 4, ty - 2, 8, 4);
     g.fillRect(tx - 3, ty - 5, 6, 3);
