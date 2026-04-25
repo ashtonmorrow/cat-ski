@@ -542,16 +542,20 @@
      area, so it never covers the cat / obstacles. Hidden unless
      .touch-active is set on body. touch-action:none prevents the
      page from scrolling / pinch-zooming while the finger drags. */
+  /* Joystick lives in the bottom-LEFT corner by default. The .controls-
+     swapped body class moves it to the bottom-right and the trick pad
+     to the bottom-left, for left-handed players. */
   .stick-area {
     display: none;
     position: fixed;
     bottom: max(18px, env(safe-area-inset-bottom, 18px));
-    left: 50%;
-    transform: translateX(-50%);
+    left: 18px;
+    right: auto;
     z-index: 10;
-    pointer-events: none; /* container ignores, stick itself catches */
+    pointer-events: none;
   }
   body.touch-active .stick-area { display: block; }
+  body.controls-swapped .stick-area { left: auto; right: 18px; }
   body.touch-active .screen-wrap { touch-action: none; }
   .stick {
     position: relative;
@@ -582,27 +586,31 @@
     transition: transform 40ms linear;
   }
 
-  /* Trick pad — three buttons shown during air time in touch mode. The
-     joystick hides while this is visible so they don't fight for the
-     same thumb. Buttons are big enough to tap without aiming. */
+  /* Trick pad — three buttons in a vertical stack on the bottom-right
+     by default. Always visible when touch-active so they don't surprise
+     the player by appearing mid-jump. Buttons dim and become non-
+     interactive when the cat is grounded; they brighten and become
+     tappable while airborne. */
   .trick-pad {
     display: none;
     position: fixed;
     bottom: max(18px, env(safe-area-inset-bottom, 18px));
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 11;
-    gap: 8px;
+    right: 18px;
+    left: auto;
+    flex-direction: column;
+    gap: 6px;
+    z-index: 10;
     pointer-events: none;
   }
-  body.touch-active.airborne .trick-pad { display: flex; }
-  body.touch-active.airborne .stick-area { display: none; }
+  body.touch-active .trick-pad { display: flex; }
+  body.controls-swapped .trick-pad { right: auto; left: 18px; }
   .trick-btn {
-    pointer-events: auto;
-    padding: 18px 14px;
+    pointer-events: none;     /* disabled until airborne */
+    opacity: 0.32;
+    padding: 12px 14px;
     min-width: 72px;
-    background: rgba(10, 20, 35, 0.75);
-    border: 2px solid rgba(255, 204, 0, 0.65);
+    background: rgba(10, 20, 35, 0.65);
+    border: 2px solid rgba(255, 204, 0, 0.55);
     color: var(--accent-2);
     font-family: 'Press Start 2P', monospace;
     font-size: 10px;
@@ -612,11 +620,46 @@
     cursor: pointer;
     touch-action: none;
     -webkit-tap-highlight-color: transparent;
+    transition: opacity 120ms ease-out;
+  }
+  body.airborne .trick-btn {
+    pointer-events: auto;
+    opacity: 1;
   }
   .trick-btn:active {
     background: rgba(255, 204, 0, 0.35);
     transform: translateY(1px);
     box-shadow: 1px 1px 0 #000;
+  }
+
+  /* Swap button — small floating control between the two zones that
+     toggles which side has the joystick vs the trick pad. */
+  .swap-btn {
+    display: none;
+    position: fixed;
+    bottom: max(60px, calc(env(safe-area-inset-bottom, 0px) + 60px));
+    left: 50%;
+    transform: translateX(-50%);
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: rgba(10, 20, 35, 0.55);
+    border: 2px solid rgba(234, 244, 255, 0.45);
+    color: var(--snow-dim);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    z-index: 11;
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 2px 2px 0 rgba(0,0,0,0.4);
+  }
+  body.touch-active .swap-btn { display: flex; }
+  .swap-btn:active {
+    background: rgba(255, 204, 0, 0.25);
+    color: var(--accent-2);
   }
 
   /* ---------- Mobile / full-bleed layout ----------
@@ -953,13 +996,18 @@
   </div>
 </div>
 
-<!-- Trick pad (mobile): 3 buttons that appear in place of the joystick
-     while the cat is airborne. Tap for trick, land to resume joystick. -->
+<!-- Trick pad (mobile): 3 buttons fixed bottom-right (or bottom-left if
+     swapped). Always visible during touch mode but disabled+dimmed while
+     the cat is grounded; brighten and become tappable in mid-air. -->
 <div class="trick-pad" id="trick-pad" aria-hidden="true">
   <button class="trick-btn" data-trick="roll"  type="button">ROLL</button>
   <button class="trick-btn" data-trick="twist" type="button">TWIST</button>
   <button class="trick-btn" data-trick="nap"   type="button">NAP</button>
 </div>
+
+<!-- Swap button (mobile): toggles which side has the joystick vs the
+     trick pad, so left-handers can mirror the layout. -->
+<button class="swap-btn" id="btn-swap" type="button" aria-label="Swap control layout" title="Swap control sides">&#x21C4;</button>
 
 <!-- Service worker registration — enables offline play via sw.js.
      Registered after 'load' so it doesn't delay first paint. -->
