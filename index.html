@@ -4,6 +4,18 @@
 <meta charset="UTF-8">
 <title>CAT SKI // Retro Downhill 1989</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Search Console verification -->
+<meta name="google-site-verification" content="Blnw1PeynoNtYxKYh57M27xYxnoz3UKCrqQ4a3mvxt8">
+
+<!-- Google Analytics 4 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSN465FL9R"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-MSN465FL9R');
+</script>
 <meta name="description" content="Waste a couple minutes of your life with this free game. A retro pixel downhill skier where you play as a cat.">
 
 <!-- Favicons -->
@@ -109,12 +121,11 @@
   }
 
   body {
-    /* min-height (not height) so body grows when content exceeds the
-       viewport, letting the page scroll naturally. place-items: center
-       centers short content horizontally and vertically, but when
-       content is taller than the viewport it aligns to the top of the
-       scrollable area instead of being clipped top-and-bottom. */
+    /* min-height uses dvh (dynamic viewport) so the body resizes with
+       iOS Safari's address bar collapse/expand instead of jumping.
+       100vh fallback for browsers that don't support dvh yet. */
     min-height: 100vh;
+    min-height: 100dvh;
     display: grid;
     place-items: center;
     padding: 12px 0;
@@ -333,6 +344,33 @@
     margin: 6px 0;
   }
   .panel .stat-row .v { color: var(--accent-2); }
+  .reset-best {
+    font-family: 'VT323', monospace;
+    font-size: 14px;
+    color: #5a7088;
+    text-decoration: none;
+    margin-left: 6px;
+    letter-spacing: 0;
+  }
+  .reset-best:hover { color: var(--accent); }
+
+  .share-btn {
+    display: block;
+    margin: 14px auto 0;
+    padding: 6px 14px;
+    background: #182638;
+    border: 2px solid var(--accent-2);
+    color: var(--accent-2);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    box-shadow: 2px 2px 0 #000;
+    transition: background 80ms;
+  }
+  .share-btn:hover { background: rgba(255,204,0,0.12); }
+  .share-btn:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 #000; }
+  .share-btn.copied { color: #6ed26b; border-color: #6ed26b; }
 
   .footer {
     margin-top: 10px;
@@ -871,7 +909,11 @@
         <div class="stat-row"><span>TIME</span><span class="v" id="over-time">0:00</span></div>
         <div class="stat-row"><span>DISTANCE</span><span class="v" id="over-dist">0 M</span></div>
         <div class="stat-row"><span>SCORE</span><span class="v" id="over-score">0</span></div>
-        <div class="stat-row"><span>BEST</span><span class="v" id="over-best">0</span></div>
+        <div class="stat-row">
+          <span>BEST <a href="#" class="reset-best" id="reset-best" title="Clear best for this difficulty">[reset]</a></span>
+          <span class="v" id="over-best">0</span>
+        </div>
+        <button class="share-btn" id="btn-share" type="button" aria-label="Share your run">SHARE</button>
         <div class="hint"><span class="blink">&gt;</span> SPACE TO TRY AGAIN</div>
       </div>
     </div>
@@ -932,7 +974,7 @@
     <button class="diff-swatch preset-btn" data-preset="easy"   type="button">EASY</button>
     <button class="diff-swatch preset-btn" data-preset="medium" type="button">MEDIUM</button>
     <button class="diff-swatch preset-btn" data-preset="hard"   type="button">HARD</button>
-    <button class="diff-swatch preset-btn" data-preset="insta"  type="button">INSTA DEATH</button>
+    <button class="diff-swatch preset-btn" data-preset="insta"  type="button">EXTREME</button>
   </div>
 
   <!-- Continuous tuners. INTENSITY scales speed/density/spawn cadence/
@@ -1277,7 +1319,7 @@
           'THE TREE WON',
           'USED UP LIFE #1',
           'WHO PLANTED THAT?',
-          'TREE: 1 — CAT: 0',
+          'TREE 1, CAT 0',
         ],
       },
       log: {
@@ -1345,7 +1387,7 @@
         titles: ['¡PLAF!', '¡TIMBER!', '¡KABLAM!', 'WIPEOUT'],
         subs: [
           'SE COMIÓ UN ÁRBOL',
-          'CHE, BOLUDO — ESE PINO',
+          'CHE, BOLUDO. ESE PINO',
           'EL PINO GANÓ ESTA VEZ',
           'SIEMPRE HAY UN PINO DE MÁS',
         ],
@@ -1365,7 +1407,7 @@
           'TE AGARRÓ EL PERRO',
           'EL PERRO ESTÁ FELIZ',
           'CHE, QUÉ PAPELÓN',
-          'LO CAZÓ UN PERRO — UN GATO',
+          'LO CAZÓ UN PERRO. UN GATO',
         ],
       },
       snowman: {
@@ -1562,6 +1604,50 @@
   document.getElementById('overlay-start').addEventListener('click', overlayTap);
   document.getElementById('overlay-over').addEventListener('click', overlayTap);
   document.getElementById('overlay-paused').addEventListener('click', overlayTap);
+
+  // ---------- share button (game-over panel) ----------
+  // Uses navigator.share where available (mobile + Edge). Falls back to
+  // clipboard copy with a "COPIED" confirmation. The shared text
+  // includes the run's distance and score so the recipient sees a hook.
+  const btnShare = document.getElementById('btn-share');
+  if (btnShare) {
+    btnShare.addEventListener('click', async () => {
+      const text = `I scored ${stats.score} on Cat Ski (${stats.distance}m). Try to beat me:`;
+      const url = 'https://ski.mike-lee.me/';
+      if (navigator.share) {
+        try { await navigator.share({ title: 'Cat Ski 1989', text, url }); }
+        catch (_) { /* user dismissed, no-op */ }
+        return;
+      }
+      // Fallback: copy URL to clipboard
+      try {
+        await navigator.clipboard.writeText(`${text} ${url}`);
+        const original = btnShare.textContent;
+        btnShare.textContent = 'COPIED';
+        btnShare.classList.add('copied');
+        setTimeout(() => {
+          btnShare.textContent = original;
+          btnShare.classList.remove('copied');
+        }, 1800);
+      } catch (_) {
+        // Last resort: prompt() so the user can copy manually
+        window.prompt('Copy this link:', url);
+      }
+    });
+  }
+
+  // ---------- reset best score (for current difficulty combo) ----------
+  const resetBestLink = document.getElementById('reset-best');
+  if (resetBestLink) {
+    resetBestLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (!confirm('Clear best score for this difficulty combo?')) return;
+      delete bests[bestKey()];
+      saveBests(bests);
+      best = 0;
+      if (overBest) overBest.textContent = '0';
+    });
+  }
 
   // ---------- controls collapse toggle ----------
   // On mobile-layout, pickers are hidden by default so the game fills
@@ -2107,12 +2193,22 @@
     localStorage.setItem('skior_intensity', String(intensity));
     if (diffSlider) diffSlider.value = String(Math.round(intensity * 100));
     if (diffValue)  diffValue.textContent = intensity.toFixed(2).replace(/\.?0+$/, '') + 'x';
+    refreshBestForCombo();
   }
   function applyDogCount(val) {
     dogCount = Math.max(1, Math.min(10, Math.round(val)));
     localStorage.setItem('skior_dogs', String(dogCount));
     if (dogsSlider) dogsSlider.value = String(dogCount);
     if (dogsValue)  dogsValue.textContent = String(dogCount);
+    refreshBestForCombo();
+  }
+  // Forward declaration — actual implementation defined later when
+  // `bests` and `currentBest` exist. Wrapped in typeof check so the
+  // first call (during initial applyIntensity/applyDogCount) is safe.
+  function refreshBestForCombo() {
+    if (typeof bests !== 'undefined' && typeof currentBest === 'function') {
+      best = currentBest();
+    }
   }
   if (diffSlider) {
     diffSlider.addEventListener('input', () =>
@@ -2174,7 +2270,30 @@
   const STATE = { TITLE:'title', PLAY:'play', PAUSED:'paused', OVER:'over' };
   let state = STATE.TITLE;
 
-  let best = Number(localStorage.getItem('skior_best') || 0);
+  // Best scores are now per difficulty combo (intensity + dogCount).
+  // Stored as a single JSON object under 'skior_bests'. Migrates the
+  // legacy single 'skior_best' key into the current combo on first run
+  // so existing players don't lose their high score.
+  function bestKey() {
+    return intensity.toFixed(1) + '_' + dogCount;
+  }
+  function loadBests() {
+    try {
+      const raw = localStorage.getItem('skior_bests');
+      if (raw) return JSON.parse(raw);
+    } catch (_) {}
+    // Migrate legacy single-best
+    const legacy = Number(localStorage.getItem('skior_best') || 0);
+    return legacy > 0 ? { [bestKey()]: legacy } : {};
+  }
+  function saveBests(obj) {
+    try { localStorage.setItem('skior_bests', JSON.stringify(obj)); } catch (_) {}
+  }
+  let bests = loadBests();
+  function currentBest() { return bests[bestKey()] || 0; }
+  // Backwards-compat: keep `best` as the current-difficulty best so
+  // existing references in update() still work without rewriting.
+  let best = currentBest();
 
   // The skier sits at a fixed screen Y; the world scrolls past.
   // worldY = how far down the mountain we've traveled (in px).
@@ -2398,11 +2517,28 @@
       { dist: far,  lateral:  44 },
     ];
     ramps.forEach(p => {
+      let x = Math.max(20, Math.min(W - 20, player.x + p.lateral));
+      const y = playerWorldY + p.dist;
+      // Avoid overlapping any existing object within a 36-unit radius —
+      // would cause the player to crash AND launch on the same frame.
+      // Try nudging laterally up to 3 times before giving up; if all
+      // attempts conflict we still spawn the ramp (rare edge case on
+      // very dense slopes — better to have a ramp than a missing one).
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const conflict = objects.some(o =>
+          o.type !== 'jump' &&
+          Math.abs(o.y - y) < 28 &&
+          Math.abs(o.x - x) < 28
+        );
+        if (!conflict) break;
+        // Nudge in the opposite direction of the original lateral offset
+        const nudge = p.lateral > 0 ? -56 : 56;
+        x = Math.max(20, Math.min(W - 20, x + nudge));
+      }
       objects.push({
         type:  'jump',
         bonus: true,
-        x:     Math.max(20, Math.min(W - 20, player.x + p.lateral)),
-        y:     playerWorldY + p.dist,
+        x, y,
         w:     34,
         h:     10,
         hit:   false,
@@ -2437,6 +2573,7 @@
       yeti.state = 'grab';
       sfx.chomp();
       silenceSwoosh();
+      if (navigator.vibrate) navigator.vibrate([20, 40, 80]);
       endRun(msg('dog', 'titles'), msg('dog', 'subs'));
       return;
     }
@@ -2496,6 +2633,7 @@
       snowman.chompT = 20;
       sfx.chomp();
       silenceSwoosh();
+      if (navigator.vibrate) navigator.vibrate(300);
       endRun(msg('snowman', 'titles'), msg('snowman', 'subs'));
     }
   }
@@ -2776,6 +2914,9 @@
     nap:   'CAT NAP',
   };
   function startTrick(name) {
+    // Only fire when actually playing — prevents tricks queueing during
+    // pause if the player taps a trick button mid-paused-jump.
+    if (state !== STATE.PLAY) return;
     if (!player || player.air <= 0 || player.crashed || player.grabbed) return;
     if (!TRICK_NAMES[name]) return;
     if (player.trick) return; // already rotating, wait for finish
@@ -2795,6 +2936,7 @@
     sfx.crash();
     sfx.meow();
     silenceSwoosh();
+    if (navigator.vibrate) navigator.vibrate(150);
     // debris
     for (let i = 0; i < 18; i++) {
       particles.push({
@@ -2815,7 +2957,8 @@
     state = STATE.OVER;
     if (stats.score > best) {
       best = stats.score;
-      localStorage.setItem('skior_best', String(best));
+      bests[bestKey()] = best;
+      saveBests(bests);
     }
     overTitle.textContent = title;
     overSub.textContent   = sub;
@@ -2850,6 +2993,8 @@
     overlayPaused.classList.remove('hidden');
     btnPause.classList.add('paused');
     btnPause.innerHTML = '&#x25B6;';  // play / resume glyph
+    // Force trick buttons to dim during pause regardless of mid-jump state
+    document.body.classList.remove('airborne');
     // Roll a fresh pause line so every pause feels different
     const pLine = document.getElementById('paused-line');
     if (pLine) pLine.textContent = pickList('paused');
