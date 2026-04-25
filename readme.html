@@ -88,7 +88,25 @@
     margin: 32px 0 14px;
     padding-bottom: 8px;
     border-bottom: 1px solid #1d2a3c;
+    scroll-margin-top: 16px;
   }
+  .toc {
+    margin: 4px 0 24px;
+    padding: 14px 16px;
+    background: rgba(26, 40, 56, 0.5);
+    border: 1px solid #1d2a3c;
+  }
+  .toc ul { margin: 0; }
+  .toc li {
+    font-size: 16px;
+    line-height: 1.4;
+    margin: 4px 0;
+  }
+  .toc a {
+    color: var(--snow-dim);
+    border-bottom: 1px dotted #4e6b8a;
+  }
+  .toc a:hover { color: var(--accent-2); border-bottom-color: var(--accent-2); }
   h3 {
     font-family: 'Press Start 2P', monospace;
     font-size: 10px;
@@ -208,13 +226,26 @@
       <a href="/" class="nav-back">&lt; PLAY</a>
     </div>
 
-    <h2>About cat-ski</h2>
+    <nav class="toc" aria-label="Contents">
+      <ul>
+        <li><a href="#about">About cat-ski</a></li>
+        <li><a href="#play">How to play</a></li>
+        <li><a href="#build">How the game is built</a></li>
+        <li><a href="#design">Design criteria for each game element</a></li>
+        <li><a href="#colors">Selecting colors from real photographs</a></li>
+        <li><a href="#claude">Working with Claude as a design collaborator</a></li>
+        <li><a href="#diy">How you can build this yourself</a></li>
+        <li><a href="#resources">Further resources</a></li>
+      </ul>
+    </nav>
+
+    <h2 id="about">About cat-ski</h2>
 
     <p>cat-ski is a browser-based skiing game inspired by <a href="https://en.wikipedia.org/wiki/SkiFree" target="_blank" rel="noopener noreferrer">SkiFree</a>, the 1991 game that shipped in Microsoft Entertainment Pack 3 for Windows 3.0. The original SkiFree presented an endless downhill ski run with trees, jumps, and an unkillable abominable yeti that eventually appeared and ended every run. cat-ski recreates the same game loop with a cat as the player character, three mountain themes, and a tunable difficulty system.</p>
 
     <p>The project is open source at <a href="https://github.com/ashtonmorrow/cat-ski" target="_blank" rel="noopener noreferrer">github.com/ashtonmorrow/cat-ski</a>. It was developed by <a href="https://www.linkedin.com/in/mikelee89/" target="_blank" rel="noopener noreferrer">Mike Lee</a> using Claude as a coding collaborator.</p>
 
-    <h2>How to play</h2>
+    <h2 id="play">How to play</h2>
 
     <p>The cat skis down an endless slope. Before starting, the player chooses a cat color (black, tabby, calico, or orange) and a mountain theme (Alps, Rockies, or Himalayas). Both selections persist across sessions through localStorage.</p>
 
@@ -241,7 +272,7 @@
 
     <p>Difficulty is set with two sliders. Intensity (0.8x to 5x) scales speed, obstacle density, spawn cadence, and dog tracking. Dog count (1 to 10) sets how many dog waves appear before the snowman. Four named presets (EASY, MEDIUM, HARD, and INSTA DEATH) snap both sliders to canonical positions for players who do not want to tune individual parameters.</p>
 
-    <h2>How the game is built</h2>
+    <h2 id="build">How the game is built</h2>
 
     <p>The game is contained in a single HTML file of approximately 140 KB, with a separate service worker for offline support and a manifest file for PWA installability. There is no build step, framework, or runtime dependency beyond two Google Fonts. The constraint of keeping the game in one file is partly a tribute to the original SkiFree, which fit in 60 KB on a 3.5-inch floppy disk. The practical benefit is that every change is deployable in under a minute. A push to the GitHub repository triggers an automatic Vercel rebuild, and the new version is served from the CDN with no build pipeline to wait for.</p>
 
@@ -260,7 +291,7 @@
       </tbody>
     </table>
 
-    <h2>Design criteria for each game element</h2>
+    <h2 id="design">Design criteria for each game element</h2>
 
     <p>Each system in the game started with a written criteria question before any code was written. The cat sprite needed to read as a cat at 16 pixels wide and support four color variants without forking the drawing code. The solution was a procedural drawing function parameterized by a palette object, which produces all four cat colors from a single set of geometry.</p>
 
@@ -268,7 +299,7 @@
 
     <p>Difficulty needed to satisfy both casual players who want presets and players who want to fine-tune individual parameters. The solution is two continuous sliders (intensity 0.8x to 5x, dog count 1 to 10) paired with four preset buttons that snap the sliders to canonical positions. New visitors land on EASY by default, which matches the casual experience. Players who want more challenge use the sliders or pick HARD or INSTA DEATH.</p>
 
-    <h2>Selecting colors from real photographs</h2>
+    <h2 id="colors">Selecting colors from real photographs</h2>
 
     <p>The first version of the three mountain themes used generic palettes: a pinky-cream Rockies, a default cool-blue Alps, and a default-cool Himalayas. The result felt synthetic. To make each region read as the actual mountain range, the palettes were rebuilt from descriptions of how each range typically photographs.</p>
 
@@ -297,7 +328,7 @@
 
     <p>The same description-first approach extended to the obstacles. Norway spruce silhouettes were drawn for the Alps, lodgepole pine (taller and narrower, with a visible trunk between branch tiers) for the Rockies, and stunted krummholz juniper (short and gnarled) for the Himalayas. The Rockies use aspen logs with white bark and black eye scars, since aspen is widely associated with the American Rocky Mountain landscape. The Himalayas use granite boulders rather than logs, because trees do not occur above the tree line where the game is conceptually set. Each species was researched, the silhouette was described in plain language, and Claude produced approximately 30 lines of fillRect calls per variant.</p>
 
-    <h2>Working with Claude as a design collaborator</h2>
+    <h2 id="claude">Working with Claude as a design collaborator</h2>
 
     <p>The project was built with Claude functioning as a design collaborator rather than purely a code-writing assistant. The pattern that worked across the build was three questions asked before any new feature.</p>
 
@@ -311,7 +342,7 @@
 
     <p>The constraint that made the iteration loop effective was the no-build deployment. Each change reached the live site in under a minute, which made the cycle of pushing, observing, and refining fast enough that the production environment doubled as the development environment. Across approximately 50 commits, this cadence affected the final quality more than any individual technical choice.</p>
 
-    <h2>How you can build this yourself</h2>
+    <h2 id="diy">How you can build this yourself</h2>
 
     <p>The full toolchain for a project like this is free and small enough to learn in an afternoon. You need a code editor, a browser, a Git client, a GitHub account, and a Vercel account. Claude is the writing tool; you can use the web interface at <a href="https://claude.ai" target="_blank" rel="noopener noreferrer">claude.ai</a> or the Claude Code CLI from a terminal. No frameworks, build systems, or asset pipelines are required for a single-file game.</p>
 
@@ -319,7 +350,7 @@
 
     <p>Three practices kept the build moving. First, treat the conversation with Claude as design work rather than code generation. State the criteria, propose the simplest approach, and identify the trade-offs before any feature is built. Second, deploy frequently. Ship each working commit so the live site stays current with the project. Third, when working on aesthetic decisions, describe the source material in concrete terms. Asking Claude for a palette inspired by "warm afternoon light on sandstone" produces hex codes that read as the place; asking for a palette that feels "rugged" returns generic results. The same pattern holds for sounds, sprites, and animation timing: the more specific the input, the more usable the output.</p>
 
-    <h2>Further resources</h2>
+    <h2 id="resources">Further resources</h2>
 
     <ul>
       <li><a href="https://en.wikipedia.org/wiki/SkiFree" target="_blank" rel="noopener noreferrer">SkiFree on Wikipedia</a>: background on the original 1991 game.</li>
