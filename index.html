@@ -1702,6 +1702,58 @@
   });
   setCatColor(catColor);
 
+  // ---------- mountain themes ----------
+  // Pure cosmetic. Each theme defines a palette for the sky, slope,
+  // trees, and which dog breed chases the cat. Themes don't affect
+  // gameplay difficulty — that's the slider's job.
+  //
+  // IMPORTANT: declared here, before renderPickerPreviews and the
+  // setTheme(mtnTheme) init call below. Function declarations are
+  // hoisted but const/let are in TDZ until executed in order, so
+  // anything that reads THEMES or mtnTheme must come after this block.
+  const THEMES = {
+    alps: {
+      name: 'ALPS',
+      sky:    { top: '#f4faff', bottom: '#d8e7f5' },
+      slope:  '#eaf4ff',
+      fleck:  'rgba(140,170,195,0.35)',
+      band:   'rgba(150,180,205,0.10)',
+      tree:   { L: '#2d8a4a', M: '#1f6b3a', D: '#0f4424', DD: '#07291a' },
+      dog:    'shepherd',
+    },
+    rockies: {
+      name: 'ROCKIES',
+      sky:    { top: '#fff3e0', bottom: '#f0d8b8' },   // warm dawn
+      slope:  '#f5ecd8',
+      fleck:  'rgba(180,160,130,0.30)',
+      band:   'rgba(160,130,100,0.10)',
+      tree:   { L: '#4cae5e', M: '#2f8042', D: '#1a4828', DD: '#0d2a18' },
+      dog:    'pitbull',
+    },
+    himalayas: {
+      name: 'HIMALAYAS',
+      sky:    { top: '#dde6f5', bottom: '#a0b0c8' },   // austere cool
+      slope:  '#f2f6fc',
+      fleck:  'rgba(110,140,170,0.40)',
+      band:   'rgba(100,120,150,0.12)',
+      tree:   { L: '#6b7a5a', M: '#4a5644', D: '#2c3328', DD: '#15180f' },
+      dog:    'doggo',
+    },
+  };
+
+  let mtnTheme = localStorage.getItem('skior_theme') || 'alps';
+  if (!THEMES[mtnTheme]) mtnTheme = 'alps';
+  function curTheme() { return THEMES[mtnTheme]; }
+
+  function setTheme(name) {
+    if (!THEMES[name]) return;
+    mtnTheme = name;
+    localStorage.setItem('skior_theme', name);
+    document.querySelectorAll('[data-theme]').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.theme === name);
+    });
+  }
+
   // Render the actual cat sprite into each picker preview using the
   // same drawCat function the game uses. Done after a microtask so
   // drawCat is hoisted and accessible.
@@ -1783,53 +1835,6 @@
   // snowmanMin / snowmanWindow: snowman rolls into this window. Always
   // scheduled AFTER yetiSeconds so players get a dog-chase phase first.
   // startSpeed   initial player speed at t=0
-  // ---------- mountain themes ----------
-  // Pure cosmetic. Each theme defines a palette for the sky, slope,
-  // trees, and which dog breed chases the cat. Themes don't affect
-  // gameplay difficulty — that's the slider's job.
-  const THEMES = {
-    alps: {
-      name: 'ALPS',
-      sky:    { top: '#f4faff', bottom: '#d8e7f5' },
-      slope:  '#eaf4ff',
-      fleck:  'rgba(140,170,195,0.35)',
-      band:   'rgba(150,180,205,0.10)',
-      tree:   { L: '#2d8a4a', M: '#1f6b3a', D: '#0f4424', DD: '#07291a' },
-      dog:    'shepherd',
-    },
-    rockies: {
-      name: 'ROCKIES',
-      sky:    { top: '#fff3e0', bottom: '#f0d8b8' },   // warm dawn
-      slope:  '#f5ecd8',
-      fleck:  'rgba(180,160,130,0.30)',
-      band:   'rgba(160,130,100,0.10)',
-      tree:   { L: '#4cae5e', M: '#2f8042', D: '#1a4828', DD: '#0d2a18' },  // saturated greens
-      dog:    'pitbull',
-    },
-    himalayas: {
-      name: 'HIMALAYAS',
-      sky:    { top: '#dde6f5', bottom: '#a0b0c8' },   // austere cool
-      slope:  '#f2f6fc',
-      fleck:  'rgba(110,140,170,0.40)',
-      band:   'rgba(100,120,150,0.12)',
-      tree:   { L: '#6b7a5a', M: '#4a5644', D: '#2c3328', DD: '#15180f' },  // dusty muted
-      dog:    'doggo',
-    },
-  };
-
-  let mtnTheme = localStorage.getItem('skior_theme') || 'alps';
-  if (!THEMES[mtnTheme]) mtnTheme = 'alps';
-  function curTheme() { return THEMES[mtnTheme]; }
-
-  function setTheme(name) {
-    if (!THEMES[name]) return;
-    mtnTheme = name;
-    localStorage.setItem('skior_theme', name);
-    document.querySelectorAll('[data-theme]').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.theme === name);
-    });
-  }
-
   // Difficulty is now driven by two sliders:
   //   intensity: 0.8 - 5.0 (default 1.0). Scales speed, density,
   //              spawn cadence, dog tracking. Linear-ish — see diff().
