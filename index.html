@@ -1764,6 +1764,23 @@
     });
   });
 
+  // ---------- control layout swap ----------
+  // Persistent toggle: which side has the joystick, which side has the
+  // trick buttons. Stored in localStorage so it sticks across sessions.
+  let controlsSwapped = localStorage.getItem('skior_swap') === '1';
+  function applyControlsSwap() {
+    document.body.classList.toggle('controls-swapped', controlsSwapped);
+  }
+  applyControlsSwap();
+  const btnSwap = document.getElementById('btn-swap');
+  if (btnSwap) {
+    btnSwap.addEventListener('click', () => {
+      controlsSwapped = !controlsSwapped;
+      localStorage.setItem('skior_swap', controlsSwapped ? '1' : '0');
+      applyControlsSwap();
+    });
+  }
+
   // ---------- cat palettes ----------
   // Each palette gives a base fur color, a darker accent for shadows
   // and markings, a belly/chest light, eye color, and a "patch" color
