@@ -604,32 +604,55 @@
   }
   body.touch-active .trick-pad { display: flex; }
   body.controls-swapped .trick-pad { right: auto; left: 18px; }
+  /* Round arcade-cabinet buttons. Solid yellow disc with a dark border
+     and inset bottom shadow for the pressed-from-above 3D look. Outer
+     glow ring tightens visual identity. Dark text label inside. */
   .trick-btn {
     pointer-events: none;     /* disabled until airborne */
-    opacity: 0.32;
-    padding: 12px 14px;
-    min-width: 72px;
-    background: rgba(10, 20, 35, 0.65);
-    border: 2px solid rgba(255, 204, 0, 0.55);
-    color: var(--accent-2);
+    width: 62px;
+    height: 62px;
+    padding: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fff088 0%, #ffcc00 45%, #c89800 100%);
+    border: 3px solid #0b1320;
+    color: #0b1320;
     font-family: 'Press Start 2P', monospace;
-    font-size: 10px;
-    letter-spacing: 1.5px;
-    border-radius: 10px;
-    box-shadow: 2px 2px 0 #000;
+    font-size: 8px;
+    letter-spacing: 0.5px;
+    text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.35);
+    box-shadow:
+      inset 0 -4px 0 rgba(0, 0, 0, 0.28),  /* bottom rim depth */
+      inset 0 2px 0 rgba(255, 255, 255, 0.4), /* top highlight */
+      2px 2px 0 #000,                       /* hard cast shadow */
+      0 0 0 2px rgba(255, 204, 0, 0.30);    /* outer glow ring */
     cursor: pointer;
     touch-action: none;
     -webkit-tap-highlight-color: transparent;
-    transition: opacity 120ms ease-out;
+    opacity: 0.4;
+    filter: saturate(0.4);
+    transition: opacity 120ms ease-out, filter 120ms ease-out, box-shadow 120ms;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   body.airborne .trick-btn {
     pointer-events: auto;
     opacity: 1;
+    filter: saturate(1);
+    box-shadow:
+      inset 0 -4px 0 rgba(0, 0, 0, 0.28),
+      inset 0 2px 0 rgba(255, 255, 255, 0.4),
+      2px 2px 0 #000,
+      0 0 0 2px rgba(255, 204, 0, 0.55),
+      0 0 14px rgba(255, 204, 0, 0.55);    /* live glow when usable */
   }
+  /* Pressed: button "sinks" by losing the bottom rim and shifting down */
   .trick-btn:active {
-    background: rgba(255, 204, 0, 0.35);
-    transform: translateY(1px);
-    box-shadow: 1px 1px 0 #000;
+    transform: translateY(3px);
+    box-shadow:
+      inset 0 -1px 0 rgba(0, 0, 0, 0.28),
+      inset 0 2px 0 rgba(255, 255, 255, 0.4),
+      0 0 0 2px rgba(255, 204, 0, 0.55);
   }
 
   /* Swap button — small floating control between the two zones that
