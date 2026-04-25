@@ -1,0 +1,26 @@
+# Cat Ski
+
+> A free retro pixel browser game where you play as a cat skiing down a mountain. Inspired by Windows 3.0 SkiFree. Single self-contained HTML file with no build step, no install, and no account required.
+
+Cat Ski is an open-source browser game that recreates the SkiFree (1991) gameplay loop with a cat as the player character. It supports keyboard and touch input, four cat color variants, three mountain themes (Alps, Rockies, Himalayas), Web Audio synthesized sound, bilingual flavor text (English and rioplatense Spanish), and a tunable difficulty system with two sliders and four named presets. It is installable as a PWA and runs offline after first visit. The entire game is approximately 145 KB of vanilla HTML, CSS, and JavaScript. Hosted on Vercel, source on GitHub.
+
+## Pages
+
+- [Play Cat Ski](https://ski.mike-lee.me/): The game itself. Loads in a browser and is playable on desktop or mobile.
+- [How to Use Claude to Build a Browser Game](https://ski.mike-lee.me/readme.html): A walkthrough article covering the project's stack, per-element design criteria, the workflow used to build it with Claude as a design collaborator, the photography-derived color palette approach for the three mountain themes, and a free toolchain readers can use to build a similar project.
+
+## About the project
+
+- Author: Mike Lee (Whisker Leaks)
+- LinkedIn: https://www.linkedin.com/in/mikelee89/
+- Source code: https://github.com/ashtonmorrow/cat-ski
+- License: open source (see repository)
+- Inspiration: SkiFree (1991, Microsoft Entertainment Pack 3 for Windows 3.0)
+- Stack: vanilla HTML, CSS, and JavaScript; HTML5 Canvas; Web Audio API; no build step; no framework; no runtime dependencies beyond Google Fonts
+- Hosting: Vercel, deployed automatically from the GitHub repository
+- PWA: installable on iOS, Android, and desktop via the in-app INSTALL button
+
+## Optional
+
+- [GitHub repository](https://github.com/ashtonmorrow/cat-ski): Issues, forks, and pull requests welcome.
+- [Mike Lee on LinkedIn](https://www.linkedin.com/in/mikelee89/): Project author contact.
