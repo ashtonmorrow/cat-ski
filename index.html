@@ -1835,26 +1835,43 @@
     if (!yeti) return;
     yeti.rage += 0.2;
 
-    // Home in on player's x; move down faster than player's speed
-    // in open terrain, slower when player is tucking hard.
+    // Track player's x with capped horizontal speed. Player's max
+    // horizontal speed is ~1.75 (faster), so a well-timed juke breaks
+    // the dog's tracking.
     const targetX = player.x;
     const dx = targetX - yeti.x;
     yeti.vx = Math.sign(dx) * Math.min(Math.abs(dx) * 0.04, 1.4);
     yeti.x += yeti.vx;
 
-    // Yeti's downward speed in world = a bit less than player speed,
-    // so it slowly closes the gap when you're not at max tuck.
-    const yetiWorldSpeed = player.speed + 0.35 - (keys.down ? 0.9 : 0);
-    yeti.y += yetiWorldSpeed;
+    // Dog ALWAYS moves down on screen relative to the camera. Tucking
+    // can't push it back off the top anymore — the dog will reach the
+    // player's screen-y in a few seconds no matter what. The player's
+    // only escape is to be horizontally clear in that moment.
+    yeti.y += player.speed + 0.5;
 
-    // If yeti overtakes player in world Y and they're close in X => grab.
+    // Grab: tight hit zone around the player. If the dog passes through
+    // while the player is even a few pixels to the side, it whiffs.
+    // Jumping (player.air > 0) still grants brief immunity.
     const py = worldY + player.screenY;
-    if (yeti.y > py - 6 && Math.abs(yeti.x - player.x) < 12 && !player.grabbed && player.air <= 0) {
+    const yDist = Math.abs(yeti.y - py);
+    const xDist = Math.abs(yeti.x - player.x);
+    if (yDist < 8 && xDist < 12 && !player.grabbed && player.air <= 0) {
       player.grabbed = true;
       yeti.state = 'grab';
       sfx.chomp();
       silenceSwoosh();
       endRun(msg('dog', 'titles'), msg('dog', 'subs'));
+      return;
+    }
+
+    // Survived the pass: dog continues off the bottom of the screen and
+    // gives up. Clear the warning and reward the player with a green
+    // "PHEW!" float text. One dog per run for now — they don't return.
+    const yetiScreenY = yeti.y - worldY;
+    if (yetiScreenY > H + 30) {
+      yeti = null;
+      hudWarning.style.display = 'none';
+      spawnFloatText('PHEW!', player.x, worldY + player.screenY - 14, '#6ed26b');
     }
   }
 
