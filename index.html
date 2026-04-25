@@ -1778,40 +1778,47 @@
     g.fill();
   }
 
+  // Palettes tuned to how these ranges actually photograph.
+  //   Alps:     cool crisp blue snow, deep emerald Norway spruce,
+  //             granite-gray peaks fading blue with atmospheric haze.
+  //   Rockies:  warm afternoon light on sandstone/granite, slightly
+  //             bluer-green lodgepole pine, rust-toned distant peaks.
+  //   Himalayas:deep saturated alpine sky, brilliant white snow, near-
+  //             black slate rock, sparse dusty juniper at low elevation.
   const THEMES = {
     alps: {
       name: 'ALPS',
-      sky:    { top: '#f4faff', bottom: '#d8e7f5' },
-      slope:  '#eaf4ff',
-      fleck:  'rgba(140,170,195,0.35)',
-      band:   'rgba(150,180,205,0.10)',
-      tree:   { L: '#2d8a4a', M: '#1f6b3a', D: '#0f4424', DD: '#07291a' },
+      sky:    { top: '#bcd1e3', bottom: '#e6ecf2' },        // crisp blue → pale near horizon
+      slope:  '#e7edf3',                                     // cool blue-white snow
+      fleck:  'rgba(95,130,165,0.38)',                       // shadowed snow texture
+      band:   'rgba(80,115,150,0.10)',
+      tree:   { L: '#3d8a4f', M: '#266a37', D: '#143d1e', DD: '#0a2410' },  // Norway spruce
       dog:    'shepherd',
       // (back, mid, front) layered for parallax depth in the picker
       peaks:  ['montblanc', 'matterhorn', 'eiger'],
-      peakColors: ['#7d8a99', '#525e6c', '#1f2632'],
+      peakColors: ['#9aacbe', '#5e6e82', '#2c3848'],         // atmospheric → granite shadow
     },
     rockies: {
       name: 'ROCKIES',
-      sky:    { top: '#fff3e0', bottom: '#f0d8b8' },
-      slope:  '#f5ecd8',
-      fleck:  'rgba(180,160,130,0.30)',
-      band:   'rgba(160,130,100,0.10)',
-      tree:   { L: '#4cae5e', M: '#2f8042', D: '#1a4828', DD: '#0d2a18' },
+      sky:    { top: '#c8d8e6', bottom: '#ecdcc0' },         // clean blue → warm horizon haze
+      slope:  '#f1e8d6',                                     // warm-tinted snow
+      fleck:  'rgba(150,115,80,0.28)',                       // earth flecks
+      band:   'rgba(125,95,70,0.10)',
+      tree:   { L: '#3f8650', M: '#235838', D: '#0f351c', DD: '#061e0e' },  // lodgepole pine
       dog:    'pitbull',
       peaks:  ['pikespeak', 'longspeak', 'teton'],
-      peakColors: ['#a08a72', '#6f5b48', '#2a1f17'],
+      peakColors: ['#bda28a', '#7c5e44', '#3a261a'],         // sandstone → rust → deep brown
     },
     himalayas: {
       name: 'HIMALAYAS',
-      sky:    { top: '#dde6f5', bottom: '#a0b0c8' },
-      slope:  '#f2f6fc',
-      fleck:  'rgba(110,140,170,0.40)',
-      band:   'rgba(100,120,150,0.12)',
-      tree:   { L: '#6b7a5a', M: '#4a5644', D: '#2c3328', DD: '#15180f' },
+      sky:    { top: '#5d8db4', bottom: '#bcd0e0' },         // deep alpine blue → paler horizon
+      slope:  '#f6f9fd',                                     // brilliant clean snow
+      fleck:  'rgba(70,110,160,0.48)',                       // strong blue shadow texture
+      band:   'rgba(60,100,150,0.18)',
+      tree:   { L: '#6c7a52', M: '#485640', D: '#2a3226', DD: '#14180f' },  // dusty juniper scrub
       dog:    'doggo',
       peaks:  ['annapurna', 'k2', 'everest'],
-      peakColors: ['#8390a0', '#4f5662', '#1a1f28'],
+      peakColors: ['#788898', '#3e4a58', '#161c24'],         // dramatic dark slate
     },
   };
 
