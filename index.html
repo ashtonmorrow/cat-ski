@@ -778,25 +778,43 @@
     &#9660; SHOW CONTROLS
   </button>
 
-  <!-- Cat color picker: each button shows the actual rendered cat -->
-  <div class="cat-picker" role="radiogroup" aria-label="Cat color">
-    <span class="cat-picker-label">CAT</span>
-    <button class="cat-swatch" data-cat="black"  aria-label="Black cat">
-      <canvas width="48" height="48"></canvas>
-      <span class="cat-name">BLACK</span>
-    </button>
-    <button class="cat-swatch" data-cat="tabby"  aria-label="Tabby cat">
-      <canvas width="48" height="48"></canvas>
-      <span class="cat-name">TABBY</span>
-    </button>
-    <button class="cat-swatch" data-cat="calico" aria-label="Calico cat">
-      <canvas width="48" height="48"></canvas>
-      <span class="cat-name">CALICO</span>
-    </button>
-    <button class="cat-swatch" data-cat="orange" aria-label="Orange cat">
-      <canvas width="48" height="48"></canvas>
-      <span class="cat-name">ORANGE</span>
-    </button>
+  <!-- Cat + Theme pickers on one row. Each swatch renders a tiny preview
+       (cats use the actual cat sprite; themes use a mini scene). -->
+  <div class="cat-picker combo-picker">
+    <div class="sub-picker" role="radiogroup" aria-label="Cat color">
+      <span class="cat-picker-label">CAT</span>
+      <button class="cat-swatch" data-cat="black"  aria-label="Black cat">
+        <canvas width="48" height="48"></canvas>
+        <span class="cat-name">BLACK</span>
+      </button>
+      <button class="cat-swatch" data-cat="tabby"  aria-label="Tabby cat">
+        <canvas width="48" height="48"></canvas>
+        <span class="cat-name">TABBY</span>
+      </button>
+      <button class="cat-swatch" data-cat="calico" aria-label="Calico cat">
+        <canvas width="48" height="48"></canvas>
+        <span class="cat-name">CALICO</span>
+      </button>
+      <button class="cat-swatch" data-cat="orange" aria-label="Orange cat">
+        <canvas width="48" height="48"></canvas>
+        <span class="cat-name">ORANGE</span>
+      </button>
+    </div>
+    <div class="sub-picker" role="radiogroup" aria-label="Mountain theme">
+      <span class="cat-picker-label">PEAK</span>
+      <button class="cat-swatch" data-theme="alps" aria-label="Alps">
+        <canvas width="48" height="48"></canvas>
+        <span class="cat-name">ALPS</span>
+      </button>
+      <button class="cat-swatch" data-theme="rockies" aria-label="Rockies">
+        <canvas width="48" height="48"></canvas>
+        <span class="cat-name">ROCKIES</span>
+      </button>
+      <button class="cat-swatch" data-theme="himalayas" aria-label="Himalayas">
+        <canvas width="48" height="48"></canvas>
+        <span class="cat-name">HIMALAYAS</span>
+      </button>
+    </div>
   </div>
 
   <!-- Quick preset buttons. Each one snaps both sliders to canonical
@@ -1693,13 +1711,65 @@
       if (!c) return;
       const pctx = c.getContext('2d');
       pctx.clearRect(0, 0, c.width, c.height);
-      const palette = CAT_PALETTES[btn.dataset.cat];
-      // Render at scale ~2.7 centered; pose=front shows eyes & whiskers.
-      // Y is shifted down so head + ears fit and the body lands lower.
-      drawCat(pctx, c.width / 2, c.height / 2 + 9, 2.7, palette, { pose: 'front' });
+      // Cat swatches: render the actual cat sprite at the right scale.
+      if (btn.dataset.cat) {
+        const palette = CAT_PALETTES[btn.dataset.cat];
+        drawCat(pctx, c.width / 2, c.height / 2 + 9, 2.7, palette, { pose: 'front' });
+        return;
+      }
+      // Theme swatches: render a tiny pixel scene using the theme palette
+      // (sky gradient, slope, a tree silhouette).
+      if (btn.dataset.theme) {
+        drawThemePreview(pctx, c.width, c.height, THEMES[btn.dataset.theme]);
+      }
     });
   }
+
+  // Mini scene rendered into a 48x48 swatch. Sky/slope gradient, a far
+  // mountain silhouette as a triangle, and a single tree to suggest the
+  // theme's vegetation density and color.
+  function drawThemePreview(g, w, h, T) {
+    // Sky gradient
+    const grad = g.createLinearGradient(0, 0, 0, h);
+    grad.addColorStop(0, T.sky.top);
+    grad.addColorStop(1, T.sky.bottom);
+    g.fillStyle = grad;
+    g.fillRect(0, 0, w, h);
+    // Distant mountain triangle (uses tree-darkest as silhouette)
+    g.fillStyle = T.tree.D;
+    g.beginPath();
+    g.moveTo(0, h * 0.65);
+    g.lineTo(w * 0.45, h * 0.20);
+    g.lineTo(w * 0.65, h * 0.45);
+    g.lineTo(w * 0.85, h * 0.30);
+    g.lineTo(w, h * 0.55);
+    g.lineTo(w, h * 0.7);
+    g.lineTo(0, h * 0.7);
+    g.closePath();
+    g.fill();
+    // Slope
+    g.fillStyle = T.slope;
+    g.fillRect(0, h * 0.7, w, h * 0.3);
+    // Tree
+    const tx = Math.floor(w * 0.7);
+    const ty = Math.floor(h * 0.78);
+    g.fillStyle = T.tree.D;
+    g.fillRect(tx - 4, ty - 2, 8, 4);
+    g.fillRect(tx - 3, ty - 5, 6, 3);
+    g.fillRect(tx - 2, ty - 7, 4, 2);
+    g.fillStyle = T.tree.M;
+    g.fillRect(tx - 3, ty - 2, 6, 1);
+    g.fillStyle = '#3a2418';
+    g.fillRect(tx - 1, ty + 2, 2, 2);
+  }
+
   renderPickerPreviews();
+
+  // Wire theme swatches
+  document.querySelectorAll('[data-theme]').forEach(btn => {
+    btn.addEventListener('click', () => setTheme(btn.dataset.theme));
+  });
+  setTheme(mtnTheme);
 
   // ---------- difficulty ----------
   // Four preset "moods" layered on top of the core difficulty ramp.
@@ -1713,6 +1783,53 @@
   // snowmanMin / snowmanWindow: snowman rolls into this window. Always
   // scheduled AFTER yetiSeconds so players get a dog-chase phase first.
   // startSpeed   initial player speed at t=0
+  // ---------- mountain themes ----------
+  // Pure cosmetic. Each theme defines a palette for the sky, slope,
+  // trees, and which dog breed chases the cat. Themes don't affect
+  // gameplay difficulty — that's the slider's job.
+  const THEMES = {
+    alps: {
+      name: 'ALPS',
+      sky:    { top: '#f4faff', bottom: '#d8e7f5' },
+      slope:  '#eaf4ff',
+      fleck:  'rgba(140,170,195,0.35)',
+      band:   'rgba(150,180,205,0.10)',
+      tree:   { L: '#2d8a4a', M: '#1f6b3a', D: '#0f4424', DD: '#07291a' },
+      dog:    'shepherd',
+    },
+    rockies: {
+      name: 'ROCKIES',
+      sky:    { top: '#fff3e0', bottom: '#f0d8b8' },   // warm dawn
+      slope:  '#f5ecd8',
+      fleck:  'rgba(180,160,130,0.30)',
+      band:   'rgba(160,130,100,0.10)',
+      tree:   { L: '#4cae5e', M: '#2f8042', D: '#1a4828', DD: '#0d2a18' },  // saturated greens
+      dog:    'pitbull',
+    },
+    himalayas: {
+      name: 'HIMALAYAS',
+      sky:    { top: '#dde6f5', bottom: '#a0b0c8' },   // austere cool
+      slope:  '#f2f6fc',
+      fleck:  'rgba(110,140,170,0.40)',
+      band:   'rgba(100,120,150,0.12)',
+      tree:   { L: '#6b7a5a', M: '#4a5644', D: '#2c3328', DD: '#15180f' },  // dusty muted
+      dog:    'doggo',
+    },
+  };
+
+  let mtnTheme = localStorage.getItem('skior_theme') || 'alps';
+  if (!THEMES[mtnTheme]) mtnTheme = 'alps';
+  function curTheme() { return THEMES[mtnTheme]; }
+
+  function setTheme(name) {
+    if (!THEMES[name]) return;
+    mtnTheme = name;
+    localStorage.setItem('skior_theme', name);
+    document.querySelectorAll('[data-theme]').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.theme === name);
+    });
+  }
+
   // Difficulty is now driven by two sliders:
   //   intensity: 0.8 - 5.0 (default 1.0). Scales speed, density,
   //              spawn cadence, dog tracking. Linear-ish — see diff().
@@ -2476,22 +2593,23 @@
   function toScreenY(wy) { return wy - worldY; }
 
   function drawBackground() {
-    // Snow field with very soft vertical gradient + faint scroll lines
+    const T = curTheme();
+    // Snow field with theme-tinted vertical gradient + faint scroll lines
     const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, '#f4faff');
-    g.addColorStop(1, '#d8e7f5');
+    g.addColorStop(0, T.sky.top);
+    g.addColorStop(1, T.sky.bottom);
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
 
     // Subtle moving snow flecks tied to worldY
-    ctx.fillStyle = 'rgba(140,170,195,0.35)';
+    ctx.fillStyle = T.fleck;
     for (let i = 0; i < 40; i++) {
       const fx = (i * 97) % W;
       const fy = ((i * 53) + (worldY * 0.7)) % H;
       ctx.fillRect(fx, fy, 1, 1);
     }
     // Slope shading bands
-    ctx.fillStyle = 'rgba(150,180,205,0.10)';
+    ctx.fillStyle = T.band;
     for (let y = -((worldY * 0.5) % 48); y < H; y += 48) {
       ctx.fillRect(0, y, W, 2);
     }
@@ -2509,10 +2627,14 @@
 
   function drawTree(x, y) {
     // Layered pine with bushy branches, snow dusting, cast shadow.
-    const pineL = '#2d8a4a';    // sunlit needles
-    const pineM = '#1f6b3a';    // mid tone
-    const pineD = '#0f4424';    // shadow side
-    const pineDD = '#07291a';   // deepest shadow
+    // Needle palette comes from the active mountain theme so trees
+    // tint toward their region's vegetation (saturated green in the
+    // Rockies, dusty muted in the Himalayas, classic alpine pine).
+    const T = curTheme();
+    const pineL  = T.tree.L;
+    const pineM  = T.tree.M;
+    const pineD  = T.tree.D;
+    const pineDD = T.tree.DD;
     const trunkL = '#5a3a1f';
     const trunkD = '#2a1708';
 
@@ -3133,9 +3255,41 @@
     }
   }
 
+  // Breed palettes. Each entry chooses fur tones, paw/chest accent,
+  // eye color, and a few shape flags read by drawYeti below to give
+  // each region's dog a distinct silhouette.
+  const DOG_BREEDS = {
+    // Alps — German Shepherd. Tan body with a black saddle on the back,
+    // upright pointed ears, bushy tail down behind.
+    shepherd: {
+      fur: '#a06d2a', furLt: '#caa050', furDk: '#1a0e06',
+      paw: '#e0b070', chest: '#e8c188',
+      eye: '#ff3b30', tongue: '#ff6b8a',
+      saddle: true, earUpright: true, tailBushy: true, blocky: false,
+    },
+    // Rockies — Pitbull. Gray coat with white paws, blocky head,
+    // small pointed ears, short stubby tail.
+    pitbull: {
+      fur: '#9a9088', furLt: '#bfb5ac', furDk: '#3a342e',
+      paw: '#fdfaf0', chest: '#ffffff',
+      eye: '#ff3b30', tongue: '#ff6b8a',
+      saddle: false, earUpright: false, tailBushy: false, blocky: true,
+    },
+    // Himalayas — Husky / "doggo." Pale gray-white coat with dark mask,
+    // upright triangular ears, blue eyes, curled tail up over back.
+    doggo: {
+      fur: '#d6d8df', furLt: '#f0f4ff', furDk: '#3a3d44',
+      paw: '#ffffff', chest: '#ffffff',
+      eye: '#5ec8e0', tongue: '#ff6b8a',
+      saddle: false, earUpright: true, tailBushy: true, blocky: false,
+      curlTail: true, mask: true,
+    },
+  };
+
   function drawYeti() {
     // The chaser is a dog. (Variable names kept as "yeti" for continuity
-    // with the rest of the code -- it's the same chase mechanic.)
+    // with the rest of the code -- it's the same chase mechanic.) Breed
+    // is chosen by the active mountain theme.
     if (!yeti) return;
     const sy = toScreenY(yeti.y);
     if (sy < -40 || sy > H + 40) return;
@@ -3146,12 +3300,12 @@
     const step = Math.sin(yeti.rage) > 0 ? 1 : -1;
     const bob  = Math.round(Math.sin(yeti.rage * 2) * 1);
 
-    // Dog colors: brown doberman-ish palette so it reads well on snow
-    const fur   = '#6b3f1f';
-    const furLt = '#8a5a32';
-    const furDk = '#3d2410';
-    const tan   = '#c99060';
-    const tongue = '#ff6b8a';
+    const B = DOG_BREEDS[curTheme().dog] || DOG_BREEDS.shepherd;
+    const fur    = B.fur;
+    const furLt  = B.furLt;
+    const furDk  = B.furDk;
+    const tan    = B.paw;
+    const tongue = B.tongue;
 
     // Shadow
     ctx.fillStyle = 'rgba(60,90,120,0.35)';
@@ -3171,27 +3325,62 @@
     ctx.fillRect(sx - 4, y + 11 + (step > 0 ? 2 : 0), 2, 1);
     ctx.fillRect(sx + 2, y + 11 + (step > 0 ? 0 : 2), 2, 1);
 
-    // Body (barrel shape)
+    // Body (barrel shape — wider for blocky breeds like pitbull)
+    const bodyW = B.blocky ? 16 : 14;
+    const bodyL = -(bodyW / 2);
     ctx.fillStyle = fur;
-    ctx.fillRect(sx - 7, y + 2 + bob, 14, 7);
+    ctx.fillRect(sx + bodyL, y + 2 + bob, bodyW, 7);
     ctx.fillStyle = furLt;
-    ctx.fillRect(sx - 6, y + 2 + bob, 12, 2);   // back highlight
+    ctx.fillRect(sx + bodyL + 1, y + 2 + bob, bodyW - 2, 2);   // back highlight
     ctx.fillStyle = furDk;
-    ctx.fillRect(sx - 7, y + 8 + bob, 14, 1);   // underbelly shadow
-    // Chest tan
-    ctx.fillStyle = tan;
+    ctx.fillRect(sx + bodyL, y + 8 + bob, bodyW, 1);           // underbelly shadow
+    // Saddle pattern (German Shepherd) — black/dark stripe along the back
+    if (B.saddle) {
+      ctx.fillStyle = '#1a0a0a';
+      ctx.fillRect(sx + bodyL + 1, y + 2 + bob, bodyW - 2, 3);
+      ctx.fillRect(sx - 3, y + 5 + bob, 6, 1);
+    }
+    // Chest accent
+    ctx.fillStyle = B.chest;
     ctx.fillRect(sx - 2, y + 6 + bob, 4, 3);
 
-    // Tail wagging (left/right per step)
-    ctx.fillStyle = fur;
-    ctx.fillRect(sx + 6, y + 2 + bob, 2, 2);
-    ctx.fillRect(sx + 7, y + (step > 0 ? 0 : 4) + bob, 2, 2);
+    // Tail — three styles:
+    //   curlTail (husky):    tail curls up over the back
+    //   tailBushy (shepherd): straight back, slight wag
+    //   default (pitbull):   short stub
+    if (B.curlTail) {
+      // Curled up over back: vertical stack of pixels with curl back over body
+      ctx.fillStyle = fur;
+      ctx.fillRect(sx + 6, y + 1 + bob, 2, 2);
+      ctx.fillRect(sx + 7, y - 1 + bob, 2, 2);
+      ctx.fillRect(sx + 5, y - 2 + bob, 2, 2);
+      ctx.fillRect(sx + 3, y - 1 + bob, 2, 1);
+      ctx.fillStyle = furLt;
+      px(sx + 6, y - 1 + bob, furLt);
+    } else if (B.tailBushy) {
+      ctx.fillStyle = fur;
+      ctx.fillRect(sx + 6, y + 2 + bob, 3, 2);
+      ctx.fillRect(sx + 8, y + (step > 0 ? 0 : 4) + bob, 2, 3);
+      ctx.fillStyle = furDk;
+      px(sx + 9, y + (step > 0 ? 0 : 4) + bob, furDk);
+    } else {
+      // Short stub
+      ctx.fillStyle = fur;
+      ctx.fillRect(sx + 6, y + 2 + bob, 2, 2);
+    }
 
-    // Head (tilted down, lunging)
+    // Head (slightly wider for blocky breeds)
+    const headW = B.blocky ? 12 : 10;
+    const headL = -(headW / 2);
     ctx.fillStyle = fur;
-    ctx.fillRect(sx - 5, y - 3 + bob, 10, 6);
+    ctx.fillRect(sx + headL, y - 3 + bob, headW, 6);
     ctx.fillStyle = furLt;
-    ctx.fillRect(sx - 5, y - 3 + bob, 10, 1);
+    ctx.fillRect(sx + headL, y - 3 + bob, headW, 1);
+    // Husky face mask: dark over the eyes/forehead
+    if (B.mask) {
+      ctx.fillStyle = furDk;
+      ctx.fillRect(sx - 4, y - 1 + bob, 8, 2);
+    }
     // Snout
     ctx.fillStyle = fur;
     ctx.fillRect(sx - 2, y + 3 + bob, 6, 3);
@@ -3207,8 +3396,8 @@
     ctx.fillStyle = '#ffffff';
     px(sx + 2, y + 5 + bob, '#ffffff');
 
-    // Eyes: angry, red
-    ctx.fillStyle = '#ff3b30';
+    // Eyes — color depends on breed (husky = blue!)
+    ctx.fillStyle = B.eye;
     ctx.fillRect(sx - 3, y + bob, 2, 2);
     ctx.fillRect(sx + 1, y + bob, 2, 2);
     // pupils
@@ -3220,15 +3409,31 @@
     ctx.fillRect(sx - 4, y - 1 + bob, 3, 1);
     ctx.fillRect(sx + 2, y - 1 + bob, 3, 1);
 
-    // Floppy ears
-    ctx.fillStyle = furDk;
-    ctx.fillRect(sx - 6, y - 3 + bob, 2, 4);
-    ctx.fillRect(sx + 4, y - 3 + bob, 2, 4);
-    ctx.fillStyle = fur;
-    px(sx - 6, y + bob, fur);
-    px(sx + 5, y + bob, fur);
+    // Ears — upright triangular for shepherd/husky, smaller pointed flop
+    // for pitbull (the iconic short pit ears).
+    if (B.earUpright) {
+      // Tall pointed ears poking up
+      ctx.fillStyle = furDk;
+      ctx.fillRect(sx - 6, y - 5 + bob, 2, 4);
+      ctx.fillRect(sx + 4, y - 5 + bob, 2, 4);
+      ctx.fillStyle = fur;
+      px(sx - 5, y - 4 + bob, fur);
+      px(sx + 5, y - 4 + bob, fur);
+      // Inner ear pink
+      ctx.fillStyle = '#d68888';
+      px(sx - 5, y - 3 + bob, '#d68888');
+      px(sx + 5, y - 3 + bob, '#d68888');
+    } else {
+      // Smaller folded/pointed pitbull ears
+      ctx.fillStyle = furDk;
+      ctx.fillRect(sx - 6, y - 3 + bob, 2, 3);
+      ctx.fillRect(sx + 4, y - 3 + bob, 2, 3);
+      ctx.fillStyle = fur;
+      px(sx - 6, y + bob, fur);
+      px(sx + 5, y + bob, fur);
+    }
 
-    // Red collar
+    // Red collar (universal — Spike from Tom & Jerry energy)
     ctx.fillStyle = '#c8102e';
     ctx.fillRect(sx - 3, y + 2 + bob, 6, 1);
     ctx.fillStyle = '#ffcc00';
