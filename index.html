@@ -2721,11 +2721,20 @@
     }
   }
 
+  // Tree dispatch — pick the regional species based on active theme.
+  // Each variant uses the theme's own needle palette so colors stay
+  // consistent with sky/slope tones, but the silhouette differs:
+  //   Alps:      Norway Spruce — dense conical, pointed.
+  //   Rockies:   Lodgepole Pine — taller, narrower, sparser branches.
+  //   Himalayas: Stunted Juniper / krummholz — short, gnarled, multi-tipped.
   function drawTree(x, y) {
-    // Layered pine with bushy branches, snow dusting, cast shadow.
-    // Needle palette comes from the active mountain theme so trees
-    // tint toward their region's vegetation (saturated green in the
-    // Rockies, dusty muted in the Himalayas, classic alpine pine).
+    if (mtnTheme === 'rockies')   return drawLodgepolePine(x, y);
+    if (mtnTheme === 'himalayas') return drawJuniper(x, y);
+    return drawSpruce(x, y);
+  }
+
+  function drawSpruce(x, y) {
+    // Layered Norway spruce — dense conical, classic European alpine.
     const T = curTheme();
     const pineL  = T.tree.L;
     const pineM  = T.tree.M;
@@ -2813,9 +2822,140 @@
     px(x - 3, y + 5, '#ffffff');
   }
 
+  function drawLodgepolePine(x, y) {
+    // Tall narrow pine with a clearly visible trunk between sparse
+    // branch tiers. Reads as American Western lodgepole/ponderosa.
+    const T = curTheme();
+    const needL  = T.tree.L;
+    const needM  = T.tree.M;
+    const needD  = T.tree.D;
+    const needDD = T.tree.DD;
+    const trunkL = '#6e4422';
+    const trunkD = '#2a1708';
+
+    // Cast shadow
+    ctx.fillStyle = 'rgba(40,60,80,0.28)';
+    ctx.fillRect(x - 5, y + 10, 10, 2);
+
+    // Trunk (more visible than spruce — runs the full height of the tree)
+    ctx.fillStyle = trunkD;
+    ctx.fillRect(x - 1, y - 8, 3, 18);
+    ctx.fillStyle = trunkL;
+    ctx.fillRect(x - 1, y - 8, 1, 18);   // sunlit side
+    // base widening
+    ctx.fillStyle = trunkD;
+    ctx.fillRect(x - 2, y + 9, 5, 2);
+
+    // Sparse branch tiers — narrower and fewer than spruce
+    // Bottom tier
+    ctx.fillStyle = needDD;
+    ctx.fillRect(x - 6, y + 5, 12, 3);
+    ctx.fillStyle = needD;
+    ctx.fillRect(x - 6, y + 4, 12, 2);
+    ctx.fillStyle = needM;
+    ctx.fillRect(x - 5, y + 4, 10, 1);
+    ctx.fillStyle = needL;
+    ctx.fillRect(x - 4, y + 4, 4, 1);
+    // Middle tier (visible trunk gap above & below)
+    ctx.fillStyle = needDD;
+    ctx.fillRect(x - 5, y + 0, 10, 3);
+    ctx.fillStyle = needD;
+    ctx.fillRect(x - 5, y - 1, 10, 2);
+    ctx.fillStyle = needM;
+    ctx.fillRect(x - 4, y - 1, 8, 1);
+    // Upper tier (small)
+    ctx.fillStyle = needDD;
+    ctx.fillRect(x - 3, y - 5, 6, 3);
+    ctx.fillStyle = needD;
+    ctx.fillRect(x - 3, y - 6, 6, 2);
+    ctx.fillStyle = needM;
+    ctx.fillRect(x - 2, y - 6, 4, 1);
+    // Pointed tip
+    ctx.fillStyle = needD;
+    ctx.fillRect(x - 1, y - 9, 2, 3);
+    ctx.fillStyle = needM;
+    px(x - 1, y - 9, needM);
+    ctx.fillStyle = needL;
+    px(x - 1, y - 10, needL);
+
+    // Light snow dusting (less than spruce — pines shed snow more)
+    ctx.fillStyle = '#ffffff';
+    px(x - 1, y - 10, '#ffffff');
+    px(x + 2, y - 5, '#ffffff');
+    px(x - 3, y - 1, '#ffffff');
+    ctx.fillRect(x + 3, y + 4, 2, 1);
+  }
+
+  function drawJuniper(x, y) {
+    // Stunted high-altitude juniper / krummholz. Short, gnarled, asymmetric
+    // — wind-shaped silhouette characteristic of Himalayan tree line.
+    const T = curTheme();
+    const needL  = T.tree.L;
+    const needM  = T.tree.M;
+    const needD  = T.tree.D;
+    const needDD = T.tree.DD;
+    const trunkD = '#3a2410';
+
+    // Cast shadow (wider, lower — squat tree)
+    ctx.fillStyle = 'rgba(40,60,80,0.28)';
+    ctx.fillRect(x - 8, y + 9, 16, 2);
+
+    // Short gnarled trunk
+    ctx.fillStyle = trunkD;
+    ctx.fillRect(x - 2, y + 5, 4, 5);
+    // base flare
+    ctx.fillRect(x - 3, y + 9, 6, 1);
+
+    // Bushy asymmetric foliage — wider than tall, multi-tipped
+    // Lower mass (broad)
+    ctx.fillStyle = needDD;
+    ctx.fillRect(x - 8, y + 2, 16, 4);
+    ctx.fillStyle = needD;
+    ctx.fillRect(x - 8, y + 1, 16, 3);
+    ctx.fillStyle = needM;
+    ctx.fillRect(x - 7, y + 1, 14, 2);
+    // Middle layer (offset to suggest wind-lean)
+    ctx.fillStyle = needDD;
+    ctx.fillRect(x - 6, y - 2, 13, 4);
+    ctx.fillStyle = needD;
+    ctx.fillRect(x - 6, y - 3, 13, 3);
+    ctx.fillStyle = needM;
+    ctx.fillRect(x - 5, y - 3, 11, 2);
+    ctx.fillStyle = needL;
+    ctx.fillRect(x - 4, y - 3, 5, 1);
+    // Two distinct tips (multi-headed crown)
+    ctx.fillStyle = needD;
+    ctx.fillRect(x - 4, y - 5, 4, 2);
+    ctx.fillRect(x + 1, y - 6, 4, 3);
+    ctx.fillStyle = needM;
+    px(x - 3, y - 5, needM);
+    px(x + 2, y - 6, needM);
+    // Wind-bent twig peeking out the right
+    ctx.fillStyle = needDD;
+    px(x + 6, y - 1, needDD);
+    px(x + 7, y - 1, needDD);
+
+    // Sparse snow lodged in the foliage
+    ctx.fillStyle = '#ffffff';
+    px(x - 5, y - 2, '#ffffff');
+    px(x + 4, y - 2, '#ffffff');
+    px(x - 7, y + 2, '#ffffff');
+    px(x + 6, y + 2, '#ffffff');
+    px(x + 2, y - 5, '#ffffff');
+  }
+
+  // Rock dispatch — same logic as drawTree. Per theme:
+  //   Alps:      pine log (current default).
+  //   Rockies:   aspen log — white bark with iconic black scars.
+  //   Himalayas: granite boulder — bare rock, no logs at altitude.
   function drawRock(x, y) {
-    // A fallen log lying across the slope: horizontal cylinder with
-    // wood grain on top, rings on the ends, and a cast shadow.
+    if (mtnTheme === 'rockies')   return drawAspenLog(x, y);
+    if (mtnTheme === 'himalayas') return drawBoulder(x, y);
+    return drawPineLog(x, y);
+  }
+
+  function drawPineLog(x, y) {
+    // Default: a fallen pine log lying across the slope.
     // (Variable name "drawRock" kept because collision type is 'rock'.)
     const woodDk = '#3a2212';
     const wood   = '#6b3f1e';
@@ -2867,6 +3007,105 @@
     px(x + 5, y + 2, '#4a6b2a');
   }
 
+  function drawAspenLog(x, y) {
+    // Iconic American Rocky Mountain tree: Quaking Aspen.
+    // White bark with horizontal black "eye" scars at branch knots.
+    const barkLt  = '#ece5d3';   // pale aspen bark
+    const barkMd  = '#cdc4ad';   // mid tone (slight shadow)
+    const barkDk  = '#8a8472';   // bottom shadow
+    const scar    = '#1a1614';   // black eye scars
+    const heart   = '#9a7a52';   // exposed wood at end caps
+
+    // shadow under the log
+    ctx.fillStyle = 'rgba(40,60,80,0.3)';
+    ctx.fillRect(x - 9, y + 4, 18, 2);
+
+    // main log body — pale bark
+    ctx.fillStyle = barkLt;
+    ctx.fillRect(x - 8, y - 2, 16, 6);
+    // top highlight
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(x - 7, y - 3, 14, 2);
+    // mid-bark tone band
+    ctx.fillStyle = barkMd;
+    ctx.fillRect(x - 8, y + 1, 16, 2);
+    // bottom shadow
+    ctx.fillStyle = barkDk;
+    ctx.fillRect(x - 8, y + 3, 16, 1);
+
+    // Black scar marks — the aspen's signature "eyes". 3-4 placed
+    // irregularly along the trunk.
+    ctx.fillStyle = scar;
+    ctx.fillRect(x - 6, y - 1, 2, 1);
+    ctx.fillRect(x - 5, y,     1, 1);
+    ctx.fillRect(x + 1, y,     2, 1);
+    ctx.fillRect(x + 2, y + 1, 1, 1);
+    ctx.fillRect(x + 5, y - 1, 2, 1);
+    // a small horizontal scar
+    ctx.fillRect(x - 2, y + 2, 2, 1);
+
+    // End caps showing the heartwood (warm tan inside the white bark)
+    ctx.fillStyle = heart;
+    ctx.fillRect(x - 9, y - 2, 1, 6);
+    ctx.fillRect(x + 8, y - 2, 1, 6);
+    // tiny dark rings
+    ctx.fillStyle = '#5a4a30';
+    px(x - 9, y,     '#5a4a30');
+    px(x + 8, y,     '#5a4a30');
+
+    // snow cap on top
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(x - 6, y - 4, 12, 1);
+    ctx.fillRect(x - 4, y - 3, 2, 1);
+    ctx.fillRect(x + 1, y - 3, 3, 1);
+  }
+
+  function drawBoulder(x, y) {
+    // Bare granite boulder — Himalayan high altitude, no logs above
+    // tree line. Rounder profile than a log, slate gray with a few
+    // cracks and a snow cap.
+    const rockLt  = '#8a8e94';
+    const rockMd  = '#5a5e64';
+    const rockDk  = '#34383e';
+    const crack   = '#1a1c20';
+
+    // shadow
+    ctx.fillStyle = 'rgba(40,60,80,0.32)';
+    ctx.fillRect(x - 8, y + 4, 16, 2);
+
+    // main rock body — dome shape (wider at base)
+    ctx.fillStyle = rockMd;
+    ctx.fillRect(x - 8, y, 16, 4);
+    ctx.fillRect(x - 7, y - 2, 14, 2);
+    ctx.fillRect(x - 5, y - 4, 10, 2);
+    // sunlit highlight (top-left)
+    ctx.fillStyle = rockLt;
+    ctx.fillRect(x - 7, y, 2, 4);
+    ctx.fillRect(x - 6, y - 2, 4, 1);
+    ctx.fillRect(x - 4, y - 4, 4, 1);
+    // shadow side (bottom-right)
+    ctx.fillStyle = rockDk;
+    ctx.fillRect(x + 5, y + 1, 3, 3);
+    ctx.fillRect(x + 4, y + 3, 4, 1);
+
+    // Cracks — angular splits across the rock surface
+    ctx.fillStyle = crack;
+    ctx.fillRect(x - 3, y - 1, 1, 3);
+    px(x - 2, y - 2, crack);
+    ctx.fillRect(x + 1, y + 1, 2, 1);
+    ctx.fillRect(x + 3, y - 1, 1, 2);
+
+    // Snow cap on top — Himalayan snow accumulation
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(x - 4, y - 5, 8, 1);
+    ctx.fillRect(x - 3, y - 4, 6, 1);
+    ctx.fillRect(x - 2, y - 3, 2, 1);
+    ctx.fillRect(x + 1, y - 3, 2, 1);
+    // Small snow patches on the body
+    px(x - 6, y, '#ffffff');
+    px(x + 5, y - 2, '#ffffff');
+  }
+
   function drawFlag(x, y, side) {
     ctx.fillStyle = '#222';
     ctx.fillRect(x, y - 8, 1, 10);
@@ -2876,24 +3115,40 @@
     ctx.fillRect(x - 2, y + 2, 5, 1);
   }
 
+  // Theme-aware palettes for snow ramps/moguls. Same shape, slightly
+  // different snow tones to match the surrounding palette so jumps
+  // and moguls don't stand out as wrong-color obstacles.
+  const RAMP_PALETTES = {
+    alps:      { shadow:'rgba(100,130,160,0.45)', face:'#ffffff',          mid:'#b6cde0', top:'#8fb0c8' },
+    rockies:   { shadow:'rgba(140,110,80,0.40)',  face:'#fdf6e8',          mid:'#dccfb6', top:'#a89478' },
+    himalayas: { shadow:'rgba(70,110,150,0.50)',  face:'#f7faff',          mid:'#a8c0d8', top:'#6e8aa8' },
+  };
+  const MOGUL_PALETTES = {
+    alps:      { shadow:'rgba(100,130,160,0.35)', face:'#ffffff', mid:'#d8e7f5' },
+    rockies:   { shadow:'rgba(140,110,80,0.30)',  face:'#faf2dd', mid:'#e6d8be' },
+    himalayas: { shadow:'rgba(70,110,150,0.40)',  face:'#f5f9fd', mid:'#bccdde' },
+  };
+
   function drawJump(x, y) {
+    const P = RAMP_PALETTES[mtnTheme] || RAMP_PALETTES.alps;
     // ramp: light top, dark shadow behind
-    ctx.fillStyle = 'rgba(100,130,160,0.45)';
+    ctx.fillStyle = P.shadow;
     ctx.fillRect(x - 14, y + 2, 28, 3);
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = P.face;
     ctx.fillRect(x - 14, y - 2, 28, 4);
-    ctx.fillStyle = '#b6cde0';
+    ctx.fillStyle = P.mid;
     ctx.fillRect(x - 12, y - 4, 24, 2);
-    ctx.fillStyle = '#8fb0c8';
+    ctx.fillStyle = P.top;
     ctx.fillRect(x - 10, y - 5, 20, 1);
   }
 
   function drawMogul(x, y) {
-    ctx.fillStyle = 'rgba(100,130,160,0.35)';
+    const P = MOGUL_PALETTES[mtnTheme] || MOGUL_PALETTES.alps;
+    ctx.fillStyle = P.shadow;
     ctx.fillRect(x - 8, y + 2, 16, 2);
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = P.face;
     ctx.fillRect(x - 8, y - 1, 16, 3);
-    ctx.fillStyle = '#d8e7f5';
+    ctx.fillStyle = P.mid;
     ctx.fillRect(x - 6, y - 3, 12, 2);
   }
 
