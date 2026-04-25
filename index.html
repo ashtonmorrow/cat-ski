@@ -2232,15 +2232,40 @@
     spawnEscapeRamps();
   }
 
-  // Place two bonus jump ramps in the upcoming spawn region. Distances
-  // chosen so a cruise-speed player reaches them ~3 and ~5 seconds
-  // ahead, giving room for either fast or slow approach. Both are
-  // tagged bonus:true so the renderer + collision treat them specially.
+  // Place two bonus jump ramps inside the player's viable hit window —
+  // the range of distances where launching off the ramp lands them in
+  // mid-air during the dog's crossing moment. Window math:
+  //
+  //   framesUntilCross = (player.screenY + 30) / yeti.vySpeed
+  //     • screenY: player's fixed screen y (where the cat sits, ~113)
+  //     • +30:     dog's spawn offset above the camera
+  //     • vySpeed: dog's downward speed relative to the camera
+  //
+  //   bonus airMax = 60 frames. So the player is mid-air from t=0 to
+  //   t=60 after they hit a ramp. They want to be mid-air at t=framesUntilCross.
+  //
+  // Hittable distance window: [(framesUntilCross - 60) * speed,
+  //                            framesUntilCross * speed]
+  //
+  // We use the player's CURRENT speed as a proxy for what they'll
+  // continue at. Adapts to carving (slow) vs cruising vs tucking.
   function spawnEscapeRamps() {
+    if (!yeti) return;
+    const framesUntilCross = (player.screenY + 30) / yeti.vySpeed;
+    const speed = Math.max(player.speed, 0.7);    // floor for safety
+    const minDist = Math.max(80, (framesUntilCross - 60) * speed);
+    const maxDist = framesUntilCross * speed;
+    // Place near + far inside the viable window with a small bracket so
+    // the player can pick either depending on how their speed evolves.
+    const center = (minDist + maxDist) / 2;
+    const span   = (maxDist - minDist) * 0.35;
+    const near   = Math.max(80, center - span);
+    const far    = center + span;
+
     const playerWorldY = worldY + player.screenY;
     const ramps = [
-      { dist: 280, lateral: -36 },   // closer & left
-      { dist: 420, lateral:  44 },   // farther & right
+      { dist: near, lateral: -36 },
+      { dist: far,  lateral:  44 },
     ];
     ramps.forEach(p => {
       objects.push({
@@ -2248,7 +2273,7 @@
         bonus: true,
         x:     Math.max(20, Math.min(W - 20, player.x + p.lateral)),
         y:     playerWorldY + p.dist,
-        w:     34,                   // a touch wider than the regular 30
+        w:     34,
         h:     10,
         hit:   false,
       });
