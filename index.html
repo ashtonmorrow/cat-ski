@@ -388,6 +388,12 @@
     background: #1f2e44;
     color: var(--accent-2);
   }
+  /* INSTA preset gets the danger color when active */
+  .preset-btn[data-preset="insta"].active {
+    border-color: var(--accent);
+    box-shadow: 2px 2px 0 #000, 0 0 0 2px var(--accent) inset;
+    color: var(--accent);
+  }
 
   /* Retro-styled range slider (difficulty + dog count).
      Custom track and chunky square thumb to match the pixel aesthetic. */
@@ -433,6 +439,34 @@
     min-width: 30px;
     text-align: left;
   }
+
+  /* Symbol-based label (replaces text labels to keep the UI
+     language-agnostic). Bigger than the pixel-font labels because
+     emoji glyphs need room to read. */
+  .icon-label {
+    font-size: 18px;
+    line-height: 1;
+    margin-right: 4px;
+    cursor: default;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* Icon button (e.g. ⏸ ⟳). Wider character set support than the pixel
+     font, and centered so glyphs render on baseline. */
+  .icon-btn {
+    font-family: 'VT323', monospace;
+    font-size: 18px;
+    letter-spacing: 0;
+    padding: 4px 12px;
+    line-height: 1;
+    min-width: 40px;
+    text-align: center;
+  }
+
+  /* Binary slider — narrower than the difficulty slider since it only
+     has two positions. */
+  .toggle-slider { width: 50px; }
 
   /* Combo picker: two sub-groups (e.g. KEYS + TOUCH) on one line */
   .combo-picker { gap: 18px; flex-wrap: wrap; }
@@ -765,9 +799,18 @@
     </button>
   </div>
 
-  <!-- Difficulty controls: continuous intensity slider + dog count.
-       INTENSITY scales speed, density, spawn cadence, dog tracking.
-       DOGS sets how many dog waves to face before the snowman. -->
+  <!-- Quick preset buttons. Each one snaps both sliders to canonical
+       values; you can fine-tune from there with the sliders below. -->
+  <div class="cat-picker diff-picker" role="group" aria-label="Difficulty preset">
+    <span class="cat-picker-label">MODE</span>
+    <button class="diff-swatch preset-btn" data-preset="easy"   type="button">EASY</button>
+    <button class="diff-swatch preset-btn" data-preset="medium" type="button">MEDIUM</button>
+    <button class="diff-swatch preset-btn" data-preset="hard"   type="button">HARD</button>
+    <button class="diff-swatch preset-btn" data-preset="insta"  type="button">INSTA DEATH</button>
+  </div>
+
+  <!-- Continuous tuners. INTENSITY scales speed/density/spawn cadence/
+       dog tracking. DOGS sets how many dog waves before the snowman. -->
   <div class="cat-picker diff-picker combo-picker">
     <div class="sub-picker">
       <span class="cat-picker-label">DIFF</span>
@@ -796,36 +839,38 @@
       <button class="diff-swatch ctrl-swatch" data-ctrl="wasd"   aria-label="WASD">WASD</button>
     </div>
     <div class="sub-picker" role="radiogroup" aria-label="Touch mode">
-      <span class="cat-picker-label">TOUCH</span>
+      <span class="icon-label" aria-hidden="true" title="Touch mode">&#x1F446;</span>
       <button class="diff-swatch touch-swatch" data-touch="auto" aria-label="Auto-detect touch">AUTO</button>
       <button class="diff-swatch touch-swatch" data-touch="on"   aria-label="Force touch on">ON</button>
       <button class="diff-swatch touch-swatch" data-touch="off"  aria-label="Force touch off">OFF</button>
     </div>
   </div>
 
-  <!-- Game controls (pause/restart) + sound toggle + language, on one row.
-       Pause/restart are also on keyboard shortcuts: P/Esc pauses, R restarts. -->
+  <!-- Game controls (pause/restart icons) + sound toggle + language toggle,
+       all on one row. Symbols replace text labels to keep the UI
+       language-agnostic. Pause/restart also on keyboard: P/Esc pause,
+       R restart. -->
   <div class="cat-picker diff-picker combo-picker">
     <div class="sub-picker" role="group" aria-label="Game controls">
-      <span class="cat-picker-label">GAME</span>
-      <button class="diff-swatch action-btn" id="btn-pause"   type="button" aria-label="Pause / resume">PAUSE</button>
-      <button class="diff-swatch action-btn" id="btn-restart" type="button" aria-label="Restart run">RESTART</button>
+      <button class="diff-swatch icon-btn action-btn" id="btn-pause"   type="button" aria-label="Pause / resume" title="Pause / Resume">&#x23F8;</button>
+      <button class="diff-swatch icon-btn action-btn" id="btn-restart" type="button" aria-label="Restart run" title="Restart">&#x27F3;</button>
     </div>
-    <div class="sub-picker" role="radiogroup" aria-label="Sound">
-      <span class="cat-picker-label">SOUND</span>
-      <button class="diff-swatch sound-swatch" data-sound="on"  aria-label="Sound on">ON</button>
-      <button class="diff-swatch sound-swatch" data-sound="off" aria-label="Sound off">OFF</button>
+    <div class="sub-picker" aria-label="Sound">
+      <span class="icon-label" aria-hidden="true" title="Sound">&#x1F50A;</span>
+      <input type="range" class="retro-slider toggle-slider" id="sound-toggle"
+             min="0" max="1" value="1" step="1" aria-label="Sound on/off">
+      <span class="slider-value" id="sound-value">ON</span>
     </div>
-    <div class="sub-picker" role="radiogroup" aria-label="Language">
-      <span class="cat-picker-label">LANG</span>
-      <button class="diff-swatch lang-swatch" data-lang="en" aria-label="English">EN</button>
-      <button class="diff-swatch lang-swatch" data-lang="es" aria-label="Spanish">ES</button>
+    <div class="sub-picker" aria-label="Language">
+      <span class="icon-label" aria-hidden="true" title="Language">&#x1F5E3;</span>
+      <input type="range" class="retro-slider toggle-slider" id="lang-toggle"
+             min="0" max="1" value="0" step="1" aria-label="Language">
+      <span class="slider-value" id="lang-value">EN</span>
     </div>
-    <!-- INSTALL button: hidden by default. Shown via JS when the browser
-         fires beforeinstallprompt (Chrome/Edge/Android) OR the user is
-         on iOS Safari and not yet in standalone mode. -->
+    <!-- INSTALL button: hidden by default. Shown when beforeinstallprompt
+         fires (Chrome/Android) or on iOS Safari not yet standalone. -->
     <div class="sub-picker" id="install-group" hidden>
-      <button class="diff-swatch install-btn" id="btn-install" type="button">INSTALL APP</button>
+      <button class="diff-swatch install-btn" id="btn-install" type="button" aria-label="Install as app" title="Install">&#x1F4F2; INSTALL</button>
     </div>
   </div>
 
@@ -1554,22 +1599,23 @@
     swooshGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.04);
   }
 
+  const soundToggle  = document.getElementById('sound-toggle');
+  const soundValueEl = document.getElementById('sound-value');
   function setAudioEnabled(on) {
     audioEnabled = !!on;
     localStorage.setItem('skior_audio', on ? 'on' : 'off');
     if (masterGain && audioCtx) {
       masterGain.gain.setTargetAtTime(on ? 0.35 : 0, audioCtx.currentTime, 0.05);
     }
-    document.querySelectorAll('.sound-swatch').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.sound === (on ? 'on' : 'off'));
+    if (soundToggle)  soundToggle.value = on ? '1' : '0';
+    if (soundValueEl) soundValueEl.textContent = on ? 'ON' : 'OFF';
+  }
+  if (soundToggle) {
+    soundToggle.addEventListener('input', () => {
+      ensureAudio(); // user gesture — unlocks audio on this interaction
+      setAudioEnabled(soundToggle.value === '1');
     });
   }
-  document.querySelectorAll('.sound-swatch').forEach(btn => {
-    btn.addEventListener('click', () => {
-      ensureAudio(); // user gesture — unlocks audio on this interaction
-      setAudioEnabled(btn.dataset.sound === 'on');
-    });
-  });
   setAudioEnabled(audioEnabled);
 
   // ---------- language picker ----------
@@ -1582,18 +1628,21 @@
     // Update hint text on all overlays (start/over/paused)
     if (typeof applyTouchState === 'function') applyTouchState();
   }
+  const langToggle  = document.getElementById('lang-toggle');
+  const langValueEl = document.getElementById('lang-value');
   function setLang(name) {
     if (!MESSAGES[name]) return;
     lang = name;
     localStorage.setItem('skior_lang', name);
-    document.querySelectorAll('.lang-swatch').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.lang === name);
-    });
+    if (langToggle)  langToggle.value = lang === 'es' ? '1' : '0';
+    if (langValueEl) langValueEl.textContent = lang === 'es' ? 'ES' : 'EN';
     refreshFlavorText();
   }
-  document.querySelectorAll('.lang-swatch').forEach(btn => {
-    btn.addEventListener('click', () => setLang(btn.dataset.lang));
-  });
+  if (langToggle) {
+    langToggle.addEventListener('input', () => {
+      setLang(langToggle.value === '1' ? 'es' : 'en');
+    });
+  }
   setLang(lang);
 
   // ---------- mobile trick buttons ----------
@@ -1734,6 +1783,48 @@
   }
   applyIntensity(intensity);
   applyDogCount(dogCount);
+
+  // Preset buttons — each snaps both sliders to a canonical (intensity,
+  // dogCount) pair. Players can still fine-tune with the sliders after.
+  const PRESETS = {
+    easy:   { intensity: 1.0, dogs: 2 },
+    medium: { intensity: 1.7, dogs: 3 },
+    hard:   { intensity: 2.5, dogs: 5 },
+    insta:  { intensity: 4.0, dogs: 8 },
+  };
+  function applyPreset(name) {
+    const p = PRESETS[name];
+    if (!p) return;
+    applyIntensity(p.intensity);
+    applyDogCount(p.dogs);
+    // Visual feedback: highlight matching preset, clear others. Updates
+    // again when sliders are touched (via the listener below).
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.preset === name);
+    });
+  }
+  document.querySelectorAll('.preset-btn').forEach(btn => {
+    btn.addEventListener('click', () => applyPreset(btn.dataset.preset));
+  });
+  // When the user manually moves a slider, clear the preset highlight
+  // (their custom value no longer matches a preset).
+  function clearPresetHighlight() {
+    document.querySelectorAll('.preset-btn').forEach(btn =>
+      btn.classList.remove('active')
+    );
+  }
+  if (diffSlider) diffSlider.addEventListener('input', clearPresetHighlight);
+  if (dogsSlider) dogsSlider.addEventListener('input', clearPresetHighlight);
+  // On boot, highlight the preset whose values match the saved sliders
+  // (if any). Subtle but nice for repeat visitors.
+  for (const [name, p] of Object.entries(PRESETS)) {
+    if (Math.abs(p.intensity - intensity) < 0.01 && p.dogs === dogCount) {
+      document.querySelectorAll('.preset-btn').forEach(btn =>
+        btn.classList.toggle('active', btn.dataset.preset === name)
+      );
+      break;
+    }
+  }
 
   // ---------- game state ----------
   // State machine: 'title' -> 'play' <-> 'paused' -> 'over' -> 'play' ...
@@ -2340,7 +2431,7 @@
     overlayOver.classList.add('hidden');
     overlayPaused.classList.add('hidden');
     btnPause.classList.remove('paused');
-    btnPause.textContent = 'PAUSE';
+    btnPause.innerHTML = '&#x23F8;';   // pause glyph (play state default)
     state = STATE.PLAY;
     ensureAudio();   // unlocks audio on first start
     sfx.start();
@@ -2353,7 +2444,7 @@
     state = STATE.PAUSED;
     overlayPaused.classList.remove('hidden');
     btnPause.classList.add('paused');
-    btnPause.textContent = 'RESUME';
+    btnPause.innerHTML = '&#x25B6;';  // play / resume glyph
     // Roll a fresh pause line so every pause feels different
     const pLine = document.getElementById('paused-line');
     if (pLine) pLine.textContent = pickList('paused');
@@ -2367,7 +2458,7 @@
     state = STATE.PLAY;
     overlayPaused.classList.add('hidden');
     btnPause.classList.remove('paused');
-    btnPause.textContent = 'PAUSE';
+    btnPause.innerHTML = '&#x23F8;';  // pause glyph
   }
   function togglePause() {
     if (state === STATE.PLAY)   pauseGame();
