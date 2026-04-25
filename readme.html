@@ -2,9 +2,29 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>CAT SKI // README</title>
+<title>How to Use Claude to Build a Browser Game | Cat Ski README</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="The story behind cat-ski, a browser game inspired by Windows 3.0 SkiFree. Stack, design choices, and notes on collaborating with Claude.">
+<meta name="description" content="A walkthrough of building a browser-based skiing game with Claude as a design collaborator. Covers stack choices, per-element design criteria, color palettes derived from photography, and a free toolchain (HTML, GitHub, Vercel) you can use to ship a similar project.">
+<meta name="keywords" content="claude, claude ai, claude code, build a game with claude, browser game, javascript game, html5 canvas, web audio api, pwa, skifree, retro game, vibe coding tutorial">
+<link rel="canonical" href="https://ski.mike-lee.me/readme.html">
+
+<!-- Open Graph -->
+<meta property="og:type" content="article">
+<meta property="og:title" content="How to Use Claude to Build a Browser Game">
+<meta property="og:description" content="Walkthrough of building Cat Ski, a browser-based SkiFree tribute, using Claude as a design collaborator. Stack, design criteria, color palettes from photography, and a free deploy toolchain.">
+<meta property="og:image" content="https://ski.mike-lee.me/preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://ski.mike-lee.me/readme.html">
+<meta property="og:site_name" content="cat-ski">
+<meta property="article:author" content="Mike Lee">
+<meta property="article:published_time" content="2026-04-25">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="How to Use Claude to Build a Browser Game">
+<meta name="twitter:description" content="Walkthrough of building a SkiFree-style browser game with Claude. Stack, design criteria, photography-derived color palettes, free toolchain.">
+<meta name="twitter:image" content="https://ski.mike-lee.me/preview.png">
 
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
@@ -12,6 +32,44 @@
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <meta name="theme-color" content="#0b1320">
+
+<!-- Structured data: TechArticle -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "How to Use Claude to Build a Browser Game",
+  "alternativeHeadline": "Building Cat Ski with Claude as a design collaborator",
+  "description": "A walkthrough of building a browser-based skiing game with Claude as a design collaborator. Covers stack choices, per-element design criteria, color palettes derived from photography, and a free toolchain you can use to ship a similar project.",
+  "image": "https://ski.mike-lee.me/preview.png",
+  "datePublished": "2026-04-25",
+  "dateModified": "2026-04-25",
+  "inLanguage": "en",
+  "isAccessibleForFree": true,
+  "proficiencyLevel": "Beginner",
+  "about": [
+    { "@type": "Thing", "name": "Claude AI" },
+    { "@type": "Thing", "name": "Browser game development" },
+    { "@type": "Thing", "name": "HTML5 Canvas" },
+    { "@type": "Thing", "name": "Web Audio API" }
+  ],
+  "author": {
+    "@type": "Person",
+    "name": "Mike Lee",
+    "alternateName": "Whisker Leaks",
+    "url": "https://www.linkedin.com/in/mikelee89/"
+  },
+  "publisher": {
+    "@type": "Person",
+    "name": "Mike Lee",
+    "url": "https://mike-lee.me/"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://ski.mike-lee.me/readme.html"
+  }
+}
+</script>
 
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
