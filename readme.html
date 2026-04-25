@@ -311,6 +311,14 @@
 
     <p>The constraint that made the iteration loop effective was the no-build deployment. Each change reached the live site in under a minute, which made the cycle of pushing, observing, and refining fast enough that the production environment doubled as the development environment. Across approximately 50 commits, this cadence affected the final quality more than any individual technical choice.</p>
 
+    <h2>How you can build this yourself</h2>
+
+    <p>The full toolchain for a project like this is free and small enough to learn in an afternoon. You need a code editor, a browser, a Git client, a GitHub account, and a Vercel account. Claude is the writing tool; you can use the web interface at <a href="https://claude.ai" target="_blank" rel="noopener noreferrer">claude.ai</a> or the Claude Code CLI from a terminal. No frameworks, build systems, or asset pipelines are required for a single-file game.</p>
+
+    <p>The workflow starts in a Claude conversation. Describe what you want to build in plain language, including the visual character, gameplay mechanics, audience, and any constraints such as a single-file output or a maximum file size. Claude produces a starting scaffold. From there, the iteration loop is short: describe a change, get the updated code, paste it into the editor, refresh the browser, and decide what to refine. Commit each working change to Git. Push to a GitHub repository connected to a Vercel project, and the new version is live within a minute. To add a custom subdomain, create a CNAME record at your DNS provider that points the subdomain to cname.vercel-dns.com, then assign the domain in the Vercel project settings.</p>
+
+    <p>Three practices kept the build moving. First, treat the conversation with Claude as design work rather than code generation. State the criteria, propose the simplest approach, and identify the trade-offs before any feature is built. Second, deploy frequently. Ship each working commit so the live site stays current with the project. Third, when working on aesthetic decisions, describe the source material in concrete terms. Asking Claude for a palette inspired by "warm afternoon light on sandstone" produces hex codes that read as the place; asking for a palette that feels "rugged" returns generic results. The same pattern holds for sounds, sprites, and animation timing: the more specific the input, the more usable the output.</p>
+
     <h2>Further resources</h2>
 
     <ul>
