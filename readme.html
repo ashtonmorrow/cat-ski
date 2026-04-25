@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CAT SKI // README</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="The story behind cat-ski — inspired by Windows 3.0 SkiFree. Stack, design choices, and a DIY Claude tutorial baked in.">
+
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#0b1320">
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+
+  :root {
+    --snow:      #eaf4ff;
+    --snow-dim:  #cfe2f5;
+    --ink:       #0b1320;
+    --accent:    #ff3b30;
+    --accent-2:  #ffcc00;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--ink);
+    color: var(--snow);
+    font-family: 'VT323', monospace;
+  }
+  body {
+    min-height: 100vh;
+    padding: 20px;
+    background:
+      radial-gradient(ellipse at 50% 0%, #24384f 0%, #0b1320 60%, #050910 100%);
+    background-attachment: fixed;
+    overflow-x: hidden;
+  }
+
+  .container {
+    max-width: 740px;
+    margin: 0 auto;
+    padding: 26px 30px 30px;
+    background: linear-gradient(#111a27, #0a111c);
+    border-radius: 6px;
+    box-shadow:
+      0 0 0 2px #1d2a3c,
+      0 0 0 4px #000,
+      0 30px 60px rgba(0,0,0,.6);
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 22px;
+    padding-bottom: 14px;
+    border-bottom: 2px solid #1d2a3c;
+  }
+  .header h1 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 14px;
+    letter-spacing: 2px;
+    color: var(--snow);
+    text-shadow: 0 0 6px rgba(122,167,199,.6);
+  }
+  .header h1 .alt   { color: var(--accent); }
+  .header h1 .label { color: var(--snow-dim); margin-left: 8px; }
+  .nav-back {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--snow-dim);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    padding: 4px 6px;
+  }
+  .nav-back:hover { color: var(--accent-2); }
+
+  h2 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: var(--accent-2);
+    margin: 32px 0 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #1d2a3c;
+  }
+  h3 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--snow);
+    margin: 22px 0 8px;
+  }
+  p {
+    font-size: 18px;
+    line-height: 1.55;
+    color: var(--snow-dim);
+    margin: 12px 0;
+  }
+  a {
+    color: var(--accent-2);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--accent-2);
+  }
+  a:hover { color: var(--snow); border-bottom-color: var(--snow); }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 12px 0;
+  }
+  li {
+    font-size: 18px;
+    line-height: 1.5;
+    color: var(--snow-dim);
+    padding-left: 20px;
+    position: relative;
+    margin: 8px 0;
+  }
+  li::before {
+    content: '\25B8';
+    position: absolute;
+    left: 0;
+    color: var(--accent-2);
+  }
+  strong { color: var(--snow); }
+  code {
+    font-family: 'VT323', monospace;
+    font-size: 0.95em;
+    background: #1a2838;
+    padding: 1px 5px;
+    border: 1px solid #2b3c54;
+    color: var(--accent-2);
+  }
+
+  .footer {
+    margin-top: 32px;
+    padding-top: 16px;
+    border-top: 2px solid #1d2a3c;
+    text-align: center;
+    font-size: 14px;
+    color: #7c8da0;
+    letter-spacing: 1px;
+  }
+  .footer .blink { color: var(--accent-2); animation: blink 1.2s steps(2,end) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  @media (max-width: 600px) {
+    body { padding: 10px; }
+    .container { padding: 18px 16px 22px; }
+    .header h1 { font-size: 11px; letter-spacing: 1px; }
+    .header h1 .label { display: block; margin-left: 0; margin-top: 4px; font-size: 9px; }
+    .nav-back { font-size: 8px; }
+    h2 { font-size: 11px; }
+    h3 { font-size: 9px; }
+    p, li { font-size: 16px; }
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1><span class="alt">CAT</span> SKI<span class="label">// README</span></h1>
+      <a href="/" class="nav-back">&lt; PLAY</a>
+    </div>
+
+    <p>A love letter to <a href="https://en.wikipedia.org/wiki/SkiFree" target="_blank" rel="noopener">Windows 3.0 SkiFree</a>, built one weekend.</p>
+
+    <p>If you grew up on Microsoft Entertainment Pack 3, you remember it: an endless downhill ski run, dodging trees, until the abominable yeti shows up out of nowhere and eats you no matter how good you've been. The yeti was 1991's most iconic boss fight &mdash; undefeatable, sudden, terrifying. I wanted to recreate that feeling but with a cat, ship it as a free thing on the web, and use it to learn how far I could push a vibes-driven build with Claude.</p>
+
+    <p>Built by <a href="https://www.linkedin.com/in/mikelee89/" target="_blank" rel="noopener noreferrer">Mike Lee</a>, aka Whisker Leaks. Say hi.</p>
+
+    <h2>HOW TO PLAY</h2>
+
+    <p>You're a cat &mdash; pick a color &mdash; skiing down a mountain &mdash; pick a range. Use <strong>arrow keys</strong> or <strong>WASD</strong> to steer; <strong>down</strong> tucks (faster), <strong>up</strong> carves (slower). Hit jump ramps to launch into the air; press <strong>1</strong>, <strong>2</strong>, or <strong>3</strong> mid-air to perform tricks (Meow Roll, Whisker Twist, Cat Nap). Chaining tricks across a single jump compounds the bonus. Grab flags as you pass them.</p>
+
+    <p>After a fixed time, dogs start chasing you down the slope. They cross your screen-Y at a deterministic moment &mdash; you can dodge horizontally, OR launch off a gold escape ramp at the right moment to be airborne when the dog tries to grab. Survive all the dog waves and the snowman appears. The snowman is the SkiFree yeti tribute &mdash; instant kill, no escape. Difficulty is fully tunable via two sliders (intensity 0.8&times;&ndash;5&times;, dog count 1&ndash;10) plus four named presets that snap to canonical values.</p>
+
+    <h2>WHY WE BUILT IT THIS WAY</h2>
+
+    <h3>The Stack</h3>
+
+    <p>The whole game is a single self-contained HTML file, ~140 KB. No build step, no framework, no dependencies besides two Google Fonts. Every sound is synthesized at runtime via Web Audio's <code>OscillatorNode</code> and filtered noise &mdash; not a single audio file. Every sprite is drawn from <code>ctx.fillRect</code> rectangles &mdash; no image assets except the social preview and the favicon set. This is partly a tribute to the original SkiFree (60 KB on a 1991 floppy) and partly because the simplest possible stack means iteration is instant: <code>git push</code>, see it live in 30 seconds, iterate.</p>
+
+    <p>Hosted on Vercel from a public GitHub repo, custom domain via a single CNAME. PWA-installable with a service worker that caches the app shell for offline play. Total moving parts you have to understand to maintain it: HTML, CSS, vanilla JS, plus 30 lines of service worker. That's it.</p>
+
+    <h3>Designing each element</h3>
+
+    <p>Before writing code for a feature, the question was always: what's the criteria? What does this need to do, look like, feel like? A few examples of how that played out:</p>
+
+    <ul>
+      <li><strong>Cat sprite:</strong> must read as a cat at 16 px wide, must support four color variants without forking the drawing code. Solved with procedural arcs and ellipses parameterized by a palette object &mdash; one drawing function, four palettes, four cats.</li>
+      <li><strong>Dog chase:</strong> must be escapable with skill but not by brute-force tucking forever. Solved by giving the dog a constant downward screen velocity, so it always reaches the cat at a calculable moment &mdash; the player gets exactly one timing window to dodge or launch. The bonus escape ramps spawn ahead of the player at a distance computed from current player speed and dog descent rate, so the launch window lands perfectly regardless of how fast you happen to be moving.</li>
+      <li><strong>Difficulty:</strong> casual players want presets, tinkerers want sliders. Solved with named presets (EASY, MEDIUM, HARD, INSTA DEATH) that snap to canonical slider positions, plus continuous intensity (0.8&times; to 5&times;) and dog count (1&ndash;10) sliders. Pick a preset, fine-tune from there.</li>
+    </ul>
+
+    <h3>Color, derived from real photographs</h3>
+
+    <p>The first pass at mountain themes used default-AI palettes &mdash; a generic pinky-cream "Rockies", a default cool-blue "Alps". They felt synthetic. To make each region actually read as itself, I described the visual character of each range from photography rather than asking for "warm" or "cool":</p>
+
+    <ul>
+      <li><strong>Alps:</strong> cool crisp blue snow, deep emerald Norway spruce, granite-gray peaks fading blue with atmospheric haze.</li>
+      <li><strong>Rockies:</strong> warm afternoon light on sandstone and exposed granite, slightly bluer-green lodgepole pine, rust-toned distant peaks &mdash; think golden hour in Estes Park.</li>
+      <li><strong>Himalayas:</strong> deep saturated alpine blue (less atmosphere = more saturation), brilliant white snow, near-black slate rock, sparse dusty juniper at low elevations only.</li>
+    </ul>
+
+    <p>That description-first approach extended to the obstacles. Norway spruce silhouettes for the Alps, lodgepole pine (taller and narrower with a visible trunk) for the Rockies, krummholz juniper (stunted, wind-shaped) for the Himalayas. Aspen logs &mdash; white bark with iconic black eye scars &mdash; in the Rockies, because that's the most recognizable Western tree feature. Bare granite boulders in the Himalayas, because at altitude there are no logs. Each species got researched, pitched as a silhouette description, and drawn as ~30 lines of <code>fillRect</code> calls.</p>
+
+    <h3>A DIY tip if you're trying this with Claude</h3>
+
+    <p>The single biggest leverage point was treating Claude as a design collaborator, not just a code-writing tool. Three questions before any feature:</p>
+
+    <ul>
+      <li><strong>What's the criteria?</strong> What does this need to do, look like, feel like &mdash; before any code.</li>
+      <li><strong>What's the simplest implementation?</strong> Often this surfaced "you don't actually need that" answers and saved a lot of code.</li>
+      <li><strong>What are the trade-offs?</strong> Procedural sprites mean no asset pipeline but harder to iterate visual detail. Web Audio means no audio files but the sounds are synthetic. Knowing the trade-off lets you pick consciously.</li>
+    </ul>
+
+    <p>For tasks like color palettes &mdash; instead of asking Claude to "make a Rockies theme," I described light, geology, and vegetation in plain words ("warm afternoon light on sandstone and exposed granite") and let Claude derive the hex codes that capture that feel. For the icons, I dropped a square reference PNG into the repo and Claude produced the multi-resolution favicon set in one prompt. For sounds, I described what each event should evoke ("dog double-bark for a dramatic entrance"; "trick chain that ascends in pitch as the chain grows") and Claude built the OscillatorNode envelopes.</p>
+
+    <p>What made the loop work: every iteration was deployable in seconds (no build step), so the cycle was push &rarr; look at the live site &rarr; iterate. Across 50+ commits in a few days, the "ship and verify" cadence mattered more than any individual code decision.</p>
+
+    <h2>SOURCE</h2>
+
+    <p>Open on GitHub: <a href="https://github.com/ashtonmorrow/cat-ski" target="_blank" rel="noopener noreferrer">ashtonmorrow/cat-ski</a>. Issues, forks, and PRs welcome.</p>
+
+    <div class="footer">
+      <span class="blink">&#9656;</span> <a href="/">PLAY</a> &nbsp; &bull; &nbsp; Made by <a href="https://www.linkedin.com/in/mikelee89/" target="_blank" rel="noopener noreferrer">Whisker Leaks</a>
+    </div>
+  </div>
+</body>
+</html>
