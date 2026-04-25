@@ -2226,6 +2226,33 @@
     hudWarning.style.display = 'block';
     sfx.bark();
     setTimeout(() => sfx.bark(), 180);  // double-bark for dramatic entrance
+    // Each dog brings two bonus escape ramps with it. The player can
+    // race to one, hit it, and be airborne during the dog's crossing
+    // moment — jumping is already grab-immunity per updateYeti.
+    spawnEscapeRamps();
+  }
+
+  // Place two bonus jump ramps in the upcoming spawn region. Distances
+  // chosen so a cruise-speed player reaches them ~3 and ~5 seconds
+  // ahead, giving room for either fast or slow approach. Both are
+  // tagged bonus:true so the renderer + collision treat them specially.
+  function spawnEscapeRamps() {
+    const playerWorldY = worldY + player.screenY;
+    const ramps = [
+      { dist: 280, lateral: -36 },   // closer & left
+      { dist: 420, lateral:  44 },   // farther & right
+    ];
+    ramps.forEach(p => {
+      objects.push({
+        type:  'jump',
+        bonus: true,
+        x:     Math.max(20, Math.min(W - 20, player.x + p.lateral)),
+        y:     playerWorldY + p.dist,
+        w:     34,                   // a touch wider than the regular 30
+        h:     10,
+        hit:   false,
+      });
+    });
   }
 
   function updateYeti() {
@@ -2425,15 +2452,25 @@
       if (o.hit) continue;
       const ob = { x:o.x, y:o.y, w:o.w, h:o.h };
 
-      // Jumps & moguls are friendly even while passing overhead
+      // Jumps & moguls are friendly even while passing overhead.
+      // Bonus ramps (spawned alongside each dog wave) give extended
+      // airtime — long enough to clear the dog's crossing window if
+      // timed well — and a gold particle burst.
       if (o.type === 'jump' || o.type === 'mogul') {
         if (player.air <= 0 && aabb(pb, ob)) {
           o.hit = true;
-          player.airMax = o.type === 'jump' ? 38 : 22;
+          if (o.bonus) {
+            player.airMax = 60;     // ~1 second airborne (vs 0.63 normal)
+            spawnFloatText('ESCAPE!', player.x, worldY + player.screenY - 14, '#ffcc00');
+            spawnPuff(player.x, worldY + player.screenY, 18, '#ffcc00');
+            spawnPuff(player.x, worldY + player.screenY - 4, 8, '#ffffff');
+          } else {
+            player.airMax = o.type === 'jump' ? 38 : 22;
+            spawnPuff(player.x, worldY + player.screenY, 10);
+          }
           player.air = player.airMax;
           stats.jumps++;
           sfx.jump();
-          spawnPuff(player.x, worldY + player.screenY, 10);
         }
         continue;
       }
@@ -3129,9 +3166,29 @@
     himalayas: { shadow:'rgba(70,110,150,0.40)',  face:'#f5f9fd', mid:'#bccdde' },
   };
 
-  function drawJump(x, y) {
+  function drawJump(x, y, isBonus) {
+    if (isBonus) {
+      // Gold escape ramp — spawns alongside each dog wave, longer
+      // air time. Visually distinct so the player can spot it from
+      // far away and plan an approach.
+      ctx.fillStyle = 'rgba(180,140,30,0.55)';
+      ctx.fillRect(x - 16, y + 2, 32, 3);
+      ctx.fillStyle = '#fff8d8';
+      ctx.fillRect(x - 16, y - 2, 32, 4);
+      ctx.fillStyle = '#ffcc00';
+      ctx.fillRect(x - 14, y - 4, 28, 2);
+      ctx.fillStyle = '#e6a000';
+      ctx.fillRect(x - 12, y - 5, 24, 1);
+      // Tiny glints for that "powerup" look
+      ctx.fillStyle = '#ffffff';
+      px(x - 9, y - 3, '#ffffff');
+      px(x +  6, y - 4, '#ffffff');
+      px(x - 2, y - 5, '#ffffff');
+      return;
+    }
+    // Normal snow ramp — palette comes from the theme so its tone
+    // matches the rest of the slope.
     const P = RAMP_PALETTES[mtnTheme] || RAMP_PALETTES.alps;
-    // ramp: light top, dark shadow behind
     ctx.fillStyle = P.shadow;
     ctx.fillRect(x - 14, y + 2, 28, 3);
     ctx.fillStyle = P.face;
@@ -3165,7 +3222,7 @@
         case 'tree':  drawTree(sx, y); break;
         case 'rock':  drawRock(sx, y); break;
         case 'flag':  drawFlag(sx, y, o.side); break;
-        case 'jump':  drawJump(sx, y); break;
+        case 'jump':  drawJump(sx, y, o.bonus); break;
         case 'mogul': drawMogul(sx, y); break;
       }
     }
