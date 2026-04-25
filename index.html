@@ -388,10 +388,50 @@
     background: #1f2e44;
     color: var(--accent-2);
   }
-  .diff-swatch[data-diff="insta"].active {
-    border-color: var(--accent);
-    box-shadow: 2px 2px 0 #000, 0 0 0 2px var(--accent) inset;
-    color: var(--accent);
+
+  /* Retro-styled range slider (difficulty + dog count).
+     Custom track and chunky square thumb to match the pixel aesthetic. */
+  .retro-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 140px;
+    height: 14px;
+    background: #182638;
+    border: 2px solid #2b3c54;
+    box-shadow: inset 0 0 0 1px #000;
+    outline: none;
+    cursor: pointer;
+    margin: 0 4px;
+  }
+  .retro-slider:hover { border-color: var(--snow-dim); }
+  .retro-slider:focus { border-color: var(--accent-2); }
+  .retro-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 18px;
+    background: var(--accent-2);
+    border: 2px solid #0b1320;
+    box-shadow: 1px 1px 0 #000;
+    cursor: pointer;
+    border-radius: 0;
+  }
+  .retro-slider::-moz-range-thumb {
+    width: 12px;
+    height: 18px;
+    background: var(--accent-2);
+    border: 2px solid #0b1320;
+    box-shadow: 1px 1px 0 #000;
+    cursor: pointer;
+    border-radius: 0;
+  }
+  .slider-value {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    letter-spacing: 1px;
+    color: var(--accent-2);
+    min-width: 30px;
+    text-align: left;
   }
 
   /* Combo picker: two sub-groups (e.g. KEYS + TOUCH) on one line */
@@ -725,13 +765,24 @@
     </button>
   </div>
 
-  <!-- Difficulty picker: easy / medium / hard / insta death -->
-  <div class="cat-picker diff-picker" role="radiogroup" aria-label="Difficulty">
-    <span class="cat-picker-label">MODE</span>
-    <button class="diff-swatch" data-diff="easy"   aria-label="Easy">EASY</button>
-    <button class="diff-swatch" data-diff="medium" aria-label="Medium">MEDIUM</button>
-    <button class="diff-swatch" data-diff="hard"   aria-label="Hard">HARD</button>
-    <button class="diff-swatch" data-diff="insta"  aria-label="Instant death">INSTA DEATH</button>
+  <!-- Difficulty controls: continuous intensity slider + dog count.
+       INTENSITY scales speed, density, spawn cadence, dog tracking.
+       DOGS sets how many dog waves to face before the snowman. -->
+  <div class="cat-picker diff-picker combo-picker">
+    <div class="sub-picker">
+      <span class="cat-picker-label">DIFF</span>
+      <input type="range" class="retro-slider" id="diff-slider"
+             min="80" max="500" value="100" step="10"
+             aria-label="Difficulty intensity">
+      <span class="slider-value" id="diff-value">1x</span>
+    </div>
+    <div class="sub-picker">
+      <span class="cat-picker-label">DOGS</span>
+      <input type="range" class="retro-slider" id="dogs-slider"
+             min="1" max="10" value="2" step="1"
+             aria-label="Number of dog waves">
+      <span class="slider-value" id="dogs-value">2</span>
+    </div>
   </div>
 
   <!-- KEYS + TOUCH combined on one row. KEYS selects ARROWS or WASD
@@ -1613,50 +1664,76 @@
   // snowmanMin / snowmanWindow: snowman rolls into this window. Always
   // scheduled AFTER yetiSeconds so players get a dog-chase phase first.
   // startSpeed   initial player speed at t=0
-  const DIFFICULTIES = {
-    easy: {
-      name: 'EASY',
-      speedMul: 1.0,  densityMul: 1.0,  rampSeconds: 150, baseRamp: 0.0,
-      yetiSeconds: 60, dogGap: 20,
-      snowmanMin: 105, snowmanWindow: 45, startSpeed: 0.8,
-    },
-    medium: {
-      name: 'MEDIUM',
-      speedMul: 1.3,  densityMul: 1.7,  rampSeconds: 90,  baseRamp: 0.2,
-      yetiSeconds: 40, dogGap: 15,
-      snowmanMin: 75,  snowmanWindow: 35, startSpeed: 1.2,
-    },
-    hard: {
-      name: 'HARD',
-      speedMul: 1.4,  densityMul: 2.0,  rampSeconds: 70,  baseRamp: 0.3,
-      yetiSeconds: 25, dogGap: 13,
-      snowmanMin: 55,  snowmanWindow: 25, startSpeed: 1.4,
-    },
-    insta: {
-      name: 'INSTA DEATH',
-      speedMul: 1.65, densityMul: 2.6,  rampSeconds: 45,  baseRamp: 0.5,
-      yetiSeconds: 10, dogGap: 8,
-      snowmanMin: 32,  snowmanWindow: 18, startSpeed: 1.8,
-    },
-  };
+  // Difficulty is now driven by two sliders:
+  //   intensity: 0.8 - 5.0 (default 1.0). Scales speed, density,
+  //              spawn cadence, dog tracking. Linear-ish — see diff().
+  //   dogCount:  1 - 10 (default 2). Number of dog waves before snowman.
+  // Both persist to localStorage.
+  let intensity = parseFloat(localStorage.getItem('skior_intensity'));
+  if (!isFinite(intensity)) intensity = 1.0;
+  intensity = Math.max(0.8, Math.min(5.0, intensity));
 
-  let difficultyMode = localStorage.getItem('skior_difficulty') || 'easy';
-  if (!DIFFICULTIES[difficultyMode]) difficultyMode = 'easy';
-  function diff() { return DIFFICULTIES[difficultyMode]; }
+  let dogCount = parseInt(localStorage.getItem('skior_dogs'), 10);
+  if (!isFinite(dogCount)) dogCount = 2;
+  dogCount = Math.max(1, Math.min(10, dogCount));
 
-  function setDifficulty(name) {
-    if (!DIFFICULTIES[name]) return;
-    difficultyMode = name;
-    localStorage.setItem('skior_difficulty', name);
-    document.querySelectorAll('.diff-swatch').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.diff === name);
-    });
+  // Difficulty params derived from the intensity slider. Each parameter
+  // scales independently so the game stays playable across the full
+  // 0.8x - 5x range. speedMul uses sqrt curve so 5x intensity isn't 5x
+  // unplayable speed; density grows linearly; spawn timings shrink
+  // inversely; dog horizontal tracking tightens; dog vertical descent
+  // slows (longer pursuit on screen).
+  function diff() {
+    const M = intensity;
+    return {
+      name:          'CUSTOM',
+      speedMul:      Math.max(0.7,  Math.min(1.85, Math.pow(M, 0.5))),
+      densityMul:    Math.max(0.5,  Math.min(3.5,  M)),
+      rampSeconds:   Math.max(30,   Math.min(200,  150 / M)),
+      baseRamp:      Math.max(0,    Math.min(0.7,  (M - 1) * 0.18)),
+      yetiSeconds:   Math.max(6,    Math.min(100,  60 / M)),
+      dogGap:        Math.max(5,    Math.min(40,   20 / M)),
+      // Snowman timing is now relative to last-dog-cleared (see update),
+      // but keep these for the random window length only.
+      snowmanWindow: 30,
+      startSpeed:    Math.max(0.6,  Math.min(2.0,  0.8 * Math.pow(M, 0.4))),
+      // Per-dog base values; spawnYeti adds wave-by-wave incremental
+      // difficulty on top so dog #5 is harder than dog #1.
+      dogVxMax:      Math.max(1.2,  Math.min(2.4,  1.4 + (M - 1) * 0.2)),
+      dogVyBase:     Math.max(0.18, Math.min(0.7,  0.5 / Math.pow(M, 0.3))),
+    };
   }
 
-  document.querySelectorAll('.diff-swatch').forEach(btn => {
-    btn.addEventListener('click', () => setDifficulty(btn.dataset.diff));
-  });
-  setDifficulty(difficultyMode);
+  // Slider wiring
+  const diffSlider = document.getElementById('diff-slider');
+  const diffValue  = document.getElementById('diff-value');
+  const dogsSlider = document.getElementById('dogs-slider');
+  const dogsValue  = document.getElementById('dogs-value');
+
+  function applyIntensity(val) {
+    intensity = Math.max(0.8, Math.min(5.0, val));
+    localStorage.setItem('skior_intensity', String(intensity));
+    if (diffSlider) diffSlider.value = String(Math.round(intensity * 100));
+    if (diffValue)  diffValue.textContent = intensity.toFixed(2).replace(/\.?0+$/, '') + 'x';
+  }
+  function applyDogCount(val) {
+    dogCount = Math.max(1, Math.min(10, Math.round(val)));
+    localStorage.setItem('skior_dogs', String(dogCount));
+    if (dogsSlider) dogsSlider.value = String(dogCount);
+    if (dogsValue)  dogsValue.textContent = String(dogCount);
+  }
+  if (diffSlider) {
+    diffSlider.addEventListener('input', () =>
+      applyIntensity(parseInt(diffSlider.value, 10) / 100)
+    );
+  }
+  if (dogsSlider) {
+    dogsSlider.addEventListener('input', () =>
+      applyDogCount(parseInt(dogsSlider.value, 10))
+    );
+  }
+  applyIntensity(intensity);
+  applyDogCount(dogCount);
 
   // ---------- game state ----------
   // State machine: 'title' -> 'play' <-> 'paused' -> 'over' -> 'play' ...
@@ -1705,15 +1782,14 @@
       score: 0,
       flags: 0,
       jumps: 0,
-      tricks: 0,             // count of landed tricks
-      trickScore: 0,         // accumulated bonus from chains
-      yetiWarned: false,
-      dog2Warned: false,
-      dogsSpawned: 0,        // 0 / 1 / 2 — how many dog waves have appeared
-      dogClearedAt: null,    // elapsed time when the most recent dog despawned
+      tricks: 0,                // count of landed tricks
+      trickScore: 0,            // accumulated bonus from chains
+      dogsWarned: [],           // index = wave number, value = boolean
+      dogsSpawned: 0,           // 0..dogCount
+      dogClearedAt: null,       // elapsed time when most recent dog despawned
       snowmanSpawned: false,
-      snowmanAt: D.snowmanMin + Math.random() * D.snowmanWindow,
-      elapsed: 0,            // seconds since run started
+      snowmanScheduledAt: null, // computed once all dogs are done
+      elapsed: 0,               // seconds since run started
       shakeT: 0,
     };
 
@@ -1823,7 +1899,13 @@
   // Wakes after diff().yetiDistance. Chases from above, faster than baseline
   // but slower than a fully-tucked skier, so you can outrun briefly.
   function spawnYeti(variant = 1) {
-    const isSecond = variant === 2;
+    const D = diff();
+    // Per-wave incremental difficulty stacked on top of diff()'s base.
+    // Wave 1 = base. Each subsequent wave adds horizontal tracking and
+    // subtracts a touch of vertical descent so the dog lingers longer.
+    const w = variant - 1;
+    const vxMax   = Math.min(2.5,  D.dogVxMax    + w * 0.18);
+    const vySpeed = Math.max(0.15, D.dogVyBase   - w * 0.045);
     yeti = {
       x: W / 2 + (Math.random() < 0.5 ? -40 : 40),
       y: worldY - 30,       // above the top of the screen
@@ -1832,14 +1914,11 @@
       rage: 0,              // animation phase
       state: 'chase',       // 'chase' | 'grab'
       variant,
-      // Per-variant tuning: variant 2 lingers on screen longer
-      // (lower vy means slower descent relative to camera) but tracks
-      // the player's x more aggressively (higher vxMax).
-      vySpeed: isSecond ? 0.32 : 0.5,
-      vxMax:   isSecond ? 1.85 : 1.4,
+      vySpeed,
+      vxMax,
     };
     stats.dogsSpawned += 1;
-    hudWarning.textContent = isSecond ? '! 2ND DOG !' : '! DOG !';
+    hudWarning.textContent = variant === 1 ? '! DOG !' : '! DOG #' + variant + ' !';
     hudWarning.style.display = 'block';
     sfx.bark();
     setTimeout(() => sfx.bark(), 180);  // double-bark for dramatic entrance
@@ -2078,38 +2157,51 @@
       }
     }
 
-    // Dog wake-up. Two waves now:
-    //   Dog 1: at diff().yetiSeconds elapsed (time-based).
-    //   Dog 2: dogGap seconds after Dog 1 cleared off-screen, IF the
-    //          player survived the first encounter. Stays well ahead of
-    //          the snowman window so it doesn't compete with that.
+    // Dog wake-up. N waves where N = dogCount slider value.
+    //   Dog 1: spawns at diff().yetiSeconds.
+    //   Dog k (2..N): spawns dogGap seconds after dog (k-1) cleared.
+    // Each subsequent wave is harder via per-wave incremental difficulty
+    // applied in spawnYeti().
     const D = diff();
-    if (stats.dogsSpawned === 0) {
-      if (!stats.yetiWarned && stats.elapsed >= D.yetiSeconds - 4) {
-        stats.yetiWarned = true;
-        hudWarning.textContent = '! DOG !';
-        hudWarning.style.display = 'block';
-      }
-      if (stats.elapsed >= D.yetiSeconds) {
-        spawnYeti(1);
-      }
-    } else if (stats.dogsSpawned === 1 && !yeti && stats.dogClearedAt != null) {
-      const dog2At = stats.dogClearedAt + D.dogGap;
-      if (!stats.dog2Warned && stats.elapsed >= dog2At - 4) {
-        stats.dog2Warned = true;
-        hudWarning.textContent = '! 2ND DOG !';
-        hudWarning.style.display = 'block';
-      }
-      if (stats.elapsed >= dog2At) {
-        spawnYeti(2);
+    if (stats.dogsSpawned < dogCount) {
+      if (stats.dogsSpawned === 0) {
+        if (!stats.dogsWarned[1] && stats.elapsed >= D.yetiSeconds - 4) {
+          stats.dogsWarned[1] = true;
+          hudWarning.textContent = '! DOG !';
+          hudWarning.style.display = 'block';
+        }
+        if (stats.elapsed >= D.yetiSeconds) {
+          spawnYeti(1);
+        }
+      } else if (!yeti && stats.dogClearedAt != null) {
+        const nextNum = stats.dogsSpawned + 1;
+        const nextAt = stats.dogClearedAt + D.dogGap;
+        if (!stats.dogsWarned[nextNum] && stats.elapsed >= nextAt - 4) {
+          stats.dogsWarned[nextNum] = true;
+          hudWarning.textContent = '! DOG #' + nextNum + ' !';
+          hudWarning.style.display = 'block';
+        }
+        if (stats.elapsed >= nextAt) {
+          spawnYeti(nextNum);
+        }
       }
     }
     updateYeti();
 
-    // Snowman: rolled randomly between 120-180s at run start.
-    // No warning, no escape.
-    if (!stats.snowmanSpawned && stats.elapsed >= stats.snowmanAt) {
-      spawnSnowman();
+    // Snowman: spawns 20-40 seconds after the LAST dog wave clears.
+    // This way dog count and snowman timing compose naturally — more
+    // dogs pushes the snowman later. The exact delay is rolled once
+    // when all dogs are done and stored on stats.snowmanScheduledAt.
+    if (!stats.snowmanSpawned
+        && stats.dogsSpawned >= dogCount
+        && !yeti
+        && stats.dogClearedAt != null) {
+      if (stats.snowmanScheduledAt == null) {
+        stats.snowmanScheduledAt = stats.dogClearedAt + 20 + Math.random() * 20;
+      }
+      if (stats.elapsed >= stats.snowmanScheduledAt) {
+        spawnSnowman();
+      }
     }
     updateSnowman();
 
