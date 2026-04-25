@@ -1,0 +1,15 @@
+# macOS metadata files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS thumbnails
+Thumbs.db
+ehthumbs.db
