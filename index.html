@@ -1617,22 +1617,26 @@
     easy: {
       name: 'EASY',
       speedMul: 1.0,  densityMul: 1.0,  rampSeconds: 150, baseRamp: 0.0,
-      yetiSeconds: 60, snowmanMin: 105, snowmanWindow: 45, startSpeed: 0.8,
+      yetiSeconds: 60, dogGap: 20,
+      snowmanMin: 105, snowmanWindow: 45, startSpeed: 0.8,
     },
     medium: {
       name: 'MEDIUM',
       speedMul: 1.3,  densityMul: 1.7,  rampSeconds: 90,  baseRamp: 0.2,
-      yetiSeconds: 40, snowmanMin: 75,  snowmanWindow: 35, startSpeed: 1.2,
+      yetiSeconds: 40, dogGap: 15,
+      snowmanMin: 75,  snowmanWindow: 35, startSpeed: 1.2,
     },
     hard: {
       name: 'HARD',
       speedMul: 1.4,  densityMul: 2.0,  rampSeconds: 70,  baseRamp: 0.3,
-      yetiSeconds: 25, snowmanMin: 55,  snowmanWindow: 25, startSpeed: 1.4,
+      yetiSeconds: 25, dogGap: 13,
+      snowmanMin: 55,  snowmanWindow: 25, startSpeed: 1.4,
     },
     insta: {
       name: 'INSTA DEATH',
       speedMul: 1.65, densityMul: 2.6,  rampSeconds: 45,  baseRamp: 0.5,
-      yetiSeconds: 10, snowmanMin: 32,  snowmanWindow: 18, startSpeed: 1.8,
+      yetiSeconds: 10, dogGap: 8,
+      snowmanMin: 32,  snowmanWindow: 18, startSpeed: 1.8,
     },
   };
 
@@ -1704,7 +1708,9 @@
       tricks: 0,             // count of landed tricks
       trickScore: 0,         // accumulated bonus from chains
       yetiWarned: false,
-      yetiSpawned: false,
+      dog2Warned: false,
+      dogsSpawned: 0,        // 0 / 1 / 2 — how many dog waves have appeared
+      dogClearedAt: null,    // elapsed time when the most recent dog despawned
       snowmanSpawned: false,
       snowmanAt: D.snowmanMin + Math.random() * D.snowmanWindow,
       elapsed: 0,            // seconds since run started
@@ -1816,7 +1822,8 @@
   // ---------- yeti ----------
   // Wakes after diff().yetiDistance. Chases from above, faster than baseline
   // but slower than a fully-tucked skier, so you can outrun briefly.
-  function spawnYeti() {
+  function spawnYeti(variant = 1) {
+    const isSecond = variant === 2;
     yeti = {
       x: W / 2 + (Math.random() < 0.5 ? -40 : 40),
       y: worldY - 30,       // above the top of the screen
@@ -1824,8 +1831,15 @@
       vx: 0,
       rage: 0,              // animation phase
       state: 'chase',       // 'chase' | 'grab'
+      variant,
+      // Per-variant tuning: variant 2 lingers on screen longer
+      // (lower vy means slower descent relative to camera) but tracks
+      // the player's x more aggressively (higher vxMax).
+      vySpeed: isSecond ? 0.32 : 0.5,
+      vxMax:   isSecond ? 1.85 : 1.4,
     };
-    stats.yetiSpawned = true;
+    stats.dogsSpawned += 1;
+    hudWarning.textContent = isSecond ? '! 2ND DOG !' : '! DOG !';
     hudWarning.style.display = 'block';
     sfx.bark();
     setTimeout(() => sfx.bark(), 180);  // double-bark for dramatic entrance
@@ -1835,19 +1849,17 @@
     if (!yeti) return;
     yeti.rage += 0.2;
 
-    // Track player's x with capped horizontal speed. Player's max
-    // horizontal speed is ~1.75 (faster), so a well-timed juke breaks
-    // the dog's tracking.
+    // Track player's x with capped horizontal speed. Variant 2 tracks
+    // tighter (vxMax 1.85 vs 1.4), making horizontal juking harder.
     const targetX = player.x;
     const dx = targetX - yeti.x;
-    yeti.vx = Math.sign(dx) * Math.min(Math.abs(dx) * 0.04, 1.4);
+    yeti.vx = Math.sign(dx) * Math.min(Math.abs(dx) * 0.04, yeti.vxMax);
     yeti.x += yeti.vx;
 
-    // Dog ALWAYS moves down on screen relative to the camera. Tucking
-    // can't push it back off the top anymore — the dog will reach the
-    // player's screen-y in a few seconds no matter what. The player's
-    // only escape is to be horizontally clear in that moment.
-    yeti.y += player.speed + 0.5;
+    // Dog always moves down on screen relative to the camera. Variant 2
+    // moves slower (vy 0.32 vs 0.5), so it lingers in the danger zone
+    // longer and the player has to dodge for more frames.
+    yeti.y += player.speed + yeti.vySpeed;
 
     // Grab: tight hit zone around the player. If the dog passes through
     // while the player is even a few pixels to the side, it whiffs.
@@ -1865,13 +1877,14 @@
     }
 
     // Survived the pass: dog continues off the bottom of the screen and
-    // gives up. Clear the warning and reward the player with a green
-    // "PHEW!" float text. One dog per run for now — they don't return.
+    // gives up. Clear the warning, reward player with green PHEW!, and
+    // record the time so the second-dog scheduler can fire later.
     const yetiScreenY = yeti.y - worldY;
     if (yetiScreenY > H + 30) {
       yeti = null;
       hudWarning.style.display = 'none';
       spawnFloatText('PHEW!', player.x, worldY + player.screenY - 14, '#6ed26b');
+      stats.dogClearedAt = stats.elapsed;
     }
   }
 
@@ -2065,16 +2078,31 @@
       }
     }
 
-    // Dog wake-up (time-based — snowman was instakilling players on easy
-    // before they could ever cover enough distance to trigger the dog).
-    const yetiAt = diff().yetiSeconds;
-    if (!stats.yetiWarned && stats.elapsed >= yetiAt - 4) {
-      stats.yetiWarned = true;
-      hudWarning.textContent = '! DOG !';
-      hudWarning.style.display = 'block';
-    }
-    if (!stats.yetiSpawned && stats.elapsed >= yetiAt) {
-      spawnYeti();
+    // Dog wake-up. Two waves now:
+    //   Dog 1: at diff().yetiSeconds elapsed (time-based).
+    //   Dog 2: dogGap seconds after Dog 1 cleared off-screen, IF the
+    //          player survived the first encounter. Stays well ahead of
+    //          the snowman window so it doesn't compete with that.
+    const D = diff();
+    if (stats.dogsSpawned === 0) {
+      if (!stats.yetiWarned && stats.elapsed >= D.yetiSeconds - 4) {
+        stats.yetiWarned = true;
+        hudWarning.textContent = '! DOG !';
+        hudWarning.style.display = 'block';
+      }
+      if (stats.elapsed >= D.yetiSeconds) {
+        spawnYeti(1);
+      }
+    } else if (stats.dogsSpawned === 1 && !yeti && stats.dogClearedAt != null) {
+      const dog2At = stats.dogClearedAt + D.dogGap;
+      if (!stats.dog2Warned && stats.elapsed >= dog2At - 4) {
+        stats.dog2Warned = true;
+        hudWarning.textContent = '! 2ND DOG !';
+        hudWarning.style.display = 'block';
+      }
+      if (stats.elapsed >= dog2At) {
+        spawnYeti(2);
+      }
     }
     updateYeti();
 
