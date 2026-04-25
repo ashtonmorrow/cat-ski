@@ -2202,13 +2202,12 @@
     if (dogsValue)  dogsValue.textContent = String(dogCount);
     refreshBestForCombo();
   }
-  // Forward declaration — actual implementation defined later when
-  // `bests` and `currentBest` exist. Wrapped in typeof check so the
-  // first call (during initial applyIntensity/applyDogCount) is safe.
+  // Refresh the global `best` when slider values change. Safe to call
+  // because `bests` and `currentBest` are declared earlier in this IIFE
+  // (after the slider listener wiring, before the applyIntensity init
+  // calls). See the bestKey/loadBests block above.
   function refreshBestForCombo() {
-    if (typeof bests !== 'undefined' && typeof currentBest === 'function') {
-      best = currentBest();
-    }
+    best = currentBest();
   }
   if (diffSlider) {
     diffSlider.addEventListener('input', () =>
@@ -2220,6 +2219,34 @@
       applyDogCount(parseInt(dogsSlider.value, 10))
     );
   }
+
+  // Best scores per difficulty combo. Declared HERE — before the
+  // applyIntensity/applyDogCount init calls below — because those calls
+  // invoke refreshBestForCombo, which reads `bests`. typeof on a let in
+  // TDZ throws ReferenceError, which would halt the IIFE init and
+  // break the entire game (same bug pattern that broke MESSAGES and
+  // THEMES earlier in the project).
+  function bestKey() {
+    return intensity.toFixed(1) + '_' + dogCount;
+  }
+  function loadBests() {
+    try {
+      const raw = localStorage.getItem('skior_bests');
+      if (raw) return JSON.parse(raw);
+    } catch (_) {}
+    // Migrate legacy single-best
+    const legacy = Number(localStorage.getItem('skior_best') || 0);
+    return legacy > 0 ? { [bestKey()]: legacy } : {};
+  }
+  function saveBests(obj) {
+    try { localStorage.setItem('skior_bests', JSON.stringify(obj)); } catch (_) {}
+  }
+  let bests = loadBests();
+  function currentBest() { return bests[bestKey()] || 0; }
+  // Backwards-compat: keep `best` as the current-difficulty best so
+  // existing references in update() still work without rewriting.
+  let best = currentBest();
+
   applyIntensity(intensity);
   applyDogCount(dogCount);
 
@@ -2269,31 +2296,6 @@
   // State machine: 'title' -> 'play' <-> 'paused' -> 'over' -> 'play' ...
   const STATE = { TITLE:'title', PLAY:'play', PAUSED:'paused', OVER:'over' };
   let state = STATE.TITLE;
-
-  // Best scores are now per difficulty combo (intensity + dogCount).
-  // Stored as a single JSON object under 'skior_bests'. Migrates the
-  // legacy single 'skior_best' key into the current combo on first run
-  // so existing players don't lose their high score.
-  function bestKey() {
-    return intensity.toFixed(1) + '_' + dogCount;
-  }
-  function loadBests() {
-    try {
-      const raw = localStorage.getItem('skior_bests');
-      if (raw) return JSON.parse(raw);
-    } catch (_) {}
-    // Migrate legacy single-best
-    const legacy = Number(localStorage.getItem('skior_best') || 0);
-    return legacy > 0 ? { [bestKey()]: legacy } : {};
-  }
-  function saveBests(obj) {
-    try { localStorage.setItem('skior_bests', JSON.stringify(obj)); } catch (_) {}
-  }
-  let bests = loadBests();
-  function currentBest() { return bests[bestKey()] || 0; }
-  // Backwards-compat: keep `best` as the current-difficulty best so
-  // existing references in update() still work without rewriting.
-  let best = currentBest();
 
   // The skier sits at a fixed screen Y; the world scrolls past.
   // worldY = how far down the mountain we've traveled (in px).
