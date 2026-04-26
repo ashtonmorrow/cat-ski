@@ -556,6 +556,25 @@
     letter-spacing: 1px;
   }
   .panel .hint .blink { color: var(--accent-2); animation: blink 1s steps(2,end) infinite; }
+  /* Secondary link below the start prompt — points players at the
+     readme for a deeper TLDR + controls reference. Subtle on purpose:
+     SPACE-to-start is the primary CTA, this is the tertiary "help me"
+     escape hatch. Sized smaller than the hint, ghosted color, dotted
+     underline so it reads as a link without competing for attention. */
+  .readme-link {
+    display: inline-block;
+    margin-top: 10px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    letter-spacing: 1px;
+    color: var(--link-dim);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--link-dim);
+    padding-bottom: 1px;
+    transition: color 120ms, border-color 120ms;
+  }
+  .readme-link:hover  { color: var(--accent-2); border-bottom-color: var(--accent-2); }
+  .readme-link:active { color: var(--accent); }
   .panel .stat-row {
     display: flex; justify-content: space-between; gap: 30px;
     font-family: 'Press Start 2P', monospace;
@@ -1154,6 +1173,7 @@
           <kbd>SPACE</kbd><span data-i18n="keys.start">START / RETRY</span>
         </div>
         <div class="hint"><span class="blink">&gt;</span> PRESS SPACE TO START</div>
+        <a href="/readme.html" class="readme-link" target="_blank" rel="noopener" data-i18n="link.readme">READ ME &rsaquo;</a>
       </div>
     </div>
 
@@ -1772,6 +1792,8 @@
         'lb.modeNine':  '9 LIVES',
         'lb.modeOne':   '1 LIFE',
         'lb.newHigh':   'NEW HIGH SCORE!',
+        // Tertiary link
+        'link.readme':  'READ ME ›',
       },
     },
     es: {
@@ -1920,6 +1942,8 @@
         'lb.modeNine':  '9 VIDAS',
         'lb.modeOne':   '1 VIDA',
         'lb.newHigh':   '¡NUEVO RÉCORD!',
+        // Tertiary link
+        'link.readme':  'LÉEME ›',
       },
     },
   };
@@ -2126,6 +2150,15 @@
   document.getElementById('overlay-start').addEventListener('click', overlayTap);
   document.getElementById('overlay-over').addEventListener('click', overlayTap);
   document.getElementById('overlay-paused').addEventListener('click', overlayTap);
+  // The READ ME link inside the start overlay sits inside the same
+  // click-target the overlayTap listener watches. Without stopPropagation
+  // the click would (a) open the readme in a new tab AND (b) fire
+  // spacePressed, which on tap-active devices starts a run the user
+  // didn't ask for. The existing reset-best link in the over overlay
+  // and the lb-entry block solve the same problem the same way.
+  document.querySelectorAll('.readme-link').forEach(el => {
+    el.addEventListener('click', e => e.stopPropagation());
+  });
 
   // ---------- share button (game-over panel) ----------
   // Composes a screenshot of the wreck moment + a banner with the run's

@@ -308,8 +308,9 @@
 
     <nav class="toc" aria-label="Contents">
       <ul>
+        <li><a href="#tldr">How to play (quick start)</a></li>
         <li><a href="#about">About cat-ski</a></li>
-        <li><a href="#play">How to play</a></li>
+        <li><a href="#play">Gameplay details</a></li>
         <li><a href="#build">How the game is built</a></li>
         <li><a href="#design">Design criteria for each game element</a></li>
         <li><a href="#colors">Selecting colors from real photographs</a></li>
@@ -319,17 +320,9 @@
       </ul>
     </nav>
 
-    <h2 id="about">About cat-ski</h2>
+    <h2 id="tldr">How to play (quick start)</h2>
 
-    <p>Cat Ski 1989 is a free browser game inspired by <a href="https://en.wikipedia.org/wiki/SkiFree" target="_blank" rel="noopener noreferrer">SkiFree</a>, the 1991 release that shipped in Microsoft Entertainment Pack 3 for Windows 3.0. The original presented an endless downhill ski run with trees, jumps, and an unkillable abominable yeti that eventually appeared and ended every run. Cat Ski 1989 recreates the same loop with a cat as the player character. The game includes three regional mountain themes (Alps, Rockies, Himalayas), four cat color variants, an in-air trick system with chained scoring, gold escape ramps that spawn alongside each dog wave, and a snowman that takes the role of the original yeti. Difficulty is fully tunable through two sliders, with four named presets for casual players.</p>
-
-    <p>The project is open source at <a href="https://github.com/ashtonmorrow/cat-ski" target="_blank" rel="noopener noreferrer">github.com/ashtonmorrow/cat-ski</a>. It was developed by <a href="https://www.linkedin.com/in/mikelee89/" target="_blank" rel="noopener noreferrer">Mike Lee</a> using Claude as a coding collaborator. The full game is one self-contained HTML file with no build step or external dependencies beyond Google Fonts. It is installable as a Progressive Web App for offline play. Best scores are tracked per difficulty combination and persist locally.</p>
-
-    <h2 id="play">How to play</h2>
-
-    <p>The cat skis down an endless slope. Before starting, the player chooses a cat color (black, tabby, calico, or orange) and a mountain theme (Alps, Rockies, or Himalayas). Both selections persist across sessions through localStorage.</p>
-
-    <p>The keyboard controls are listed below. Touch controls are also available on phones and tablets through an on-screen joystick that appears automatically when the device reports a coarse primary pointer.</p>
+    <p>Ski downhill, dodge trees, land tricks for bonus points, and try to outlast the dog chasers and the snowman that ends every run. By default you have nine lives; toggle the <strong>9</strong> button to play 1-life classic. Pick a cat color and a mountain theme, then press <strong>SPACE</strong> to start.</p>
 
     <table>
       <thead>
@@ -339,18 +332,32 @@
         <tr><td>Arrow keys or WASD</td><td>Steer left and right</td></tr>
         <tr><td>Down arrow or S</td><td>Tuck for higher speed</td></tr>
         <tr><td>Up arrow or W</td><td>Carve for lower speed</td></tr>
-        <tr><td>1, 2, 3 (in mid-air)</td><td>Perform a trick: Meow Roll, Whisker Twist, or Cat Nap</td></tr>
-        <tr><td>Space</td><td>Start a run, retry after a crash, or resume from pause</td></tr>
+        <tr><td>1, 2, 3 (in mid-air)</td><td>Trick: Meow Roll, Whisker Twist, Cat Nap</td></tr>
+        <tr><td>Space</td><td>Start, retry, or resume</td></tr>
         <tr><td>P or Esc</td><td>Pause</td></tr>
         <tr><td>R</td><td>Restart the current run</td></tr>
       </tbody>
     </table>
+
+    <p>On phones and tablets, an on-screen joystick replaces the keyboard. The trick buttons sit alongside the joystick and a SWAP button lets you put either control on whichever side fits your thumb.</p>
+
+    <h2 id="about">About cat-ski</h2>
+
+    <p>Cat Ski 1989 is a free browser game inspired by <a href="https://en.wikipedia.org/wiki/SkiFree" target="_blank" rel="noopener noreferrer">SkiFree</a>, the 1991 release that shipped in Microsoft Entertainment Pack 3 for Windows 3.0. The original presented an endless downhill ski run with trees, jumps, and an unkillable abominable yeti that eventually appeared and ended every run. Cat Ski 1989 recreates the same loop with a cat as the player character. The game includes three regional mountain themes (Alps, Rockies, Himalayas), four cat color variants, an in-air trick system with chained scoring, gold escape ramps that spawn alongside each dog wave, and a snowman that takes the role of the original yeti. Difficulty is fully tunable through two sliders, with four named presets for casual players.</p>
+
+    <p>The project is open source at <a href="https://github.com/ashtonmorrow/cat-ski" target="_blank" rel="noopener noreferrer">github.com/ashtonmorrow/cat-ski</a>. It was developed by <a href="https://www.linkedin.com/in/mikelee89/" target="_blank" rel="noopener noreferrer">Mike Lee</a> using Claude as a coding collaborator. The full game is one self-contained HTML file with no build step or external dependencies beyond Google Fonts. It is installable as a Progressive Web App for offline play. Best scores are tracked per difficulty combination and persist locally.</p>
+
+    <h2 id="play">Gameplay details</h2>
+
+    <p>Before starting, the player chooses a cat color (black, tabby, calico, or orange) and a mountain theme (Alps, Rockies, or Himalayas). Both selections persist across sessions through localStorage.</p>
 
     <p>The score increases with distance traveled, plus bonuses for collected flags, completed jumps, and chained tricks. Each subsequent trick within a single jump compounds the bonus, so chaining several tricks before landing produces a higher reward than performing them across separate jumps.</p>
 
     <p>After a fixed time, dogs begin to appear at the top of the screen and chase the cat down the slope. Each dog crosses the cat's screen position at a calculable moment determined by its descent rate. The player can dodge horizontally before the crossing, or launch from a gold escape ramp to be airborne while the dog passes. After the configured number of dog waves are cleared, a snowman appears within a randomized window and ends the run on contact. The snowman is the project's tribute to the original SkiFree yeti.</p>
 
     <p>Difficulty is set with two sliders. Intensity (0.8x to 5x) scales speed, obstacle density, spawn cadence, and dog tracking. Dog count (1 to 10) sets how many dog waves appear before the snowman. Four named presets (EASY, MEDIUM, HARD, and INSTA DEATH) snap both sliders to canonical positions for players who do not want to tune individual parameters.</p>
+
+    <p>Lives mode (the <strong>9</strong> button on the picker row) gives the cat nine lives instead of one. Each crash, dog grab, or snowman chomp consumes a life with a brief invincibility window before the next hit can register. The global leaderboard splits by mode, so 9-lives runs and 1-life runs are scored on separate boards.</p>
 
     <h2 id="build">How the game is built</h2>
 
