@@ -193,29 +193,44 @@
   @keyframes blink { 50% { opacity: 0; } }
 
   /* Top-3 high score strip. Sits between the bezel title and the game
-     canvas. Three flex cells holding "1. NAME 12345" each. Designed to
-     read as background chrome — same pixel font as the bezel, dimmer
-     than the HUD, no animation, minimum vertical real-estate. */
+     canvas. Three flex cells, each laid out as | RANK  NAME    SCORE |.
+     Same Press Start 2P font as the bezel, dimmer than the HUD, no
+     animation, minimum vertical real-estate. Each entry is fixed-width
+     so rank/name/score columns line up vertically across the three
+     entries — reads as a tiny arcade leaderboard, not a run-on string. */
   .leaderboard {
     display: flex;
     justify-content: center;
-    gap: 18px;
+    gap: 28px;
     font-family: 'Press Start 2P', monospace;
-    font-size: 8px;
+    font-size: 9px;
     letter-spacing: 1.5px;
     color: var(--snow-dim);
     margin-bottom: 6px;
-    padding: 4px 4px 5px;
-    border-top: 1px solid rgba(122,167,199,0.18);
-    border-bottom: 1px solid rgba(122,167,199,0.18);
+    padding: 6px 8px 7px;
+    border-top: 1px solid rgba(122,167,199,0.22);
+    border-bottom: 1px solid rgba(122,167,199,0.22);
     text-shadow: 0 0 4px rgba(122,167,199,0.35);
-    opacity: 0.85;
     flex-wrap: wrap;
   }
-  .leaderboard .lb-rank { color: var(--accent-2); }
-  .leaderboard .lb-name { color: var(--snow); margin: 0 4px; }
-  .leaderboard .lb-score { color: var(--snow-dim); }
+  .leaderboard .lb-row {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 10px;
+    min-width: 130px;
+    justify-content: flex-start;
+  }
+  .leaderboard .lb-rank  { color: var(--accent-2); min-width: 18px; }
+  .leaderboard .lb-name  { color: var(--snow);     min-width: 50px; letter-spacing: 2px; }
+  .leaderboard .lb-score { color: var(--snow-dim); min-width: 38px; text-align: right; margin-left: auto; }
   .leaderboard .lb-empty { opacity: 0.45; }
+  /* Tighter on phones — three entries on one line is the priority. */
+  @media (max-width: 540px) {
+    .leaderboard { gap: 12px; font-size: 8px; padding: 5px 4px; }
+    .leaderboard .lb-row { gap: 6px; min-width: 0; }
+    .leaderboard .lb-name  { min-width: 38px; letter-spacing: 1.5px; }
+    .leaderboard .lb-score { min-width: 30px; }
+  }
 
   /* Name-entry block inside the game-over panel. Only revealed when
      the run qualifies for top-3. Uses the same pixel font and a
@@ -245,14 +260,18 @@
     font-family: 'Press Start 2P', monospace;
     font-size: 14px;
     letter-spacing: 4px;
-    width: 100px;
-    padding: 6px 8px;
+    /* 5 chars * (~14px glyph + 4px letter-spacing) = ~90px, plus the
+       trailing letter-spacing slot, plus padding + border. ~140px keeps
+       all five visible without crowding the cursor. */
+    width: 140px;
+    padding: 8px 10px;
     background: var(--ink);
     color: var(--snow);
     border: 2px solid var(--snow-dim);
     text-align: center;
     text-transform: uppercase;
     outline: none;
+    caret-color: var(--accent-2);
   }
   .lb-name-input:focus {
     border-color: var(--accent-2);
@@ -1358,6 +1377,13 @@
   }
 
   window.addEventListener('keydown', e => {
+    // If the user is typing into a form input (the leaderboard name
+    // entry, primarily), don't intercept keys for game controls. Without
+    // this guard, typing 'R' restarts the run and 'P' pauses it, which
+    // makes it impossible to spell anything starting with those letters.
+    const tag = e.target && e.target.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
     const dir = normalizeKey(e);
     if (dir) e.preventDefault();
     if (e.repeat) return;
@@ -1387,6 +1413,8 @@
     }
   });
   window.addEventListener('keyup', e => {
+    const tag = e.target && e.target.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
     const dir = normalizeKey(e);
     if (dir === 'left')  keys.left = false;
     if (dir === 'right') keys.right = false;
@@ -3375,6 +3403,7 @@
     for (let i = 0; i < 3; i++) {
       const e = leaderboard[i];
       const row = document.createElement('span');
+      row.className = 'lb-row';
       if (!e) row.classList.add('lb-empty');
       const r = document.createElement('span');
       r.className = 'lb-rank';
@@ -3384,7 +3413,7 @@
       n.textContent = e ? e.name : '---';
       const s = document.createElement('span');
       s.className = 'lb-score';
-      s.textContent = e ? e.score : '-----';
+      s.textContent = e ? String(e.score) : '-----';
       row.appendChild(r); row.appendChild(n); row.appendChild(s);
       leaderboardEl.appendChild(row);
     }
