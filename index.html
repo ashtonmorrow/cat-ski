@@ -131,8 +131,11 @@
     padding: 12px 0;
     background:
       radial-gradient(ellipse at 50% 0%, #24384f 0%, #0b1320 60%, #050910 100%);
-    background-attachment: fixed;
     overflow-x: hidden;
+    /* background-attachment: fixed was removed — it forced a full body
+       repaint on every scroll, especially expensive on mobile. The
+       gradient now scrolls with the body, which is fine because the
+       body is rarely scrolled mid-game. */
   }
 
   .frame {
@@ -218,7 +221,11 @@
     image-rendering: crisp-edges;
   }
 
-  /* Scanline + vignette overlay for CRT feel */
+  /* Scanline + vignette overlay for CRT feel.
+     mix-blend-mode was removed because it forced the browser to
+     composite the entire canvas underneath every frame, dropping
+     framerate noticeably on mobile. Direct alpha gets a similar
+     visual at a fraction of the GPU cost. */
   .crt {
     pointer-events: none;
     position: absolute;
@@ -228,11 +235,10 @@
         to bottom,
         rgba(0,0,0,0) 0px,
         rgba(0,0,0,0) 2px,
-        rgba(0,0,0,.18) 3px,
+        rgba(0,0,0,.10) 3px,
         rgba(0,0,0,0) 4px
       ),
-      radial-gradient(ellipse at center, rgba(0,0,0,0) 60%, rgba(0,0,0,.55) 100%);
-    mix-blend-mode: multiply;
+      radial-gradient(ellipse at center, rgba(0,0,0,0) 60%, rgba(0,0,0,.30) 100%);
   }
 
   /* HUD */
@@ -2300,6 +2306,9 @@
   // The skier sits at a fixed screen Y; the world scrolls past.
   // worldY = how far down the mountain we've traveled (in px).
   let worldY = 0;
+  // Last-known airborne state, used to skip redundant body classList
+  // toggles. See the per-frame guard inside update().
+  let _wasAirborne = false;
   let player, objects, particles, tracks, yeti, stats;
 
   function resetGame() {
@@ -2852,11 +2861,15 @@
     // Camera shake decay
     if (stats.shakeT > 0) stats.shakeT--;
 
-    // Toggle body.airborne for mobile trick-pad swap. Done here (not in
-    // render) so the class only reflects game-state truth, not render
-    // accidents. Safe to set every frame — classList.toggle is a no-op
-    // when the target state already matches.
-    document.body.classList.toggle('airborne', player.air > 0 && !player.crashed && !player.grabbed);
+    // Toggle body.airborne only when it actually changes, not every
+    // frame. classList.toggle is a no-op when the state matches, but
+    // the call itself still triggers a style invalidation each time at
+    // 60Hz. Tracking last-known state avoids that work.
+    const shouldBeAirborne = player.air > 0 && !player.crashed && !player.grabbed;
+    if (shouldBeAirborne !== _wasAirborne) {
+      document.body.classList.toggle('airborne', shouldBeAirborne);
+      _wasAirborne = shouldBeAirborne;
+    }
 
     // Swoosh wind sound tracks player speed, quieter when airborne
     // (nothing to scrape) and silent when paused/crashed.
@@ -3512,9 +3525,11 @@
   }
 
   function drawObjects() {
-    // Sort by world Y so things layer correctly
-    const sorted = objects.slice().sort((a, b) => a.y - b.y);
-    for (const o of sorted) {
+    // Skip the per-frame copy + sort. Objects are pushed in roughly
+    // increasing world-y order by maintainWorld, so layering is already
+    // close to correct. Strict z-order isn't perceptible for a few-pixel
+    // tree-vs-flag z-fight. Saves an O(n log n) per frame at 60Hz.
+    for (const o of objects) {
       const sy = toScreenY(o.y);
       if (sy < -20 || sy > H + 20) continue;
       const sx = Math.round(o.x);
