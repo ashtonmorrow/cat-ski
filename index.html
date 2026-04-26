@@ -221,24 +221,62 @@
     image-rendering: crisp-edges;
   }
 
-  /* Scanline + vignette overlay for CRT feel.
-     mix-blend-mode was removed because it forced the browser to
-     composite the entire canvas underneath every frame, dropping
-     framerate noticeably on mobile. Direct alpha gets a similar
-     visual at a fraction of the GPU cost. */
+  /* CRT overlay. Layered CSS-only effect targeting an authentic shadow-
+     mask CRT look without per-frame cost.
+       1. Horizontal scanlines (period 4px, dark gap every 4th line)
+       2. Vertical R-G-B phosphor stripes (the actual mechanism that
+          makes a CRT look like a CRT — sub-pixel mask, period 6px)
+       3. Corner vignette
+       4. Inset shadow on the overlay itself fakes the tube's curvature
+          (real CRTs darken at the very edges of the visible image
+          where the electron beam can't quite reach)
+     A ::before pseudo adds a diagonal glass sheen, like light hitting
+     the front of the tube. mix-blend-mode is deliberately not used —
+     it forces a full-canvas re-composite every frame.                */
   .crt {
     pointer-events: none;
     position: absolute;
     inset: 0;
     background:
+      /* horizontal scanlines */
       repeating-linear-gradient(
         to bottom,
         rgba(0,0,0,0) 0px,
         rgba(0,0,0,0) 2px,
-        rgba(0,0,0,.10) 3px,
+        rgba(0,0,0,.12) 3px,
         rgba(0,0,0,0) 4px
       ),
-      radial-gradient(ellipse at center, rgba(0,0,0,0) 60%, rgba(0,0,0,.30) 100%);
+      /* vertical RGB phosphor mask */
+      repeating-linear-gradient(
+        to right,
+        rgba(255,80,80,0.06) 0px,
+        rgba(255,80,80,0.06) 2px,
+        rgba(80,255,80,0.06) 2px,
+        rgba(80,255,80,0.06) 4px,
+        rgba(80,80,255,0.06) 4px,
+        rgba(80,80,255,0.06) 6px
+      ),
+      /* corner vignette */
+      radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,.35) 100%);
+    /* Tube curvature illusion — edges of visible image darken inward */
+    box-shadow:
+      inset 0 0 24px rgba(0,0,0,0.45),
+      inset 0 0 70px rgba(15,25,40,0.25);
+  }
+  /* Glass sheen — subtle diagonal highlight as if light is reflecting
+     off the front of the tube. Pinned to the overlay so it scales with
+     the screen-wrap. */
+  .crt::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      135deg,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,0.05) 28%,
+      rgba(255,255,255,0) 55%
+    );
   }
 
   /* HUD */
@@ -1612,35 +1650,109 @@
   document.getElementById('overlay-paused').addEventListener('click', overlayTap);
 
   // ---------- share button (game-over panel) ----------
-  // Uses navigator.share where available (mobile + Edge). Falls back to
-  // clipboard copy with a "COPIED" confirmation. The shared text
-  // includes the run's distance and score so the recipient sees a hook.
+  // Composes a screenshot of the wreck moment + a banner with the run's
+  // stats, then opens the system share sheet with the image attached
+  // (Web Share Level 2). Falls back to PNG download + URL clipboard
+  // copy on browsers without file-share support.
   const btnShare = document.getElementById('btn-share');
-  if (btnShare) {
-    btnShare.addEventListener('click', async () => {
-      const text = `I scored ${stats.score} on Cat Ski (${stats.distance}m). Try to beat me:`;
-      const url = 'https://ski.mike-lee.me/';
-      if (navigator.share) {
-        try { await navigator.share({ title: 'Cat Ski 1989', text, url }); }
-        catch (_) { /* user dismissed, no-op */ }
-        return;
-      }
-      // Fallback: copy URL to clipboard
-      try {
-        await navigator.clipboard.writeText(`${text} ${url}`);
-        const original = btnShare.textContent;
-        btnShare.textContent = 'COPIED';
-        btnShare.classList.add('copied');
-        setTimeout(() => {
-          btnShare.textContent = original;
-          btnShare.classList.remove('copied');
-        }, 1800);
-      } catch (_) {
-        // Last resort: prompt() so the user can copy manually
-        window.prompt('Copy this link:', url);
-      }
-    });
+
+  // Build a 720 x 720 PNG: top half is the canvas at 2x, bottom is a
+  // banner with score, distance, time, cat color, theme, and the URL.
+  // Returns a Blob ready for sharing or downloading.
+  async function composeShareImage() {
+    const W2 = 720, H2 = 540, BANNER_H = 200;
+    const out = document.createElement('canvas');
+    out.width = W2;
+    out.height = H2 + BANNER_H;
+    const c = out.getContext('2d');
+    c.imageSmoothingEnabled = false;     // crisp 2x pixel upscale
+    // Background
+    c.fillStyle = '#0a111c';
+    c.fillRect(0, 0, out.width, out.height);
+    // Game canvas at 2x — the wreck scene the player just saw
+    c.drawImage(canvas, 0, 0, W2, H2);
+    // Divider band between game and banner
+    c.fillStyle = '#1d2a3c';
+    c.fillRect(0, H2, W2, 3);
+    // Banner content
+    c.textAlign = 'center';
+    // Big score
+    c.fillStyle = '#ffcc00';
+    c.font = 'bold 48px "Press Start 2P", monospace';
+    c.fillText(String(stats.score), W2 / 2, H2 + 70);
+    // SCORE label
+    c.fillStyle = '#cfe2f5';
+    c.font = 'bold 14px "Press Start 2P", monospace';
+    c.fillText('SCORE', W2 / 2, H2 + 95);
+    // Distance + time
+    c.fillStyle = '#eaf4ff';
+    c.font = 'bold 14px "Press Start 2P", monospace';
+    c.fillText(`${stats.distance}M    ${formatTime(stats.elapsed)}`, W2 / 2, H2 + 130);
+    // Difficulty / cat / theme line
+    c.fillStyle = '#7c8da0';
+    c.font = '20px "VT323", monospace';
+    const meta = `${catColor.toUpperCase()} CAT  ${THEMES[mtnTheme].name}  ${intensity.toFixed(1)}x  ${dogCount} DOG${dogCount > 1 ? 'S' : ''}`;
+    c.fillText(meta, W2 / 2, H2 + 158);
+    // URL
+    c.fillStyle = '#ffcc00';
+    c.font = 'bold 16px "Press Start 2P", monospace';
+    c.fillText('SKI.MIKE-LEE.ME', W2 / 2, H2 + 188);
+    return new Promise(resolve => out.toBlob(resolve, 'image/png'));
   }
+
+  function flashShareLabel(text) {
+    if (!btnShare) return;
+    const original = btnShare.dataset.label || btnShare.textContent;
+    btnShare.dataset.label = original;
+    btnShare.textContent = text;
+    btnShare.classList.add('copied');
+    setTimeout(() => {
+      btnShare.textContent = original;
+      btnShare.classList.remove('copied');
+    }, 1800);
+  }
+
+  async function shareRun() {
+    const text = `I scored ${stats.score} on Cat Ski (${stats.distance}m). Beat me:`;
+    const url = 'https://ski.mike-lee.me/';
+    let blob = null;
+    try { blob = await composeShareImage(); } catch (_) {}
+    // Path 1: Web Share Level 2 with file — best UX on mobile
+    if (blob && navigator.canShare) {
+      const file = new File([blob], 'cat-ski-run.png', { type: 'image/png' });
+      if (navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ title: 'Cat Ski', text, url, files: [file] });
+          return;
+        } catch (_) { /* user cancelled, fall through */ }
+      }
+    }
+    // Path 2: Web Share Level 1 — text + URL only
+    if (navigator.share) {
+      try { await navigator.share({ title: 'Cat Ski', text, url }); return; }
+      catch (_) {}
+    }
+    // Path 3: download the PNG + copy text+URL
+    if (blob) {
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `cat-ski-${stats.score}.png`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+      try { await navigator.clipboard.writeText(`${text} ${url}`); } catch (_) {}
+      flashShareLabel('SAVED');
+      return;
+    }
+    // Path 4: last resort — clipboard text only
+    try {
+      await navigator.clipboard.writeText(`${text} ${url}`);
+      flashShareLabel('COPIED');
+    } catch (_) {
+      window.prompt('Copy this link:', url);
+    }
+  }
+
+  if (btnShare) btnShare.addEventListener('click', shareRun);
 
   // ---------- reset best score (for current difficulty combo) ----------
   const resetBestLink = document.getElementById('reset-best');
