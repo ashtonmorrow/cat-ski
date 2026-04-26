@@ -3375,12 +3375,24 @@
     endRun(msg(cat, 'titles'), msg(cat, 'subs'));
   }
 
-  // ---------- top-3 leaderboard ----------
-  // One global top-3 (no per-difficulty namespacing — that's what BEST is
-  // for). Persisted as `skior_leaderboard` JSON. Each entry: { name, score }.
-  // The strip above the canvas always shows 3 rows; empty slots render
-  // as "1. ---  -----" so the layout stays stable.
+  // ---------- top-3 leaderboard (global, Supabase-backed) ----------
+  // The strip is now a global top-3 stored in Supabase. localStorage is
+  // used only as an offline cache so the strip can render something
+  // immediately at boot, before the network round-trip completes. On
+  // page load we read the cache, render, then fire a fetch and replace
+  // the data with whatever the server has.
+  //
+  // Key + URL are public by design (RLS on the table allows anon
+  // SELECT and INSERT). No service-role key is ever shipped to the
+  // browser. Cheaters welcome — reset is manual.
+  const SUPABASE_URL  = 'https://pdjrvlhepiwkshxerkpz.supabase.co';
+  const SUPABASE_KEY  = 'sb_publishable_NrfBsFhfj0DSKqDEKeUCMQ_H5oDG-Zv';
+  const SCORES_TABLE  = 'cat_ski_scores';
+  const LB_LIMIT      = 3;
+
   function loadLeaderboard() {
+    // Read the cached top-3 (last successful network fetch). Returns []
+    // if nothing's cached yet.
     try {
       const raw = localStorage.getItem('skior_leaderboard');
       if (raw) {
@@ -3388,7 +3400,7 @@
         if (Array.isArray(arr)) {
           return arr
             .filter(e => e && typeof e.score === 'number' && typeof e.name === 'string')
-            .slice(0, 3);
+            .slice(0, LB_LIMIT);
         }
       }
     } catch (_) {}
@@ -3398,6 +3410,61 @@
     try { localStorage.setItem('skior_leaderboard', JSON.stringify(arr)); } catch (_) {}
   }
   let leaderboard = loadLeaderboard();
+
+  // Fetch the global top-3 from Supabase. On success: replace the
+  // in-memory leaderboard, save to cache, re-render. On failure: leave
+  // the cached data alone so the strip still shows something. No retry
+  // (next page load will try again).
+  async function fetchGlobalLeaderboard() {
+    if (!SUPABASE_URL || !SUPABASE_KEY) return;
+    const url = SUPABASE_URL + '/rest/v1/' + SCORES_TABLE +
+                '?select=name,score&order=score.desc&limit=' + LB_LIMIT;
+    try {
+      const res = await fetch(url, {
+        headers: {
+          'apikey':        SUPABASE_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_KEY,
+        },
+      });
+      if (!res.ok) return;
+      const rows = await res.json();
+      if (!Array.isArray(rows)) return;
+      leaderboard = rows
+        .filter(r => r && typeof r.name === 'string' && typeof r.score === 'number')
+        .slice(0, LB_LIMIT);
+      saveLeaderboard(leaderboard);
+      renderLeaderboard();
+    } catch (_) {
+      // Network down — keep showing whatever was cached. No-op.
+    }
+  }
+
+  // Submit a score row to Supabase. Fire-and-forget; the caller
+  // optimistically inserted into the local list already so the strip
+  // updates immediately. After the POST resolves we refetch to merge
+  // in any other plays that landed concurrently.
+  async function submitGlobalScore(name, score, extra) {
+    if (!SUPABASE_URL || !SUPABASE_KEY) return;
+    const body = Object.assign({ name: name, score: score }, extra || {});
+    try {
+      const res = await fetch(SUPABASE_URL + '/rest/v1/' + SCORES_TABLE, {
+        method: 'POST',
+        headers: {
+          'apikey':        SUPABASE_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_KEY,
+          'Content-Type':  'application/json',
+          'Prefer':        'return=minimal',
+        },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) return;
+      // Refetch authoritative top-3 so the strip reflects everyone's
+      // plays, not just this device's optimistic insert.
+      fetchGlobalLeaderboard();
+    } catch (_) {
+      // Network down — the optimistic local insert is the best we can do.
+    }
+  }
 
   const leaderboardEl = document.getElementById('leaderboard');
   function renderLeaderboard() {
@@ -3424,6 +3491,10 @@
     }
   }
   renderLeaderboard();
+  // Kick off the network fetch right after the cached version paints —
+  // user sees the cached strip instantly, then it updates to whatever
+  // the global state is once the round-trip resolves.
+  fetchGlobalLeaderboard();
 
   // True if `score` would land in the top-3 (either there are open
   // slots, or it beats the current 3rd-place score).
@@ -3474,8 +3545,18 @@
       hideLbEntry();
       return;
     }
+    // Optimistic local insert so the strip updates immediately. The POST
+    // below mirrors it to Supabase; on success we refetch the
+    // authoritative top-3 so the strip ends up correct even if a higher
+    // score landed elsewhere between our submit and our response.
     insertLeaderboardEntry(name, score);
     if (name) localStorage.setItem('skior_lb_last_name', name);
+    submitGlobalScore(name || 'CAT', score, {
+      intensity:  intensity,
+      dogs:       dogCount,
+      lives_mode: livesMode,
+      theme:      mtnTheme,
+    });
     hideLbEntry();
   }
   function hideLbEntry() {
