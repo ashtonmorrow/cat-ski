@@ -244,6 +244,11 @@
     align-items: center;
     gap: 8px;
   }
+  /* The site's existing `.hidden` rule only matches `.overlay.hidden`,
+     so this scoped variant is needed to actually collapse the entry
+     block when hideLbEntry() runs. Without it the block stayed visible
+     after submit and the user couldn't tell anything had happened. */
+  .lb-entry.hidden { display: none; }
   .lb-entry-title {
     font-family: 'Press Start 2P', monospace;
     font-size: 10px;
@@ -3476,6 +3481,16 @@
   function hideLbEntry() {
     lbEntryActive = false;
     if (lbEntry) lbEntry.classList.add('hidden');
+    // Release focus from any element inside the entry block so SPACE
+    // restarts the run instead of either:
+    //   (a) being swallowed by a hidden input (the window keydown
+    //       listener early-returns on INPUT targets), or
+    //   (b) re-triggering the OK button (browsers fire 'click' on a
+    //       focused button when SPACE is pressed).
+    const active = document.activeElement;
+    if (active && lbEntry && lbEntry.contains(active)) {
+      try { active.blur(); } catch (_) {}
+    }
   }
   // Stop name-entry interactions from bubbling up to the overlay-tap
   // handler, which sets spacePressed=true on any click within the
