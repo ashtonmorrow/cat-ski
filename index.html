@@ -192,6 +192,88 @@
   .bezel-link:active { color: var(--accent); }
   @keyframes blink { 50% { opacity: 0; } }
 
+  /* Top-3 high score strip. Sits between the bezel title and the game
+     canvas. Three flex cells holding "1. NAME 12345" each. Designed to
+     read as background chrome — same pixel font as the bezel, dimmer
+     than the HUD, no animation, minimum vertical real-estate. */
+  .leaderboard {
+    display: flex;
+    justify-content: center;
+    gap: 18px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    letter-spacing: 1.5px;
+    color: var(--snow-dim);
+    margin-bottom: 6px;
+    padding: 4px 4px 5px;
+    border-top: 1px solid rgba(122,167,199,0.18);
+    border-bottom: 1px solid rgba(122,167,199,0.18);
+    text-shadow: 0 0 4px rgba(122,167,199,0.35);
+    opacity: 0.85;
+    flex-wrap: wrap;
+  }
+  .leaderboard .lb-rank { color: var(--accent-2); }
+  .leaderboard .lb-name { color: var(--snow); margin: 0 4px; }
+  .leaderboard .lb-score { color: var(--snow-dim); }
+  .leaderboard .lb-empty { opacity: 0.45; }
+
+  /* Name-entry block inside the game-over panel. Only revealed when
+     the run qualifies for top-3. Uses the same pixel font and a
+     monospaced 5-char input that auto-uppercases. */
+  .lb-entry {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed rgba(234,244,255,0.25);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .lb-entry-title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    color: var(--accent-2);
+    letter-spacing: 2px;
+    text-shadow: 0 0 6px rgba(255,204,0,0.4);
+  }
+  .lb-entry-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .lb-name-input {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 14px;
+    letter-spacing: 4px;
+    width: 100px;
+    padding: 6px 8px;
+    background: var(--ink);
+    color: var(--snow);
+    border: 2px solid var(--snow-dim);
+    text-align: center;
+    text-transform: uppercase;
+    outline: none;
+  }
+  .lb-name-input:focus {
+    border-color: var(--accent-2);
+    box-shadow: 0 0 0 2px rgba(255,204,0,0.3);
+  }
+  .lb-submit {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    padding: 8px 12px;
+    background: var(--accent-2);
+    color: var(--ink);
+    border: 2px solid var(--accent-2);
+    cursor: pointer;
+    letter-spacing: 2px;
+    box-shadow: 2px 2px 0 #000;
+  }
+  .lb-submit:active {
+    transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0 #000;
+  }
+
   .screen-wrap {
     position: relative;
     /* Responsive: scale the 4:3 game area to the viewport with sensible
@@ -921,6 +1003,11 @@
     </span>
   </div>
 
+  <!-- Top-3 high-score strip. Populated from localStorage by JS. Always
+       visible: empty slots render as "1. ---  -----" so the strip's
+       footprint stays consistent before any scores are recorded. -->
+  <div class="leaderboard" id="leaderboard" aria-label="Top three high scores"></div>
+
   <div class="screen-wrap" id="screen">
     <canvas id="game" width="360" height="270"></canvas>
 
@@ -1005,6 +1092,19 @@
           <span class="v" id="over-best">0</span>
         </div>
         <button class="share-btn" id="btn-share" type="button" aria-label="Share your run">SHARE</button>
+        <!-- Name-entry block. Hidden unless the run cracked the top-3.
+             Submitting writes the name to the leaderboard, hides this
+             block, and updates the strip at the top of the page. -->
+        <div class="lb-entry hidden" id="lb-entry">
+          <div class="lb-entry-title" id="lb-entry-title">NEW HIGH SCORE!</div>
+          <div class="lb-entry-row">
+            <input class="lb-name-input" id="lb-name-input" type="text"
+                   maxlength="5" autocomplete="off" autocapitalize="characters"
+                   spellcheck="false" inputmode="text"
+                   aria-label="Enter your initials, up to 5 characters">
+            <button class="lb-submit" id="lb-submit" type="button">OK</button>
+          </div>
+        </div>
         <div class="hint"><span class="blink">&gt;</span> SPACE TO TRY AGAIN</div>
       </div>
     </div>
@@ -3242,6 +3342,144 @@
     endRun(msg(cat, 'titles'), msg(cat, 'subs'));
   }
 
+  // ---------- top-3 leaderboard ----------
+  // One global top-3 (no per-difficulty namespacing — that's what BEST is
+  // for). Persisted as `skior_leaderboard` JSON. Each entry: { name, score }.
+  // The strip above the canvas always shows 3 rows; empty slots render
+  // as "1. ---  -----" so the layout stays stable.
+  function loadLeaderboard() {
+    try {
+      const raw = localStorage.getItem('skior_leaderboard');
+      if (raw) {
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr)) {
+          return arr
+            .filter(e => e && typeof e.score === 'number' && typeof e.name === 'string')
+            .slice(0, 3);
+        }
+      }
+    } catch (_) {}
+    return [];
+  }
+  function saveLeaderboard(arr) {
+    try { localStorage.setItem('skior_leaderboard', JSON.stringify(arr)); } catch (_) {}
+  }
+  let leaderboard = loadLeaderboard();
+
+  const leaderboardEl = document.getElementById('leaderboard');
+  function renderLeaderboard() {
+    if (!leaderboardEl) return;
+    // Build with createElement to avoid any HTML injection from saved
+    // names. maxlength caps user input, but defense in depth.
+    leaderboardEl.innerHTML = '';
+    for (let i = 0; i < 3; i++) {
+      const e = leaderboard[i];
+      const row = document.createElement('span');
+      if (!e) row.classList.add('lb-empty');
+      const r = document.createElement('span');
+      r.className = 'lb-rank';
+      r.textContent = (i + 1) + '.';
+      const n = document.createElement('span');
+      n.className = 'lb-name';
+      n.textContent = e ? e.name : '---';
+      const s = document.createElement('span');
+      s.className = 'lb-score';
+      s.textContent = e ? e.score : '-----';
+      row.appendChild(r); row.appendChild(n); row.appendChild(s);
+      leaderboardEl.appendChild(row);
+    }
+  }
+  renderLeaderboard();
+
+  // True if `score` would land in the top-3 (either there are open
+  // slots, or it beats the current 3rd-place score).
+  function qualifiesForLeaderboard(score) {
+    if (!isFinite(score) || score <= 0) return false;
+    if (leaderboard.length < 3) return true;
+    return score > leaderboard[leaderboard.length - 1].score;
+  }
+
+  // Insert a new entry, sort high-to-low, trim to 3. Returns the
+  // 1-based rank the new entry landed at (1, 2, or 3).
+  function insertLeaderboardEntry(name, score) {
+    const clean = String(name || '').toUpperCase().replace(/[^A-Z0-9 ]/g, '').slice(0, 5).trim() || 'CAT';
+    const entry = { name: clean, score: score };
+    leaderboard.push(entry);
+    leaderboard.sort((a, b) => b.score - a.score);
+    leaderboard = leaderboard.slice(0, 3);
+    saveLeaderboard(leaderboard);
+    renderLeaderboard();
+    return leaderboard.indexOf(entry) + 1;
+  }
+
+  // Name-entry overlay wiring (lives inside the game-over panel).
+  const lbEntry      = document.getElementById('lb-entry');
+  const lbEntryTitle = document.getElementById('lb-entry-title');
+  const lbNameInput  = document.getElementById('lb-name-input');
+  const lbSubmitBtn  = document.getElementById('lb-submit');
+  // While the entry block is showing, swallow the SPACE-to-restart
+  // shortcut so typing a space into the input doesn't restart the game.
+  let lbEntryActive = false;
+  function showLbEntry(score) {
+    if (!lbEntry || !lbNameInput) return;
+    lbEntryActive = true;
+    lbEntry.classList.remove('hidden');
+    lbNameInput.value = '';
+    // The remembered last-used name (if any) makes repeat sessions one
+    // tap shorter on mobile.
+    const lastName = localStorage.getItem('skior_lb_last_name') || '';
+    if (lastName) lbNameInput.value = lastName;
+    // Defer focus a tick so it survives the overlay reveal animation.
+    setTimeout(() => { try { lbNameInput.focus(); lbNameInput.select(); } catch (_) {} }, 50);
+  }
+  function submitLbEntry() {
+    if (!lbEntryActive) return;
+    const name = (lbNameInput && lbNameInput.value || '').toUpperCase().slice(0, 5).trim();
+    const score = stats ? stats.score : 0;
+    if (!isFinite(score) || score <= 0) {
+      hideLbEntry();
+      return;
+    }
+    insertLeaderboardEntry(name, score);
+    if (name) localStorage.setItem('skior_lb_last_name', name);
+    hideLbEntry();
+  }
+  function hideLbEntry() {
+    lbEntryActive = false;
+    if (lbEntry) lbEntry.classList.add('hidden');
+  }
+  // Stop name-entry interactions from bubbling up to the overlay-tap
+  // handler, which sets spacePressed=true on any click within the
+  // game-over overlay. Without this, clicking SUBMIT would also restart
+  // the run on the next frame.
+  if (lbSubmitBtn) lbSubmitBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    submitLbEntry();
+  });
+  if (lbNameInput) {
+    lbNameInput.addEventListener('click', e => e.stopPropagation());
+    lbNameInput.addEventListener('keydown', e => {
+      // Don't let key presses inside the input bubble out to the
+      // game-wide listeners (steering, tricks, pause, etc.).
+      e.stopPropagation();
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        submitLbEntry();
+      }
+    });
+    // Strip non-alphanumeric live so the input stays clean even if the
+    // user pastes from somewhere.
+    lbNameInput.addEventListener('input', () => {
+      const cleaned = lbNameInput.value.toUpperCase().replace(/[^A-Z0-9 ]/g, '').slice(0, 5);
+      if (cleaned !== lbNameInput.value) lbNameInput.value = cleaned;
+    });
+  }
+  if (lbEntry) {
+    // Clicking inside the entry block (but outside the input/button)
+    // shouldn't restart the run either.
+    lbEntry.addEventListener('click', e => e.stopPropagation());
+  }
+
   function endRun(title, sub) {
     state = STATE.OVER;
     if (stats.score > best) {
@@ -3256,6 +3494,13 @@
     overScore.textContent = stats.score;
     overBest.textContent  = best;
     overlayOver.classList.remove('hidden');
+    // Reveal the name-entry block if this run cracked the top-3. Default
+    // hidden by HTML, hidden again by hideLbEntry() once submitted.
+    if (qualifiesForLeaderboard(stats.score)) {
+      showLbEntry(stats.score);
+    } else {
+      hideLbEntry();
+    }
   }
 
   function startRun() {
@@ -3267,6 +3512,10 @@
     overlayStart.classList.add('hidden');
     overlayOver.classList.add('hidden');
     overlayPaused.classList.add('hidden');
+    // Clear any leftover name-entry state. If the player skipped naming
+    // last run, lbEntryActive could still be true; reset it here so
+    // SPACE during this run doesn't get swallowed.
+    hideLbEntry();
     btnPause.classList.remove('paused');
     btnPause.innerHTML = '&#x23F8;';   // pause glyph (play state default)
     state = STATE.PLAY;
@@ -4587,9 +4836,18 @@
   // ---------- main loop ----------
   function loop() {
     // Edge-triggered space: start/retry on title/over, resume on paused.
+    // While the leaderboard name-entry is active, SPACE inside the input
+    // is captured by the input's own keydown (with stopPropagation), so
+    // a SPACE that reaches here came from outside the input — treat it
+    // as "skip naming, just retry." Same for overlay clicks (which set
+    // spacePressed=true via overlayTap).
     if (spacePressed) {
       spacePressed = false;
-      if (state === STATE.TITLE || state === STATE.OVER) {
+      if (lbEntryActive) {
+        hideLbEntry();
+        if (state === STATE.OVER) startRun();
+        else if (state === STATE.TITLE) startRun();
+      } else if (state === STATE.TITLE || state === STATE.OVER) {
         startRun();
       } else if (state === STATE.PAUSED) {
         resumeGame();
