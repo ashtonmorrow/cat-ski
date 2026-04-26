@@ -1,8 +1,8 @@
-# Cat Ski
+# Cat Ski 1989
 
-> A free retro pixel browser game where you play as a cat skiing down a mountain. Inspired by Windows 3.0 SkiFree. Single self-contained HTML file with no build step, no install, and no account required.
+> A free browser game inspired by SkiFree (1991). Play as a cat skiing down an endless mountain. Three regional themes, mid-air tricks, dog and snowman chasers, tunable difficulty. Single self-contained HTML file with no build step or install required.
 
-Cat Ski is an open-source browser game that recreates the SkiFree (1991) gameplay loop with a cat as the player character. It supports keyboard and touch input, four cat color variants, three mountain themes (Alps, Rockies, Himalayas), Web Audio synthesized sound, bilingual flavor text (English and rioplatense Spanish), and a tunable difficulty system with two sliders and four named presets. It is installable as a PWA and runs offline after first visit. The entire game is approximately 145 KB of vanilla HTML, CSS, and JavaScript. Hosted on Vercel, source on GitHub.
+Cat Ski 1989 is an open-source browser game that recreates the SkiFree (Windows 3.0, 1991) gameplay loop with a cat as the player character. It includes three regional mountain themes (Alps, Rockies, Himalayas), four cat color variants, an in-air trick system with chained scoring, gold escape ramps that spawn alongside each dog wave, and a snowman that takes the role of the original yeti. Difficulty is fully tunable through two sliders (intensity and dog count) with four named presets. The game supports keyboard and touch input, has Web Audio synthesized sound effects, bilingual flavor text (English and rioplatense Spanish), per-difficulty best score tracking, and a 9-lives casual mode. The entire game is approximately 150 KB of vanilla HTML, CSS, and JavaScript. Installable as a Progressive Web App for offline play. Hosted on Vercel, source on GitHub.
 
 ## Pages
 

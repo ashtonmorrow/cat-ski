@@ -16,7 +16,7 @@
   gtag('js', new Date());
   gtag('config', 'G-MSN465FL9R');
 </script>
-<meta name="description" content="Waste a couple minutes of your life with this free game. A retro pixel downhill skier where you play as a cat.">
+<meta name="description" content="A free browser game inspired by SkiFree (1991). Play as a cat skiing down an endless mountain. Three regional themes (Alps, Rockies, Himalayas), four cat color variants, mid-air tricks, dog and snowman chasers, tunable difficulty. Installable as a Progressive Web App.">
 
 <!-- Favicons -->
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
@@ -35,7 +35,7 @@
   "@type": "VideoGame",
   "name": "Cat Ski 1989",
   "alternateName": "cat-ski",
-  "description": "A retro pixel downhill skier game where you play as a cat. Inspired by Windows 3.0 SkiFree. Three mountain themes (Alps, Rockies, Himalayas), four cat colors, dog and snowman chasers, and tunable difficulty. Free to play in the browser.",
+  "description": "A free browser game inspired by SkiFree (1991). Play as a cat skiing down an endless mountain. Three regional themes (Alps, Rockies, Himalayas), four cat color variants, mid-air tricks, dog and snowman chasers, tunable difficulty, and a 9-lives mode. Installable as a Progressive Web App for offline play.",
   "url": "https://ski.mike-lee.me/",
   "image": "https://ski.mike-lee.me/preview.png",
   "inLanguage": ["en", "es"],
@@ -74,7 +74,7 @@
 
 <!-- Open Graph (iMessage, Slack, Discord, Facebook, LinkedIn, WhatsApp) -->
 <meta property="og:title" content="CAT SKI // 1989">
-<meta property="og:description" content="Waste a couple minutes of your life with this free game.">
+<meta property="og:description" content="A free browser game inspired by SkiFree (1991). Play as a cat down an endless mountain. Three themes, mid-air tricks, dog and snowman chasers, tunable difficulty.">
 <meta property="og:image" content="https://ski.mike-lee.me/preview.png">
 <meta property="og:image:secure_url" content="https://ski.mike-lee.me/preview.png">
 <meta property="og:image:type" content="image/png">
@@ -88,7 +88,7 @@
 <!-- Twitter / X -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="CAT SKI // 1989">
-<meta name="twitter:description" content="Waste a couple minutes of your life with this free game.">
+<meta name="twitter:description" content="A free browser game inspired by SkiFree (1991). Play as a cat down an endless mountain. Three themes, mid-air tricks, dog and snowman chasers, tunable difficulty.">
 <meta name="twitter:image" content="https://ski.mike-lee.me/preview.png">
 <meta name="twitter:image:alt" content="Pixel-art downhill skiing scene with a cat, a dog, a yeti, and a skier on a peak">
 <style>
@@ -561,6 +561,39 @@
     text-align: left;
   }
 
+  /* 9-lives toggle: button labeled "9", highlights yellow when active */
+  .lives-toggle {
+    font-size: 12px;
+    padding: 6px 10px;
+    min-width: 32px;
+  }
+  .lives-toggle.active {
+    background: var(--accent-2);
+    color: var(--ink);
+    border-color: var(--accent-2);
+    box-shadow: 2px 2px 0 #000, inset 0 -2px 0 rgba(0,0,0,0.25);
+  }
+
+  /* Lives HUD: row of cat-face SVG icons in the top-right of the game.
+     Hidden in 1-life mode. Active lives show yellow; lost lives go grey. */
+  .lives-hud {
+    display: none;
+    margin-top: 4px;
+    gap: 2px;
+    justify-content: flex-end;
+  }
+  body.lives-mode .lives-hud { display: flex; }
+  .life-icon {
+    width: 14px;
+    height: 12px;
+    color: var(--accent-2);
+    transition: color 200ms, opacity 200ms;
+  }
+  .life-icon.lost {
+    color: #4a5664;
+    opacity: 0.55;
+  }
+
   /* Symbol-based label (replaces text labels to keep the UI
      language-agnostic). Bigger than the pixel-font labels because
      emoji glyphs need room to read. */
@@ -903,6 +936,20 @@
         <div><span class="label">TIME</span> <span class="value" id="hud-time">0:00</span></div>
         <div><span class="label">SPD</span> <span class="value" id="hud-speed">0</span></div>
         <div id="hud-warning" class="danger" style="display:none">! DOG !</div>
+        <!-- Lives HUD: 9 cat-face SVGs, only visible in lives-mode.
+             Active lives show in --accent-2 (yellow); spent lives gain
+             .lost class (grey + lower opacity). -->
+        <div class="lives-hud" id="lives-hud" aria-label="Lives remaining">
+          <svg class="life-icon" viewBox="0 0 14 12" aria-hidden="true"><polygon points="1,0 1,4 4,4" fill="currentColor"/><polygon points="13,0 13,4 10,4" fill="currentColor"/><rect x="1" y="3" width="12" height="8" fill="currentColor"/><rect x="4" y="6" width="2" height="2" fill="#0b1320"/><rect x="8" y="6" width="2" height="2" fill="#0b1320"/><rect x="6" y="9" width="2" height="1" fill="#ff6b8a"/></svg>
+          <svg class="life-icon" viewBox="0 0 14 12" aria-hidden="true"><polygon points="1,0 1,4 4,4" fill="currentColor"/><polygon points="13,0 13,4 10,4" fill="currentColor"/><rect x="1" y="3" width="12" height="8" fill="currentColor"/><rect x="4" y="6" width="2" height="2" fill="#0b1320"/><rect x="8" y="6" width="2" height="2" fill="#0b1320"/><rect x="6" y="9" width="2" height="1" fill="#ff6b8a"/></svg>
+          <svg class="life-icon" viewBox="0 0 14 12" aria-hidden="true"><polygon points="1,0 1,4 4,4" fill="currentColor"/><polygon points="13,0 13,4 10,4" fill="currentColor"/><rect x="1" y="3" width="12" height="8" fill="currentColor"/><rect x="4" y="6" width="2" height="2" fill="#0b1320"/><rect x="8" y="6" width="2" height="2" fill="#0b1320"/><rect x="6" y="9" width="2" height="1" fill="#ff6b8a"/></svg>
+          <svg class="life-icon" viewBox="0 0 14 12" aria-hidden="true"><polygon points="1,0 1,4 4,4" fill="currentColor"/><polygon points="13,0 13,4 10,4" fill="currentColor"/><rect x="1" y="3" width="12" height="8" fill="currentColor"/><rect x="4" y="6" width="2" height="2" fill="#0b1320"/><rect x="8" y="6" width="2" height="2" fill="#0b1320"/><rect x="6" y="9" width="2" height="1" fill="#ff6b8a"/></svg>
+          <svg class="life-icon" viewBox="0 0 14 12" aria-hidden="true"><polygon points="1,0 1,4 4,4" fill="currentColor"/><polygon points="13,0 13,4 10,4" fill="currentColor"/><rect x="1" y="3" width="12" height="8" fill="currentColor"/><rect x="4" y="6" width="2" height="2" fill="#0b1320"/><rect x="8" y="6" width="2" height="2" fill="#0b1320"/><rect x="6" y="9" width="2" height="1" fill="#ff6b8a"/></svg>
+          <svg class="life-icon" viewBox="0 0 14 12" aria-hidden="true"><polygon points="1,0 1,4 4,4" fill="currentColor"/><polygon points="13,0 13,4 10,4" fill="currentColor"/><rect x="1" y="3" width="12" height="8" fill="currentColor"/><rect x="4" y="6" width="2" height="2" fill="#0b1320"/><rect x="8" y="6" width="2" height="2" fill="#0b1320"/><rect x="6" y="9" width="2" height="1" fill="#ff6b8a"/></svg>
+          <svg class="life-icon" viewBox="0 0 14 12" aria-hidden="true"><polygon points="1,0 1,4 4,4" fill="currentColor"/><polygon points="13,0 13,4 10,4" fill="currentColor"/><rect x="1" y="3" width="12" height="8" fill="currentColor"/><rect x="4" y="6" width="2" height="2" fill="#0b1320"/><rect x="8" y="6" width="2" height="2" fill="#0b1320"/><rect x="6" y="9" width="2" height="1" fill="#ff6b8a"/></svg>
+          <svg class="life-icon" viewBox="0 0 14 12" aria-hidden="true"><polygon points="1,0 1,4 4,4" fill="currentColor"/><polygon points="13,0 13,4 10,4" fill="currentColor"/><rect x="1" y="3" width="12" height="8" fill="currentColor"/><rect x="4" y="6" width="2" height="2" fill="#0b1320"/><rect x="8" y="6" width="2" height="2" fill="#0b1320"/><rect x="6" y="9" width="2" height="1" fill="#ff6b8a"/></svg>
+          <svg class="life-icon" viewBox="0 0 14 12" aria-hidden="true"><polygon points="1,0 1,4 4,4" fill="currentColor"/><polygon points="13,0 13,4 10,4" fill="currentColor"/><rect x="1" y="3" width="12" height="8" fill="currentColor"/><rect x="4" y="6" width="2" height="2" fill="#0b1320"/><rect x="8" y="6" width="2" height="2" fill="#0b1320"/><rect x="6" y="9" width="2" height="1" fill="#ff6b8a"/></svg>
+        </div>
       </div>
     </div>
 
@@ -1037,6 +1084,11 @@
              min="1" max="10" value="2" step="1"
              aria-label="Number of dog waves">
       <span class="slider-value" id="dogs-value">2</span>
+    </div>
+    <div class="sub-picker">
+      <span class="cat-picker-label">LIVES</span>
+      <button class="diff-swatch lives-toggle" id="btn-lives" type="button"
+              aria-label="Toggle 9 lives mode" title="9 lives mode">9</button>
     </div>
   </div>
 
@@ -2273,6 +2325,13 @@
   if (!isFinite(dogCount)) dogCount = 2;
   dogCount = Math.max(1, Math.min(10, dogCount));
 
+  // 9-lives casual mode. When true, the player has 9 lives instead of 1;
+  // each hit decrements lives, and the run only ends on the 9th hit. The
+  // HUD shows 9 cat-face SVGs that grey out as lives are spent. Best
+  // scores in 9-lives mode are tracked under a separate bestKey so they
+  // don't pollute the regular leaderboard.
+  let livesMode = localStorage.getItem('skior_lives') === '1';
+
   // Difficulty params derived from the intensity slider. Each parameter
   // scales independently so the game stays playable across the full
   // 0.8x - 5x range. speedMul uses sqrt curve so 5x intensity isn't 5x
@@ -2345,7 +2404,10 @@
   // break the entire game (same bug pattern that broke MESSAGES and
   // THEMES earlier in the project).
   function bestKey() {
-    return intensity.toFixed(1) + '_' + dogCount;
+    // 9-lives runs are scored on their own slot per intensity/dogs combo,
+    // since "9 hits to die" is a fundamentally different leaderboard than
+    // the default 1-hit run.
+    return intensity.toFixed(1) + '_' + dogCount + (livesMode ? '_9' : '');
   }
   function loadBests() {
     try {
@@ -2367,6 +2429,44 @@
 
   applyIntensity(intensity);
   applyDogCount(dogCount);
+
+  // 9-lives toggle wiring. The HUD (9 cat-face SVGs) is in the DOM at
+  // boot but hidden via CSS unless body has the `lives-mode` class. The
+  // toggle button gets `.active` while on. Both states persist via
+  // localStorage. Lives are reset at the start of each run; setLivesMode
+  // refreshes the visual icon row so toggling on the title screen
+  // immediately shows 9 yellow cats.
+  const btnLives  = document.getElementById('btn-lives');
+  const livesHud  = document.getElementById('lives-hud');
+  // Pass the current lives count explicitly. Defaults to "all 9 alive" so
+  // we can call this at boot (when `player` is still in TDZ — same trap
+  // that bit MESSAGES, THEMES, and bests earlier; a `let` referenced
+  // before its declaration line throws ReferenceError, not undefined).
+  function updateLivesHUD(remaining) {
+    if (!livesHud) return;
+    if (remaining == null) remaining = livesMode ? 9 : 1;
+    const icons = livesHud.querySelectorAll('.life-icon');
+    icons.forEach((el, i) => {
+      // Icon i (0-indexed) is "alive" if i < remaining. The rightmost
+      // icons grey out first because lives spend high-to-low and the row
+      // reads left-to-right.
+      el.classList.toggle('lost', i >= remaining);
+    });
+  }
+  function setLivesMode(on) {
+    livesMode = !!on;
+    localStorage.setItem('skior_lives', livesMode ? '1' : '0');
+    document.body.classList.toggle('lives-mode', livesMode);
+    if (btnLives) btnLives.classList.toggle('active', livesMode);
+    // Best scores live under a different key when lives mode is on, so
+    // refresh the displayed best for the current intensity/dogs combo.
+    best = currentBest();
+    updateLivesHUD();
+  }
+  if (btnLives) {
+    btnLives.addEventListener('click', () => setLivesMode(!livesMode));
+  }
+  setLivesMode(livesMode);   // apply persisted state on boot
 
   // Preset buttons — each snaps both sliders to a canonical (intensity,
   // dogCount) pair. Players can still fine-tune with the sliders after.
@@ -2445,6 +2545,12 @@
       trickFrames: 0,           // total duration of current trick
       trickElapsed: 0,          // progress within current trick
       trickChain: [],           // names of tricks landed this jump
+      // 9-lives mode: lives is 9 in lives-mode, 1 otherwise (so the
+      // existing endRun-on-hit logic still applies in classic mode).
+      // invincT counts down post-hit immunity in lives-mode so a single
+      // collision can't burn through multiple lives in consecutive frames.
+      lives: livesMode ? 9 : 1,
+      invincT: 0,
     };
 
     objects = [];     // trees, rocks, flags, jumps, moguls
@@ -2474,6 +2580,10 @@
     for (let y = 120; y < 600; y += 90) {
       spawnObjectsAround(y, 0.2); // forced-low density
     }
+
+    // Repaint the lives HUD (all 9 yellow at run start in lives-mode;
+    // hidden via CSS in classic mode).
+    updateLivesHUD(player.lives);
   }
 
   // ---------- object spawning ----------
@@ -2687,11 +2797,29 @@
 
     // Grab: tight hit zone around the player. If the dog passes through
     // while the player is even a few pixels to the side, it whiffs.
-    // Jumping (player.air > 0) still grants brief immunity.
+    // Jumping (player.air > 0) still grants brief immunity, as does a
+    // recent life-loss invincibility window in 9-lives mode.
     const py = worldY + player.screenY;
     const yDist = Math.abs(yeti.y - py);
     const xDist = Math.abs(yeti.x - player.x);
-    if (yDist < 8 && xDist < 12 && !player.grabbed && player.air <= 0) {
+    if (yDist < 8 && xDist < 12 && !player.grabbed && player.air <= 0 && player.invincT <= 0) {
+      // Lives mode: dog takes a bite (a life) and gives up. Cleaner than
+      // having the dog "hold" a still-skiing player. The player gets the
+      // standard PHEW reward path on the next frame via the despawn
+      // branch — but we set dogClearedAt here so the next-wave scheduler
+      // still fires correctly.
+      if (livesMode && player.lives > 1) {
+        player.lives--;
+        player.invincT = 60;
+        updateLivesHUD(player.lives);
+        sfx.chomp();
+        if (navigator.vibrate) navigator.vibrate([20, 40]);
+        spawnFloatText('-1 LIFE', player.x, worldY + player.screenY - 14, '#ff6b8a');
+        yeti = null;
+        hudWarning.style.display = 'none';
+        stats.dogClearedAt = stats.elapsed;
+        return;
+      }
       player.grabbed = true;
       yeti.state = 'grab';
       sfx.chomp();
@@ -2751,7 +2879,23 @@
     snowman.y = py + Math.sin(snowman.bob) * 1.5;
 
     // Close enough? Chomp.
-    if (!player.grabbed && Math.abs(snowman.x - player.x) < 10) {
+    if (!player.grabbed && Math.abs(snowman.x - player.x) < 10 && player.invincT <= 0) {
+      // Lives mode: snowman takes a bite (a life) and bounces off-screen
+      // so it has to charge again. Without the bounce the snowman would
+      // chomp every frame after the invincT window — it can't be outrun.
+      // Repeated charges still drain lives quickly, so survival depends
+      // on dodges between bounces.
+      if (livesMode && player.lives > 1) {
+        player.lives--;
+        player.invincT = 60;
+        updateLivesHUD(player.lives);
+        sfx.chomp();
+        if (navigator.vibrate) navigator.vibrate(120);
+        spawnFloatText('-1 LIFE', player.x, worldY + player.screenY - 14, '#ff6b8a');
+        snowman.chompT = 20;
+        snowman.x = snowman.x < player.x ? -40 : W + 40;
+        return;
+      }
       player.grabbed = true;
       snowman.chompT = 20;
       sfx.chomp();
@@ -2973,6 +3117,11 @@
     // Camera shake decay
     if (stats.shakeT > 0) stats.shakeT--;
 
+    // Post-life-loss invincibility decay (9-lives mode only). While this
+    // counts down, crash/grab/chomp checks all bail out so the next hit
+    // doesn't immediately consume another life.
+    if (player.invincT > 0) player.invincT--;
+
     // Toggle body.airborne only when it actually changes, not every
     // frame. classList.toggle is a no-op when the state matches, but
     // the call itself still triggers a style invalidation each time at
@@ -3058,11 +3207,12 @@
 
   function crash(cause) {
     if (player.crashed) return;
-    player.crashed = true;
+    // Brief immunity window after a previous life-loss so a single
+    // collision can't burn through several lives in consecutive frames.
+    if (player.invincT > 0) return;
     stats.shakeT = 18;
     sfx.crash();
     sfx.meow();
-    silenceSwoosh();
     if (navigator.vibrate) navigator.vibrate(150);
     // debris
     for (let i = 0; i < 18; i++) {
@@ -3076,6 +3226,18 @@
         size: 1 + Math.random() * 2,
       });
     }
+    // Lives mode: spend a life, keep skiing. Player doesn't lock into a
+    // crash pose, gets a 1-second invincibility window, and the swoosh
+    // wind keeps playing. Only the last life crashes the run for real.
+    if (livesMode && player.lives > 1) {
+      player.lives--;
+      player.invincT = 60;
+      updateLivesHUD(player.lives);
+      spawnFloatText('-1 LIFE', player.x, worldY + player.screenY - 14, '#ff6b8a');
+      return;
+    }
+    player.crashed = true;
+    silenceSwoosh();
     const cat = cause === 'tree' ? 'tree' : 'log';
     endRun(msg(cat, 'titles'), msg(cat, 'subs'));
   }
@@ -4015,6 +4177,13 @@
     const sx = player.x;
     const sy = player.screenY - player.airHeight;
 
+    // Strobe the skier on every other 5-frame interval while the
+    // post-life-loss invincibility window is ticking down. The shadow
+    // still draws so the silhouette doesn't fully disappear; only the
+    // skis/cat/poles flicker, which reads clearly as "you're hit but
+    // still alive" — a 1980s arcade convention that needs no explanation.
+    const blinkSkip = player.invincT > 0 && Math.floor(player.invincT / 5) % 2 === 0;
+
     // Shadow (bigger when higher in the air)
     const shadowW = 16 + player.airHeight * 0.35;
     ctx.fillStyle = 'rgba(60,90,120,0.35)';
@@ -4028,7 +4197,8 @@
     const airborne = player.air > 0;
 
     // Skis render under the cat. Angle them with the lean.
-    if (!player.crashed) {
+    // Skipped on alternating intervals during the post-life-loss strobe.
+    if (!blinkSkip && !player.crashed) {
       const skiShift = lean * 2;
       const skiY = sy + 10;
       ctx.save();
@@ -4050,7 +4220,7 @@
       ctx.fillRect(-6, 4, 2, 1);
       ctx.fillRect( 4, 4, 2, 1);
       ctx.restore();
-    } else {
+    } else if (player.crashed) {
       // Broken skis splayed
       ctx.fillStyle = '#3a2418';
       ctx.fillRect(sx - 12, sy + 10, 9, 2);
@@ -4058,22 +4228,25 @@
     }
 
     // Draw the cat, passing the in-progress trick (if any) so drawCat
-    // can apply rotation/scale transforms to sell the move.
-    const trickPhase = player.trickFrames > 0
-      ? Math.min(1, player.trickElapsed / player.trickFrames)
-      : 0;
-    drawCat(ctx, sx, sy, 1, p, {
-      lean,
-      tucked,
-      airborne,
-      crashed: player.crashed,
-      pose: 'skier',
-      trick: player.trick,
-      trickPhase,
-    });
+    // can apply rotation/scale transforms to sell the move. Skipped
+    // during the strobe-off frames of the invincibility window.
+    if (!blinkSkip) {
+      const trickPhase = player.trickFrames > 0
+        ? Math.min(1, player.trickElapsed / player.trickFrames)
+        : 0;
+      drawCat(ctx, sx, sy, 1, p, {
+        lean,
+        tucked,
+        airborne,
+        crashed: player.crashed,
+        pose: 'skier',
+        trick: player.trick,
+        trickPhase,
+      });
+    }
 
     // Ski poles (cat holds them out when not tucked and grounded)
-    if (!tucked && !airborne && !player.crashed) {
+    if (!blinkSkip && !tucked && !airborne && !player.crashed) {
       ctx.strokeStyle = '#c8a060';
       ctx.lineWidth = 1;
       ctx.lineCap = 'butt';

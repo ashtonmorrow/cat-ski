@@ -1,7 +1,7 @@
 {
   "name": "Cat Ski 1989",
   "short_name": "Cat Ski",
-  "description": "Retro pixel downhill skier where you play as a cat. Dodge trees, land tricks, outrun the dog. Free.",
+  "description": "A free browser game inspired by SkiFree (1991). Play as a cat down an endless mountain. Three regional themes, mid-air tricks, dog and snowman chasers, tunable difficulty.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
