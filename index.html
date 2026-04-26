@@ -280,12 +280,26 @@
     border-right: 1px solid var(--ice-22);
     margin-right: 4px;
   }
+  /* Trophy bookends. Pixel-art SVGs flank the strip so it reads
+     instantly as a high-score table even before the labels parse.
+     currentColor follows --accent-2 so they glow in the same gold as
+     the rank numerals. The drop-shadow filter is kept light — the
+     bezel chrome already has its own glow language. */
+  .leaderboard .lb-trophy {
+    width: 14px;
+    height: 14px;
+    color: var(--accent-2);
+    align-self: center;
+    flex-shrink: 0;
+    filter: drop-shadow(0 0 2px var(--ice-35));
+  }
   /* Tighter on phones — three entries on one line is the priority. */
   @media (max-width: 540px) {
     .leaderboard { gap: 12px; font-size: 8px; padding: 5px 4px; }
     .leaderboard .lb-row { gap: 6px; min-width: 0; }
     .leaderboard .lb-name  { min-width: 38px; letter-spacing: 1.5px; }
     .leaderboard .lb-score { min-width: 30px; }
+    .leaderboard .lb-trophy { width: 12px; height: 12px; }
   }
 
   /* Name-entry block inside the game-over panel. Only revealed when
@@ -3817,11 +3831,26 @@
   }
 
   const leaderboardEl = document.getElementById('leaderboard');
+  // Pixel-art trophy SVG used as bookends on the strip so the row reads
+  // as a high-score table at a glance. 12x12 grid: chunky cup with a
+  // pair of handles, a stem, and a wide base. currentColor is set by
+  // .lb-trophy CSS to --accent-2 (gold).
+  const TROPHY_SVG =
+    '<svg class="lb-trophy" viewBox="0 0 12 12" aria-hidden="true">' +
+      '<rect x="3" y="1" width="6" height="4" fill="currentColor"/>' +    // cup
+      '<rect x="1" y="2" width="2" height="3" fill="currentColor"/>' +    // L handle
+      '<rect x="9" y="2" width="2" height="3" fill="currentColor"/>' +    // R handle
+      '<rect x="5" y="5" width="2" height="3" fill="currentColor"/>' +    // stem
+      '<rect x="3" y="8" width="6" height="2" fill="currentColor"/>' +    // base top
+      '<rect x="2" y="10" width="8" height="1" fill="currentColor"/>' +   // base foot
+    '</svg>';
   function renderLeaderboard() {
     if (!leaderboardEl) return;
     // Build with createElement to avoid any HTML injection from saved
-    // names. maxlength caps user input, but defense in depth.
-    leaderboardEl.innerHTML = '';
+    // names. maxlength caps user input, but defense in depth. The
+    // trophy SVGs are author-controlled markup so innerHTML there is
+    // safe; user data only reaches textContent on lb-name / lb-score.
+    leaderboardEl.innerHTML = TROPHY_SVG;
     // Mode label so players can tell which of the two global boards
     // they're looking at — the strip changes when the LIVES toggle does.
     const mode = document.createElement('span');
@@ -3845,6 +3874,8 @@
       row.appendChild(r); row.appendChild(n); row.appendChild(s);
       leaderboardEl.appendChild(row);
     }
+    // Closing trophy bookend.
+    leaderboardEl.insertAdjacentHTML('beforeend', TROPHY_SVG);
   }
   renderLeaderboard();
   // Kick off the network fetch right after the cached version paints —
