@@ -224,6 +224,18 @@
   .leaderboard .lb-name  { color: var(--snow);     min-width: 50px; letter-spacing: 2px; }
   .leaderboard .lb-score { color: var(--snow-dim); min-width: 38px; text-align: right; margin-left: auto; }
   .leaderboard .lb-empty { opacity: 0.45; }
+  /* Mode label tells the player which of the two global boards is on
+     screen (9 LIVES vs 1 LIFE). Lives in accent-2 so it visually
+     belongs with the rank numerals; small enough to read as chrome. */
+  .leaderboard .lb-mode {
+    color: var(--accent-2);
+    letter-spacing: 2px;
+    font-size: 8px;
+    align-self: center;
+    padding-right: 4px;
+    border-right: 1px solid rgba(122,167,199,0.25);
+    margin-right: 4px;
+  }
   /* Tighter on phones — three entries on one line is the priority. */
   @media (max-width: 540px) {
     .leaderboard { gap: 12px; font-size: 8px; padding: 5px 4px; }
@@ -2461,9 +2473,14 @@
   // 9-lives casual mode. When true, the player has 9 lives instead of 1;
   // each hit decrements lives, and the run only ends on the 9th hit. The
   // HUD shows 9 cat-face SVGs that grey out as lives are spent. Best
-  // scores in 9-lives mode are tracked under a separate bestKey so they
-  // don't pollute the regular leaderboard.
-  let livesMode = localStorage.getItem('skior_lives') === '1';
+  // scores in 9-lives mode are tracked under a separate bestKey, and
+  // the global leaderboard has its own slot per mode (see fetch logic
+  // below).
+  //
+  // Default is ON. Users who explicitly disable it get '0' written to
+  // storage; everyone else (new visitors, returning users without an
+  // explicit pref) starts in 9-lives mode. Casual is the default.
+  let livesMode = localStorage.getItem('skior_lives') !== '0';
 
   // Difficulty params derived from the intensity slider. Each parameter
   // scales independently so the game stays playable across the full
@@ -2597,7 +2614,18 @@
     updateLivesHUD();
   }
   if (btnLives) {
-    btnLives.addEventListener('click', () => setLivesMode(!livesMode));
+    // Toggling the mode also swaps which global leaderboard board is
+    // visible (9-lives vs 1-life). applyLeaderboardForMode is declared
+    // later in the IIFE alongside the leaderboard cache; calling it at
+    // user-click time is safe (everything's initialized by then), but
+    // we deliberately don't call it from setLivesMode itself because
+    // that runs at boot — before the leaderboard block exists. TDZ trap.
+    btnLives.addEventListener('click', () => {
+      setLivesMode(!livesMode);
+      if (typeof applyLeaderboardForMode === 'function') {
+        applyLeaderboardForMode();
+      }
+    });
   }
   setLivesMode(livesMode);   // apply persisted state on boot
 
@@ -3376,11 +3404,15 @@
   }
 
   // ---------- top-3 leaderboard (global, Supabase-backed) ----------
-  // The strip is now a global top-3 stored in Supabase. localStorage is
-  // used only as an offline cache so the strip can render something
-  // immediately at boot, before the network round-trip completes. On
-  // page load we read the cache, render, then fire a fetch and replace
-  // the data with whatever the server has.
+  // Two separate global leaderboards: one for 9-lives runs, one for
+  // 1-life runs. The visible strip toggles based on the player's
+  // current livesMode — switch the toggle and the strip refreshes.
+  // This keeps the boards apples-to-apples (9 hits to die is a very
+  // different game from 1 hit to die).
+  //
+  // localStorage caches BOTH boards under a single key so the strip
+  // paints instantly at boot regardless of which mode is on. On boot,
+  // and on every livesMode toggle, we fetch the relevant board fresh.
   //
   // Key + URL are public by design (RLS on the table allows anon
   // SELECT and INSERT). No service-role key is ever shipped to the
@@ -3389,36 +3421,57 @@
   const SUPABASE_KEY  = 'sb_publishable_NrfBsFhfj0DSKqDEKeUCMQ_H5oDG-Zv';
   const SCORES_TABLE  = 'cat_ski_scores';
   const LB_LIMIT      = 3;
+  const LB_CACHE_KEY  = 'skior_leaderboard_v2';
 
-  function loadLeaderboard() {
-    // Read the cached top-3 (last successful network fetch). Returns []
-    // if nothing's cached yet.
+  function sanitizeBoard(arr) {
+    if (!Array.isArray(arr)) return [];
+    return arr
+      .filter(e => e && typeof e.score === 'number' && typeof e.name === 'string')
+      .slice(0, LB_LIMIT);
+  }
+  function loadLeaderboardCache() {
+    // Cache shape: { lives9: [...], lives1: [...] }. Each list is the
+    // last successful fetch for that mode.
     try {
-      const raw = localStorage.getItem('skior_leaderboard');
+      const raw = localStorage.getItem(LB_CACHE_KEY);
       if (raw) {
-        const arr = JSON.parse(raw);
-        if (Array.isArray(arr)) {
-          return arr
-            .filter(e => e && typeof e.score === 'number' && typeof e.name === 'string')
-            .slice(0, LB_LIMIT);
+        const obj = JSON.parse(raw);
+        if (obj && typeof obj === 'object') {
+          return {
+            lives9: sanitizeBoard(obj.lives9),
+            lives1: sanitizeBoard(obj.lives1),
+          };
         }
       }
     } catch (_) {}
-    return [];
+    return { lives9: [], lives1: [] };
   }
-  function saveLeaderboard(arr) {
-    try { localStorage.setItem('skior_leaderboard', JSON.stringify(arr)); } catch (_) {}
+  function saveLeaderboardCache() {
+    try { localStorage.setItem(LB_CACHE_KEY, JSON.stringify(leaderboardCache)); }
+    catch (_) {}
   }
-  let leaderboard = loadLeaderboard();
+  let leaderboardCache = loadLeaderboardCache();
 
-  // Fetch the global top-3 from Supabase. On success: replace the
-  // in-memory leaderboard, save to cache, re-render. On failure: leave
-  // the cached data alone so the strip still shows something. No retry
-  // (next page load will try again).
+  // The slot key for the player's current mode. Used to index the
+  // cache and to filter the network query.
+  function modeSlot()    { return livesMode ? 'lives9' : 'lives1'; }
+  function modeFilter()  { return livesMode ? 'true' : 'false'; }
+
+  // The visible board is whichever slot matches the current livesMode.
+  // setLivesMode (defined elsewhere) calls applyLeaderboardForMode after
+  // toggling, which re-points this reference and re-renders.
+  let leaderboard = leaderboardCache[modeSlot()];
+
+  // Fetch the global top-3 for the current mode. On success: replace
+  // the in-memory board for that mode, save to cache, re-render IF the
+  // mode is still the current one (user might have toggled mid-flight).
   async function fetchGlobalLeaderboard() {
     if (!SUPABASE_URL || !SUPABASE_KEY) return;
+    const requestedMode = modeSlot();
     const url = SUPABASE_URL + '/rest/v1/' + SCORES_TABLE +
-                '?select=name,score&order=score.desc&limit=' + LB_LIMIT;
+                '?select=name,score' +
+                '&lives_mode=eq.' + modeFilter() +
+                '&order=score.desc&limit=' + LB_LIMIT;
     try {
       const res = await fetch(url, {
         headers: {
@@ -3428,21 +3481,24 @@
       });
       if (!res.ok) return;
       const rows = await res.json();
-      if (!Array.isArray(rows)) return;
-      leaderboard = rows
-        .filter(r => r && typeof r.name === 'string' && typeof r.score === 'number')
-        .slice(0, LB_LIMIT);
-      saveLeaderboard(leaderboard);
-      renderLeaderboard();
+      const clean = sanitizeBoard(rows);
+      leaderboardCache[requestedMode] = clean;
+      saveLeaderboardCache();
+      // Only update the visible list if the user hasn't toggled away
+      // from this mode while the request was in flight.
+      if (modeSlot() === requestedMode) {
+        leaderboard = clean;
+        renderLeaderboard();
+      }
     } catch (_) {
       // Network down — keep showing whatever was cached. No-op.
     }
   }
 
-  // Submit a score row to Supabase. Fire-and-forget; the caller
-  // optimistically inserted into the local list already so the strip
-  // updates immediately. After the POST resolves we refetch to merge
-  // in any other plays that landed concurrently.
+  // Submit a score row to Supabase. The caller already optimistically
+  // inserted into the in-memory list for the current mode, so the
+  // strip is up to date locally. After the POST resolves we refetch
+  // the same mode's board to merge in any concurrent plays.
   async function submitGlobalScore(name, score, extra) {
     if (!SUPABASE_URL || !SUPABASE_KEY) return;
     const body = Object.assign({ name: name, score: score }, extra || {});
@@ -3458,12 +3514,22 @@
         body: JSON.stringify(body),
       });
       if (!res.ok) return;
-      // Refetch authoritative top-3 so the strip reflects everyone's
-      // plays, not just this device's optimistic insert.
+      // Refetch the authoritative top-3 for whichever mode this score
+      // belongs to (could differ from the current visible mode if the
+      // user toggled in the small window between submit and response).
       fetchGlobalLeaderboard();
     } catch (_) {
       // Network down — the optimistic local insert is the best we can do.
     }
+  }
+
+  // Swap the visible board to match the current livesMode. Called from
+  // setLivesMode AFTER it flips the bool. Renders cached data
+  // immediately, then fires a fresh network fetch in the background.
+  function applyLeaderboardForMode() {
+    leaderboard = leaderboardCache[modeSlot()];
+    renderLeaderboard();
+    fetchGlobalLeaderboard();
   }
 
   const leaderboardEl = document.getElementById('leaderboard');
@@ -3472,6 +3538,12 @@
     // Build with createElement to avoid any HTML injection from saved
     // names. maxlength caps user input, but defense in depth.
     leaderboardEl.innerHTML = '';
+    // Mode label so players can tell which of the two global boards
+    // they're looking at — the strip changes when the LIVES toggle does.
+    const mode = document.createElement('span');
+    mode.className = 'lb-mode';
+    mode.textContent = livesMode ? '9 LIVES' : '1 LIFE';
+    leaderboardEl.appendChild(mode);
     for (let i = 0; i < 3; i++) {
       const e = leaderboard[i];
       const row = document.createElement('span');
@@ -3504,15 +3576,24 @@
     return score > leaderboard[leaderboard.length - 1].score;
   }
 
-  // Insert a new entry, sort high-to-low, trim to 3. Returns the
-  // 1-based rank the new entry landed at (1, 2, or 3).
+  // Insert a new entry into the cache slot for the CURRENT mode, sort
+  // high-to-low, trim to 3. Returns the 1-based rank the entry landed
+  // at. The optimistic update keeps the strip responsive; the POST in
+  // submitLbEntry will refetch the authoritative list shortly after.
   function insertLeaderboardEntry(name, score) {
     const clean = String(name || '').toUpperCase().replace(/[^A-Z0-9 ]/g, '').slice(0, 5).trim() || 'CAT';
     const entry = { name: clean, score: score };
-    leaderboard.push(entry);
-    leaderboard.sort((a, b) => b.score - a.score);
-    leaderboard = leaderboard.slice(0, 3);
-    saveLeaderboard(leaderboard);
+    const slot  = modeSlot();
+    const board = leaderboardCache[slot] || [];
+    board.push(entry);
+    board.sort((a, b) => b.score - a.score);
+    leaderboardCache[slot] = board.slice(0, LB_LIMIT);
+    saveLeaderboardCache();
+    // Re-point the visible board reference to the now-mutated cache
+    // slot, then re-render. (If the user has somehow toggled mode
+    // between crash and submit, applyLeaderboardForMode handles that
+    // separately.)
+    leaderboard = leaderboardCache[slot];
     renderLeaderboard();
     return leaderboard.indexOf(entry) + 1;
   }
