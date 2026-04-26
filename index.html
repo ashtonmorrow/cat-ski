@@ -22,6 +22,13 @@
 <link rel="preconnect" href="https://pdjrvlhepiwkshxerkpz.supabase.co">
 <link rel="dns-prefetch" href="https://www.googletagmanager.com">
 
+<!-- Preload the Google Fonts stylesheet so the browser parses the
+     @font-face declarations before encountering the @import in our
+     own <style> block. Cuts ~50-100ms off the FOUT window on first
+     paint. The font files themselves are version-stamped URLs we
+     can't preload directly without parsing the CSS first. -->
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap">
+
 <!-- Search Console verification -->
 <meta name="google-site-verification" content="Blnw1PeynoNtYxKYh57M27xYxnoz3UKCrqQ4a3mvxt8">
 
@@ -173,6 +180,20 @@
       animation-iteration-count: 1 !important;
       transition-duration: 0.001ms !important;
     }
+  }
+
+  /* Visible focus ring for keyboard navigators. :focus-visible only
+     activates for keyboard / programmatic focus, not mouse clicks,
+     so the outline never appears for pointer users. The accent-2
+     gold keeps the focus indicator on-brand. Buttons and links both
+     get the same treatment for consistency. */
+  :focus { outline: none; }
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  [role="button"]:focus-visible {
+    outline: 2px solid var(--accent-2);
+    outline-offset: 2px;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -666,6 +687,11 @@
   }
   .cookie-banner .cb-btn.cb-accept:hover { color: var(--ink); }
   .cookie-banner .cb-btn:active { transform: translate(1px, 1px); }
+  /* While the cookie banner is up, hide the touch joystick and trick
+     pad so they don't get covered or get tapped through the banner.
+     The banner is one-time per device, so this is a brief gate. */
+  body.cookie-banner-active .stick-area,
+  body.cookie-banner-active .trick-pad { display: none !important; }
   .panel .stat-row {
     display: flex; justify-content: space-between; gap: 30px;
     font-family: 'Press Start 2P', monospace;
@@ -5620,10 +5646,15 @@
     if (!banner) return;
     if (saved !== 'accepted' && saved !== 'declined') {
       banner.hidden = false;
+      // Body class hides the joystick + trick pad while the banner is
+      // up so they don't compete for the same bottom-of-viewport real
+      // estate on mobile. CSS in the head handles the actual hiding.
+      document.body.classList.add('cookie-banner-active');
     }
     function close(decision) {
       try { localStorage.setItem(KEY, decision); } catch (_) {}
       banner.hidden = true;
+      document.body.classList.remove('cookie-banner-active');
       if (decision === 'accepted' && typeof gtag === 'function') {
         gtag('consent', 'update', { 'analytics_storage': 'granted' });
       }

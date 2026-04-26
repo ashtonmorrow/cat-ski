@@ -15,6 +15,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="dns-prefetch" href="https://www.googletagmanager.com">
 
+<!-- Preload the Google Fonts stylesheet so the browser parses
+     @font-face before reaching our <style> block. -->
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap">
+
 <!-- Search Console verification -->
 <meta name="google-site-verification" content="Blnw1PeynoNtYxKYh57M27xYxnoz3UKCrqQ4a3mvxt8">
 
@@ -402,9 +406,11 @@
 
     <h2 id="about">About cat-ski</h2>
 
-    <p>Cat Ski 1989 is a free browser game inspired by <a href="https://en.wikipedia.org/wiki/SkiFree" target="_blank" rel="noopener noreferrer">SkiFree</a>, the 1991 release that shipped in Microsoft Entertainment Pack 3 for Windows 3.0. The original presented an endless downhill ski run with trees, jumps, and an unkillable abominable yeti that eventually appeared and ended every run. Cat Ski 1989 recreates the same loop with a cat as the player character. The game includes three regional mountain themes (Alps, Rockies, Himalayas), four cat color variants, an in-air trick system with chained scoring, gold escape ramps that spawn alongside each dog wave, and a snowman that takes the role of the original yeti. Difficulty is fully tunable through two sliders, with four named presets for casual players.</p>
+    <p>Cat Ski 1989 is a free browser game inspired by <a href="https://en.wikipedia.org/wiki/SkiFree" target="_blank" rel="noopener noreferrer">SkiFree</a>, the 1991 release that shipped in Microsoft Entertainment Pack 3 for Windows 3.0. The original presented an endless downhill ski run with trees, jumps, and an unkillable abominable yeti that eventually appeared and ended every run. Cat Ski 1989 recreates the same loop with a cat as the player character. The game includes three regional mountain themes (Alps, Rockies, Himalayas), four cat color variants, an in-air trick system with chained scoring, gold escape ramps that spawn alongside each dog wave, and a snowman that takes the role of the original yeti. Difficulty is tunable through two sliders, with four named presets for casual players.</p>
 
-    <p>The project is open source at <a href="https://github.com/ashtonmorrow/cat-ski" target="_blank" rel="noopener noreferrer">github.com/ashtonmorrow/cat-ski</a>. It was developed by <a href="https://www.linkedin.com/in/mikelee89/" target="_blank" rel="noopener noreferrer">Mike Lee</a> using Claude as a coding collaborator. The full game is one self-contained HTML file with no build step or external dependencies beyond Google Fonts. It is installable as a Progressive Web App for offline play. Best scores are tracked per difficulty combination and persist locally.</p>
+    <p>The game ships with a 9-lives casual mode enabled by default. Each crash, dog grab, or snowman chomp consumes a life, with a brief invincibility window before the next hit registers. A toggle on the picker row drops the cat back to 1-life classic for players who want the original SkiFree edge. A global top-3 leaderboard sits at the top of the page; it splits into separate boards for 9-lives and 1-life so the two modes stay apples-to-apples. Submitting a name is optional and only happens after a qualifying run. The UI is bilingual (English and rioplatense Spanish) via a slider on the controls row.</p>
+
+    <p>The project is open source at <a href="https://github.com/ashtonmorrow/cat-ski" target="_blank" rel="noopener noreferrer">github.com/ashtonmorrow/cat-ski</a>. It was developed by <a href="https://www.linkedin.com/in/mikelee89/" target="_blank" rel="noopener noreferrer">Mike Lee</a> using Claude as a coding collaborator. The full game is one self-contained HTML file with no build step or framework, and depends only on Google Fonts at runtime plus a Supabase REST endpoint for the leaderboard. It is installable as a Progressive Web App for offline play. Per-difficulty best scores persist locally; the global leaderboard is shared across all players.</p>
 
     <h2 id="play">Gameplay details</h2>
 

@@ -1,13 +1,13 @@
 # Cat Ski 1989
 
-> A free browser game inspired by SkiFree (1991). Play as a cat skiing down an endless mountain. Three regional themes, mid-air tricks, dog and snowman chasers, tunable difficulty. Single self-contained HTML file with no build step or install required.
+> A free browser game inspired by SkiFree (1991). Play as a cat skiing down an endless mountain. Three regional themes, mid-air tricks, dog and snowman chasers, tunable difficulty, a 9-lives casual mode that is on by default, and a global high-score leaderboard split by mode. Single self-contained HTML file with no build step or install required. Last updated 26 April 2026.
 
-Cat Ski 1989 is an open-source browser game that recreates the SkiFree (Windows 3.0, 1991) gameplay loop with a cat as the player character. It includes three regional mountain themes (Alps, Rockies, Himalayas), four cat color variants, an in-air trick system with chained scoring, gold escape ramps that spawn alongside each dog wave, and a snowman that takes the role of the original yeti. Difficulty is fully tunable through two sliders (intensity and dog count) with four named presets. The game supports keyboard and touch input, has Web Audio synthesized sound effects, bilingual flavor text (English and rioplatense Spanish), per-difficulty best score tracking, and a 9-lives casual mode. The entire game is approximately 150 KB of vanilla HTML, CSS, and JavaScript. Installable as a Progressive Web App for offline play. Hosted on Vercel, source on GitHub.
+Cat Ski 1989 is an open-source browser game that recreates the SkiFree (Windows 3.0, 1991) gameplay loop with a cat as the player character. It includes three regional mountain themes (Alps, Rockies, Himalayas), four cat color variants (black, tabby, calico, orange), an in-air trick system with chained scoring (Meow Roll, Whisker Twist, Cat Nap), gold escape ramps that spawn alongside each dog wave, regional dog breeds, and a snowman that takes the role of the original yeti. Difficulty is tunable through two sliders (intensity 0.8x to 5x, dog count 1 to 10) with four named presets (Easy, Medium, Hard, Insta Death). The game ships with a 9-lives casual mode enabled by default; the player can toggle to 1-life classic at any time, and the global leaderboard tracks the two modes on separate boards so they stay apples-to-apples. The game supports keyboard (arrows or WASD) and touch input (virtual joystick plus arcade-style trick buttons), has Web Audio synthesized sound effects, bilingual UI and flavor text (English and rioplatense Spanish), per-difficulty best score tracking, and a global top-3 leaderboard backed by Supabase. Player names are five characters, entered after a qualifying run. The entire game is approximately 200 KB of vanilla HTML, CSS, and JavaScript. Installable as a Progressive Web App for offline play. Hosted on Vercel, source on GitHub.
 
 ## Pages
 
-- [Play Cat Ski](https://ski.mike-lee.me/): The game itself. Loads in a browser and is playable on desktop or mobile.
-- [How to Use Claude to Build a Browser Game](https://ski.mike-lee.me/readme.html): A walkthrough article covering the project's stack, per-element design criteria, the workflow used to build it with Claude as a design collaborator, the photography-derived color palette approach for the three mountain themes, and a free toolchain readers can use to build a similar project.
+- [Play Cat Ski](https://ski.mike-lee.me/): The game itself. Loads in a browser and is playable on desktop or mobile. Press SPACE on desktop or tap on mobile to start.
+- [How to play and how the game is built](https://ski.mike-lee.me/readme.html): An article covering quick-start gameplay (controls table at the top), the project's stack, per-element design criteria, the photography-derived color palette approach for the three mountain themes, the workflow used to build it with Claude as a design collaborator, a free toolchain readers can use to build a similar project, and privacy notes covering analytics and the leaderboard.
 
 ## About the project
 
@@ -16,9 +16,15 @@ Cat Ski 1989 is an open-source browser game that recreates the SkiFree (Windows 
 - Source code: https://github.com/ashtonmorrow/cat-ski
 - License: open source (see repository)
 - Inspiration: SkiFree (1991, Microsoft Entertainment Pack 3 for Windows 3.0)
-- Stack: vanilla HTML, CSS, and JavaScript; HTML5 Canvas; Web Audio API; no build step; no framework; no runtime dependencies beyond Google Fonts
+- Stack: vanilla HTML, CSS, and JavaScript; HTML5 Canvas (360x270 internal, scaled with image-rendering: pixelated); Web Audio API for procedural sound; no build step; no framework; no runtime dependencies beyond Google Fonts and a Supabase REST endpoint for the global leaderboard
 - Hosting: Vercel, deployed automatically from the GitHub repository
+- Backend: Supabase Postgres for the global leaderboard (anonymous read and write via Row Level Security; no accounts; cheaters welcome by design, reset is manual)
 - PWA: installable on iOS, Android, and desktop via the in-app INSTALL button
+- Analytics: Google Analytics 4, opt-in via cookie consent banner (GA Consent Mode v2 defaults to denied)
+
+## Privacy
+
+The game does not collect names, emails, or accounts. Local game state (cat color, theme, difficulty, best scores, leaderboard cache, language preference, cookie consent decision) lives in localStorage on the user's device. Submitted leaderboard entries store only the five-character name, score, and run settings; no IP addresses are logged. See the in-page privacy notes for details: https://ski.mike-lee.me/readme.html#privacy
 
 ## Optional
 
