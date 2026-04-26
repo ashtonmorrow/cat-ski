@@ -1050,14 +1050,14 @@
     <!-- HUD: distance, time, score, speed, yeti warning -->
     <div class="hud">
       <div>
-        <div><span class="label">DIST</span> <span class="value" id="hud-dist">0</span> M</div>
-        <div><span class="label">SCORE</span> <span class="value" id="hud-score">0</span></div>
-        <div><span class="label">FLAGS</span> <span class="value" id="hud-flags">0</span></div>
-        <div><span class="label">TRICKS</span> <span class="value" id="hud-tricks">0</span></div>
+        <div><span class="label" data-i18n="hud.dist">DIST</span> <span class="value" id="hud-dist">0</span> M</div>
+        <div><span class="label" data-i18n="hud.score">SCORE</span> <span class="value" id="hud-score">0</span></div>
+        <div><span class="label" data-i18n="hud.flags">FLAGS</span> <span class="value" id="hud-flags">0</span></div>
+        <div><span class="label" data-i18n="hud.tricks">TRICKS</span> <span class="value" id="hud-tricks">0</span></div>
       </div>
       <div style="text-align:right">
-        <div><span class="label">TIME</span> <span class="value" id="hud-time">0:00</span></div>
-        <div><span class="label">SPD</span> <span class="value" id="hud-speed">0</span></div>
+        <div><span class="label" data-i18n="hud.time">TIME</span> <span class="value" id="hud-time">0:00</span></div>
+        <div><span class="label" data-i18n="hud.spd">SPD</span> <span class="value" id="hud-speed">0</span></div>
         <div id="hud-warning" class="danger" style="display:none">! DOG !</div>
         <!-- Lives HUD: 9 cat-face SVGs, only visible in lives-mode.
              Active lives show in --accent-2 (yellow); spent lives gain
@@ -1084,11 +1084,11 @@
         <p id="start-line-1">Dodge trees. Launch jumps. Grab flags.</p>
         <p id="start-line-2">Don't look behind you.</p>
         <div class="keys">
-          <kbd id="key-steer">&larr;&nbsp;&rarr;</kbd><span>STEER</span>
-          <kbd id="key-fast">&darr;</kbd><span>TUCK / FASTER</span>
-          <kbd id="key-slow">&uarr;</kbd><span>SLOW / CARVE</span>
-          <kbd>1 2 3</kbd><span>TRICKS (AIR)</span>
-          <kbd>SPACE</kbd><span>START / RETRY</span>
+          <kbd id="key-steer">&larr;&nbsp;&rarr;</kbd><span data-i18n="keys.steer">STEER</span>
+          <kbd id="key-fast">&darr;</kbd><span data-i18n="keys.fast">TUCK / FASTER</span>
+          <kbd id="key-slow">&uarr;</kbd><span data-i18n="keys.slow">SLOW / CARVE</span>
+          <kbd>1 2 3</kbd><span data-i18n="keys.tricks">TRICKS (AIR)</span>
+          <kbd>SPACE</kbd><span data-i18n="keys.start">START / RETRY</span>
         </div>
         <div class="hint"><span class="blink">&gt;</span> PRESS SPACE TO START</div>
       </div>
@@ -1097,19 +1097,19 @@
     <!-- iOS install instructions (no programmatic prompt on Safari) -->
     <div class="overlay hidden" id="overlay-install-ios">
       <div class="panel">
-        <h1>INSTALL</h1>
-        <h2>ADD TO HOME SCREEN</h2>
-        <p>1. Tap the <strong>Share</strong> icon in Safari</p>
-        <p>2. Scroll down</p>
-        <p>3. Tap <strong>Add to Home Screen</strong></p>
-        <div class="hint"><span class="blink">&gt;</span> TAP TO CLOSE</div>
+        <h1 data-i18n="install.title">INSTALL</h1>
+        <h2 data-i18n="install.subtitle">ADD TO HOME SCREEN</h2>
+        <p data-i18n-html="install.step1">1. Tap the <strong>Share</strong> icon in Safari</p>
+        <p data-i18n="install.step2">2. Scroll down</p>
+        <p data-i18n-html="install.step3">3. Tap <strong>Add to Home Screen</strong></p>
+        <div class="hint"><span class="blink">&gt;</span> <span data-i18n="install.close">TAP TO CLOSE</span></div>
       </div>
     </div>
 
     <!-- Pause screen -->
     <div class="overlay hidden" id="overlay-paused">
       <div class="panel">
-        <h1>PAUSED</h1>
+        <h1 data-i18n="pause.title">PAUSED</h1>
         <p id="paused-line">Take a breath.</p>
         <div class="hint" id="paused-hint"><span class="blink">&gt;</span> SPACE TO RESUME</div>
       </div>
@@ -1120,25 +1120,25 @@
       <div class="panel">
         <h1 id="over-title">WIPEOUT</h1>
         <h2 id="over-sub">YOU ATE SNOW</h2>
-        <div class="stat-row"><span>TIME</span><span class="v" id="over-time">0:00</span></div>
-        <div class="stat-row"><span>DISTANCE</span><span class="v" id="over-dist">0 M</span></div>
-        <div class="stat-row"><span>SCORE</span><span class="v" id="over-score">0</span></div>
+        <div class="stat-row"><span data-i18n="over.time">TIME</span><span class="v" id="over-time">0:00</span></div>
+        <div class="stat-row"><span data-i18n="over.distance">DISTANCE</span><span class="v" id="over-dist">0 M</span></div>
+        <div class="stat-row"><span data-i18n="over.score">SCORE</span><span class="v" id="over-score">0</span></div>
         <div class="stat-row">
-          <span>BEST <a href="#" class="reset-best" id="reset-best" title="Clear best for this difficulty">[reset]</a></span>
+          <span><span data-i18n="over.best">BEST</span> <a href="#" class="reset-best" id="reset-best" data-i18n="over.reset" data-i18n-title="over.resetTitle" title="Clear best for this difficulty">[reset]</a></span>
           <span class="v" id="over-best">0</span>
         </div>
-        <button class="share-btn" id="btn-share" type="button" aria-label="Share your run">SHARE</button>
+        <button class="share-btn" id="btn-share" type="button" aria-label="Share your run" data-i18n="btn.share">SHARE</button>
         <!-- Name-entry block. Hidden unless the run cracked the top-3.
              Submitting writes the name to the leaderboard, hides this
              block, and updates the strip at the top of the page. -->
         <div class="lb-entry hidden" id="lb-entry">
-          <div class="lb-entry-title" id="lb-entry-title">NEW HIGH SCORE!</div>
+          <div class="lb-entry-title" id="lb-entry-title" data-i18n="lb.newHigh">NEW HIGH SCORE!</div>
           <div class="lb-entry-row">
             <input class="lb-name-input" id="lb-name-input" type="text"
                    maxlength="5" autocomplete="off" autocapitalize="characters"
                    spellcheck="false" inputmode="text"
                    aria-label="Enter your initials, up to 5 characters">
-            <button class="lb-submit" id="lb-submit" type="button">OK</button>
+            <button class="lb-submit" id="lb-submit" type="button" data-i18n="btn.ok">OK</button>
           </div>
         </div>
         <div class="hint"><span class="blink">&gt;</span> SPACE TO TRY AGAIN</div>
@@ -1152,44 +1152,44 @@
        default state is collapsed so the game dominates the phone
        screen. Tap to toggle the picker controls below. -->
   <button class="controls-toggle" id="controls-toggle" aria-expanded="false" type="button">
-    &#9660; SHOW CONTROLS
+    &#9660; <span data-i18n="mobile.show">SHOW CONTROLS</span>
   </button>
 
   <!-- Cat + Theme pickers on one row. Each swatch renders a tiny preview
        (cats use the actual cat sprite; themes use a mini scene). -->
   <div class="cat-picker combo-picker">
     <div class="sub-picker" role="radiogroup" aria-label="Cat color">
-      <span class="cat-picker-label">CAT</span>
+      <span class="cat-picker-label" data-i18n="pick.cat">CAT</span>
       <button class="cat-swatch" data-cat="black"  aria-label="Black cat">
         <canvas width="48" height="48"></canvas>
-        <span class="cat-name">BLACK</span>
+        <span class="cat-name" data-i18n="cat.black">BLACK</span>
       </button>
       <button class="cat-swatch" data-cat="tabby"  aria-label="Tabby cat">
         <canvas width="48" height="48"></canvas>
-        <span class="cat-name">TABBY</span>
+        <span class="cat-name" data-i18n="cat.tabby">TABBY</span>
       </button>
       <button class="cat-swatch" data-cat="calico" aria-label="Calico cat">
         <canvas width="48" height="48"></canvas>
-        <span class="cat-name">CALICO</span>
+        <span class="cat-name" data-i18n="cat.calico">CALICO</span>
       </button>
       <button class="cat-swatch" data-cat="orange" aria-label="Orange cat">
         <canvas width="48" height="48"></canvas>
-        <span class="cat-name">ORANGE</span>
+        <span class="cat-name" data-i18n="cat.orange">ORANGE</span>
       </button>
     </div>
     <div class="sub-picker" role="radiogroup" aria-label="Mountain theme">
-      <span class="cat-picker-label">PEAK</span>
+      <span class="cat-picker-label" data-i18n="pick.peak">PEAK</span>
       <button class="cat-swatch" data-theme="alps" aria-label="Alps">
         <canvas width="48" height="48"></canvas>
-        <span class="cat-name">ALPS</span>
+        <span class="cat-name" data-i18n="theme.alps">ALPS</span>
       </button>
       <button class="cat-swatch" data-theme="rockies" aria-label="Rockies">
         <canvas width="48" height="48"></canvas>
-        <span class="cat-name">ROCKIES</span>
+        <span class="cat-name" data-i18n="theme.rockies">ROCKIES</span>
       </button>
       <button class="cat-swatch" data-theme="himalayas" aria-label="Himalayas">
         <canvas width="48" height="48"></canvas>
-        <span class="cat-name">HIMALAYAS</span>
+        <span class="cat-name" data-i18n="theme.himalayas">HIMALAYAS</span>
       </button>
     </div>
   </div>
@@ -1197,32 +1197,32 @@
   <!-- Quick preset buttons. Each one snaps both sliders to canonical
        values; you can fine-tune from there with the sliders below. -->
   <div class="cat-picker diff-picker" role="group" aria-label="Difficulty preset">
-    <span class="cat-picker-label">MODE</span>
-    <button class="diff-swatch preset-btn" data-preset="easy"   type="button">EASY</button>
-    <button class="diff-swatch preset-btn" data-preset="medium" type="button">MEDIUM</button>
-    <button class="diff-swatch preset-btn" data-preset="hard"   type="button">HARD</button>
-    <button class="diff-swatch preset-btn" data-preset="insta"  type="button">INSTA DEATH</button>
+    <span class="cat-picker-label" data-i18n="pick.mode">MODE</span>
+    <button class="diff-swatch preset-btn" data-preset="easy"   type="button" data-i18n="preset.easy">EASY</button>
+    <button class="diff-swatch preset-btn" data-preset="medium" type="button" data-i18n="preset.medium">MEDIUM</button>
+    <button class="diff-swatch preset-btn" data-preset="hard"   type="button" data-i18n="preset.hard">HARD</button>
+    <button class="diff-swatch preset-btn" data-preset="insta"  type="button" data-i18n="preset.insta">INSTA DEATH</button>
   </div>
 
   <!-- Continuous tuners. INTENSITY scales speed/density/spawn cadence/
        dog tracking. DOGS sets how many dog waves before the snowman. -->
   <div class="cat-picker diff-picker combo-picker">
     <div class="sub-picker">
-      <span class="cat-picker-label">DIFF</span>
+      <span class="cat-picker-label" data-i18n="pick.diff">DIFF</span>
       <input type="range" class="retro-slider" id="diff-slider"
              min="80" max="500" value="100" step="10"
              aria-label="Difficulty intensity">
       <span class="slider-value" id="diff-value">1x</span>
     </div>
     <div class="sub-picker">
-      <span class="cat-picker-label">DOGS</span>
+      <span class="cat-picker-label" data-i18n="pick.dogs">DOGS</span>
       <input type="range" class="retro-slider" id="dogs-slider"
              min="1" max="10" value="2" step="1"
              aria-label="Number of dog waves">
       <span class="slider-value" id="dogs-value">2</span>
     </div>
     <div class="sub-picker">
-      <span class="cat-picker-label">LIVES</span>
+      <span class="cat-picker-label" data-i18n="pick.lives">LIVES</span>
       <button class="diff-swatch lives-toggle" id="btn-lives" type="button"
               aria-label="Toggle 9 lives mode" title="9 lives mode">9</button>
     </div>
@@ -1234,15 +1234,15 @@
        via viewport + pointer capability; ON / OFF force it. -->
   <div class="cat-picker diff-picker combo-picker">
     <div class="sub-picker" role="radiogroup" aria-label="Controls">
-      <span class="cat-picker-label">KEYS</span>
-      <button class="diff-swatch ctrl-swatch" data-ctrl="arrows" aria-label="Arrow keys">ARROWS</button>
-      <button class="diff-swatch ctrl-swatch" data-ctrl="wasd"   aria-label="WASD">WASD</button>
+      <span class="cat-picker-label" data-i18n="pick.keys">KEYS</span>
+      <button class="diff-swatch ctrl-swatch" data-ctrl="arrows" aria-label="Arrow keys" data-i18n="ctrl.arrows">ARROWS</button>
+      <button class="diff-swatch ctrl-swatch" data-ctrl="wasd"   aria-label="WASD" data-i18n="ctrl.wasd">WASD</button>
     </div>
     <div class="sub-picker" role="radiogroup" aria-label="Touch mode">
       <span class="icon-label" aria-hidden="true" title="Touch mode">&#x1F446;</span>
-      <button class="diff-swatch touch-swatch" data-touch="auto" aria-label="Auto-detect touch">AUTO</button>
-      <button class="diff-swatch touch-swatch" data-touch="on"   aria-label="Force touch on">ON</button>
-      <button class="diff-swatch touch-swatch" data-touch="off"  aria-label="Force touch off">OFF</button>
+      <button class="diff-swatch touch-swatch" data-touch="auto" aria-label="Auto-detect touch" data-i18n="ctrl.auto">AUTO</button>
+      <button class="diff-swatch touch-swatch" data-touch="on"   aria-label="Force touch on"   data-i18n="ctrl.on">ON</button>
+      <button class="diff-swatch touch-swatch" data-touch="off"  aria-label="Force touch off"  data-i18n="ctrl.off">OFF</button>
     </div>
   </div>
 
@@ -1270,15 +1270,15 @@
     <!-- INSTALL button: hidden by default. Shown when beforeinstallprompt
          fires (Chrome/Android) or on iOS Safari not yet standalone. -->
     <div class="sub-picker" id="install-group" hidden>
-      <button class="diff-swatch install-btn" id="btn-install" type="button" aria-label="Install as app" title="Install">&#x1F4F2; INSTALL</button>
+      <button class="diff-swatch install-btn" id="btn-install" type="button" aria-label="Install as app" title="Install">&#x1F4F2; <span data-i18n="btn.install">INSTALL</span></button>
     </div>
   </div>
 
-  <div class="footer">ARROWS &#9679; SPACE &#9679; NO QUARTER REQUIRED</div>
+  <div class="footer" data-i18n="footer">ARROWS &#9679; SPACE &#9679; NO QUARTER REQUIRED</div>
 
   <!-- Small unobtrusive credit -->
   <div class="credit">
-    created by
+    <span data-i18n="credit.by">created by</span>
     <a href="https://www.linkedin.com/in/mikelee89/" target="_blank" rel="noopener noreferrer">Whisker Leaks</a>
   </div>
 </div>
@@ -1622,6 +1622,94 @@
         retryKeys:  'SPACE TO TRY AGAIN',
         retryTap:   'TAP TO TRY AGAIN',
       },
+      // UI labels — applied to anything with a data-i18n attribute, plus
+      // the dynamic JS-driven strings (warnings, floaters, leaderboard
+      // mode label, name-entry prompt). Add new keys here AND in the es
+      // block below; missing keys fall back to the en value.
+      ui: {
+        // HUD (in-game stats)
+        'hud.dist':    'DIST',
+        'hud.score':   'SCORE',
+        'hud.flags':   'FLAGS',
+        'hud.tricks':  'TRICKS',
+        'hud.time':    'TIME',
+        'hud.spd':     'SPD',
+        // In-canvas warnings (set by JS)
+        'warn.dog':    '! DOG !',
+        'warn.dogN':   '! DOG #{n} !',
+        'warn.snow':   '! SNOWMAN !',
+        // Floating-text events
+        'float.phew':    'PHEW!',
+        'float.escape':  'ESCAPE!',
+        'float.lifeOff': '-1 LIFE',
+        // Picker section labels
+        'pick.cat':       'CAT',
+        'pick.peak':      'PEAK',
+        'pick.mode':      'MODE',
+        'pick.diff':      'DIFF',
+        'pick.dogs':      'DOGS',
+        'pick.lives':     'LIVES',
+        'pick.keys':      'KEYS',
+        // Cat color names
+        'cat.black':   'BLACK',
+        'cat.tabby':   'TABBY',
+        'cat.calico':  'CALICO',
+        'cat.orange':  'ORANGE',
+        // Theme names — kept as proper-noun mountain ranges in both langs
+        'theme.alps':       'ALPS',
+        'theme.rockies':    'ROCKIES',
+        'theme.himalayas':  'HIMALAYAS',
+        // Difficulty presets
+        'preset.easy':    'EASY',
+        'preset.medium':  'MEDIUM',
+        'preset.hard':    'HARD',
+        'preset.insta':   'INSTA DEATH',
+        // Control swatches
+        'ctrl.arrows':  'ARROWS',
+        'ctrl.wasd':    'WASD',
+        'ctrl.auto':    'AUTO',
+        'ctrl.on':      'ON',
+        'ctrl.off':     'OFF',
+        // Sound + language switch values
+        'switch.on':    'ON',
+        'switch.off':   'OFF',
+        // Buttons
+        'btn.share':    'SHARE',
+        'btn.install':  'INSTALL',
+        'btn.ok':       'OK',
+        // Game-over panel labels
+        'over.time':      'TIME',
+        'over.distance':  'DISTANCE',
+        'over.score':     'SCORE',
+        'over.best':      'BEST',
+        'over.reset':     '[reset]',
+        'over.resetTitle':'Clear best for this difficulty',
+        // Pause overlay heading
+        'pause.title':    'PAUSED',
+        // Start-screen keys legend
+        'keys.steer':     'STEER',
+        'keys.fast':      'TUCK / FASTER',
+        'keys.slow':      'SLOW / CARVE',
+        'keys.tricks':    'TRICKS (AIR)',
+        'keys.start':     'START / RETRY',
+        // iOS install panel
+        'install.title':       'INSTALL',
+        'install.subtitle':    'ADD TO HOME SCREEN',
+        'install.step1':       '1. Tap the <strong>Share</strong> icon in Safari',
+        'install.step2':       '2. Scroll down',
+        'install.step3':       '3. Tap <strong>Add to Home Screen</strong>',
+        'install.close':       'TAP TO CLOSE',
+        // Mobile collapse toggle (arrow added by JS)
+        'mobile.show':    'SHOW CONTROLS',
+        'mobile.hide':    'HIDE CONTROLS',
+        // Footer + credit
+        'footer':       'ARROWS ● SPACE ● NO QUARTER REQUIRED',
+        'credit.by':    'created by',
+        // Leaderboard
+        'lb.modeNine':  '9 LIVES',
+        'lb.modeOne':   '1 LIFE',
+        'lb.newHigh':   'NEW HIGH SCORE!',
+      },
     },
     es: {
       tree: {
@@ -1686,6 +1774,90 @@
         retryKeys:  'SPACE PARA REINTENTAR',
         retryTap:   'TOCÁ PARA REINTENTAR',
       },
+      ui: {
+        // HUD
+        'hud.dist':    'DIST',
+        'hud.score':   'PUNTOS',
+        'hud.flags':   'BANDERAS',
+        'hud.tricks':  'TRUCOS',
+        'hud.time':    'TIEMPO',
+        'hud.spd':     'VEL',
+        // Warnings
+        'warn.dog':    '¡ PERRO !',
+        'warn.dogN':   '¡ PERRO #{n} !',
+        'warn.snow':   '¡ MUÑECO !',
+        // Floaters
+        'float.phew':    '¡UF!',
+        'float.escape':  '¡ESCAPE!',
+        'float.lifeOff': '-1 VIDA',
+        // Pickers
+        'pick.cat':       'GATO',
+        'pick.peak':      'CIMA',
+        'pick.mode':      'MODO',
+        'pick.diff':      'NIVEL',
+        'pick.dogs':      'PERROS',
+        'pick.lives':     'VIDAS',
+        'pick.keys':      'TECLAS',
+        // Cat colors
+        'cat.black':   'NEGRO',
+        'cat.tabby':   'RAYADO',
+        'cat.calico':  'TRICOLOR',
+        'cat.orange':  'NARANJA',
+        // Themes — proper nouns, untranslated
+        'theme.alps':       'ALPES',
+        'theme.rockies':    'ROCALLOSAS',
+        'theme.himalayas':  'HIMALAYA',
+        // Presets
+        'preset.easy':    'FÁCIL',
+        'preset.medium':  'MEDIO',
+        'preset.hard':    'DIFÍCIL',
+        'preset.insta':   'MUERTE YA',
+        // Controls
+        'ctrl.arrows':  'FLECHAS',
+        'ctrl.wasd':    'WASD',
+        'ctrl.auto':    'AUTO',
+        'ctrl.on':      'SI',
+        'ctrl.off':     'NO',
+        // Switch values
+        'switch.on':    'SI',
+        'switch.off':   'NO',
+        // Buttons
+        'btn.share':    'COMPARTIR',
+        'btn.install':  'INSTALAR',
+        'btn.ok':       'OK',
+        // Game-over labels
+        'over.time':       'TIEMPO',
+        'over.distance':   'DISTANCIA',
+        'over.score':      'PUNTOS',
+        'over.best':       'MEJOR',
+        'over.reset':      '[reiniciar]',
+        'over.resetTitle': 'Borrar mejor puntaje',
+        // Pause
+        'pause.title':    'PAUSADO',
+        // Keys legend
+        'keys.steer':     'DIRIGIR',
+        'keys.fast':      'AGACHAR / RÁPIDO',
+        'keys.slow':      'LENTO / GIRO',
+        'keys.tricks':    'TRUCOS (AIRE)',
+        'keys.start':     'EMPEZAR / REINTENTAR',
+        // iOS install
+        'install.title':    'INSTALAR',
+        'install.subtitle': 'AGREGAR A INICIO',
+        'install.step1':    '1. Tocá el ícono <strong>Compartir</strong> en Safari',
+        'install.step2':    '2. Bajá la lista',
+        'install.step3':    '3. Tocá <strong>Agregar a Inicio</strong>',
+        'install.close':    'TOCÁ PARA CERRAR',
+        // Mobile collapse
+        'mobile.show':    'MOSTRAR CONTROLES',
+        'mobile.hide':    'OCULTAR CONTROLES',
+        // Footer + credit
+        'footer':       'FLECHAS ● SPACE ● GRATIS',
+        'credit.by':    'creado por',
+        // Leaderboard
+        'lb.modeNine':  '9 VIDAS',
+        'lb.modeOne':   '1 VIDA',
+        'lb.newHigh':   '¡NUEVO RÉCORD!',
+      },
     },
   };
 
@@ -1716,6 +1888,52 @@
   }
   function hintText(key) {
     return (MESSAGES[lang].hints && MESSAGES[lang].hints[key]) || MESSAGES.en.hints[key] || '';
+  }
+  // Single-string lookup for UI chrome. Falls back to en, then to the
+  // raw key (so missing translations are visible during development).
+  function t(key) {
+    return (MESSAGES[lang].ui && MESSAGES[lang].ui[key])
+        || (MESSAGES.en.ui  && MESSAGES.en.ui[key])
+        || key;
+  }
+  // Walk every element with a data-i18n attribute and update its text.
+  // Elements with data-i18n-html allow inline HTML in the translation
+  // (used for the iOS install steps that contain <strong> tags).
+  // data-i18n-title sets the `title` attribute instead of textContent
+  // (used for the [reset] tooltip on the BEST row).
+  function applyUILabels() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      el.textContent = t(el.dataset.i18n);
+    });
+    document.querySelectorAll('[data-i18n-html]').forEach(el => {
+      el.innerHTML = t(el.dataset.i18nHtml);
+    });
+    document.querySelectorAll('[data-i18n-title]').forEach(el => {
+      el.title = t(el.dataset.i18nTitle);
+    });
+    // Mobile collapse toggle: arrow stays in place, only the label
+    // (currently-shown vs hidden state) translates. Read the live
+    // expanded state to pick which key applies.
+    const ct = document.getElementById('controls-toggle');
+    if (ct) {
+      const expanded = ct.getAttribute('aria-expanded') === 'true';
+      const arrow = expanded ? '▲' : '▼';
+      ct.innerHTML = arrow + ' <span data-i18n="' +
+                     (expanded ? 'mobile.hide' : 'mobile.show') +
+                     '">' + t(expanded ? 'mobile.hide' : 'mobile.show') + '</span>';
+    }
+    // Sound + language slider value labels read straight off the toggle
+    // value, so we re-emit them here in case the lang switch fired.
+    const soundValEl = document.getElementById('sound-value');
+    const soundTog   = document.getElementById('sound-toggle');
+    if (soundValEl && soundTog) {
+      soundValEl.textContent = soundTog.value === '1' ? t('switch.on') : t('switch.off');
+    }
+    // Leaderboard mode label reads from t() in renderLeaderboard, so
+    // re-render it whenever the language flips.
+    if (typeof renderLeaderboard === 'function') {
+      try { renderLeaderboard(); } catch (_) {}
+    }
   }
 
   // ---------- touch / mobile mode ----------
@@ -1970,7 +2188,9 @@
   const ctrlToggle = document.getElementById('controls-toggle');
   ctrlToggle.addEventListener('click', () => {
     const expanded = document.body.classList.toggle('controls-expanded');
-    ctrlToggle.innerHTML = expanded ? '&#9650; HIDE CONTROLS' : '&#9660; SHOW CONTROLS';
+    ctrlToggle.innerHTML = (expanded ? '&#9650; ' : '&#9660; ') +
+                           '<span data-i18n="' + (expanded ? 'mobile.hide' : 'mobile.show') + '">' +
+                           t(expanded ? 'mobile.hide' : 'mobile.show') + '</span>';
     ctrlToggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
   });
 
@@ -2140,7 +2360,7 @@
       masterGain.gain.setTargetAtTime(on ? 0.35 : 0, audioCtx.currentTime, 0.05);
     }
     if (soundToggle)  soundToggle.value = on ? '1' : '0';
-    if (soundValueEl) soundValueEl.textContent = on ? 'ON' : 'OFF';
+    if (soundValueEl) soundValueEl.textContent = on ? t('switch.on') : t('switch.off');
   }
   if (soundToggle) {
     soundToggle.addEventListener('input', () => {
@@ -2169,6 +2389,23 @@
     if (langToggle)  langToggle.value = lang === 'es' ? '1' : '0';
     if (langValueEl) langValueEl.textContent = lang === 'es' ? 'ES' : 'EN';
     refreshFlavorText();
+    // Repaint every translatable HTML element + dynamic strings.
+    applyUILabels();
+    // The hint texts under the start/over/paused panels are flavor and
+    // get their own pool-based refresh elsewhere; for the static hint
+    // text (SPACE TO START, etc) re-run the touch-state apply so the
+    // current keys/touch hint reflects the new language.
+    if (typeof applyTouchState === 'function') {
+      try { applyTouchState(); } catch (_) {}
+    }
+    // Refresh the in-game warning text if a wave is active so it
+    // reflects the current language immediately.
+    if (typeof hudWarning !== 'undefined' && hudWarning && hudWarning.style.display === 'block') {
+      // Best-effort: regenerate from the dog/snowman state. The
+      // updateYeti / updateSnowman loops will overwrite this on the
+      // next frame, so this is just to avoid a stale flash.
+      // (No-op if neither is active.)
+    }
   }
   if (langToggle) {
     langToggle.addEventListener('input', () => {
@@ -2865,7 +3102,9 @@
       vxMax,
     };
     stats.dogsSpawned += 1;
-    hudWarning.textContent = variant === 1 ? '! DOG !' : '! DOG #' + variant + ' !';
+    hudWarning.textContent = variant === 1
+      ? t('warn.dog')
+      : t('warn.dogN').replace('{n}', variant);
     hudWarning.style.display = 'block';
     sfx.bark();
     setTimeout(() => sfx.bark(), 180);  // double-bark for dramatic entrance
@@ -2975,7 +3214,7 @@
         updateLivesHUD(player.lives);
         sfx.chomp();
         if (navigator.vibrate) navigator.vibrate([20, 40]);
-        spawnFloatText('-1 LIFE', player.x, worldY + player.screenY - 14, '#ff6b8a');
+        spawnFloatText(t('float.lifeOff'), player.x, worldY + player.screenY - 14, '#ff6b8a');
         yeti = null;
         hudWarning.style.display = 'none';
         stats.dogClearedAt = stats.elapsed;
@@ -2997,7 +3236,7 @@
     if (yetiScreenY > H + 30) {
       yeti = null;
       hudWarning.style.display = 'none';
-      spawnFloatText('PHEW!', player.x, worldY + player.screenY - 14, '#6ed26b');
+      spawnFloatText(t('float.phew'), player.x, worldY + player.screenY - 14, '#6ed26b');
       stats.dogClearedAt = stats.elapsed;
     }
   }
@@ -3021,7 +3260,7 @@
     };
     stats.snowmanSpawned = true;
     stats.shakeT = 14;      // little jolt to announce the entrance
-    hudWarning.textContent = '! SNOWMAN !';
+    hudWarning.textContent = t('warn.snow');
     hudWarning.style.display = 'block';
   }
 
@@ -3052,7 +3291,7 @@
         updateLivesHUD(player.lives);
         sfx.chomp();
         if (navigator.vibrate) navigator.vibrate(120);
-        spawnFloatText('-1 LIFE', player.x, worldY + player.screenY - 14, '#ff6b8a');
+        spawnFloatText(t('float.lifeOff'), player.x, worldY + player.screenY - 14, '#ff6b8a');
         snowman.chompT = 20;
         snowman.x = snowman.x < player.x ? -40 : W + 40;
         return;
@@ -3182,7 +3421,7 @@
           o.hit = true;
           if (o.bonus) {
             player.airMax = 60;     // ~1 second airborne (vs 0.63 normal)
-            spawnFloatText('ESCAPE!', player.x, worldY + player.screenY - 14, '#ffcc00');
+            spawnFloatText(t('float.escape'), player.x, worldY + player.screenY - 14, '#ffcc00');
             spawnPuff(player.x, worldY + player.screenY, 18, '#ffcc00');
             spawnPuff(player.x, worldY + player.screenY - 4, 8, '#ffffff');
           } else {
@@ -3229,7 +3468,7 @@
       if (stats.dogsSpawned === 0) {
         if (!stats.dogsWarned[1] && stats.elapsed >= D.yetiSeconds - 4) {
           stats.dogsWarned[1] = true;
-          hudWarning.textContent = '! DOG !';
+          hudWarning.textContent = t('warn.dog');
           hudWarning.style.display = 'block';
         }
         if (stats.elapsed >= D.yetiSeconds) {
@@ -3240,7 +3479,7 @@
         const nextAt = stats.dogClearedAt + D.dogGap;
         if (!stats.dogsWarned[nextNum] && stats.elapsed >= nextAt - 4) {
           stats.dogsWarned[nextNum] = true;
-          hudWarning.textContent = '! DOG #' + nextNum + ' !';
+          hudWarning.textContent = t('warn.dogN').replace('{n}', nextNum);
           hudWarning.style.display = 'block';
         }
         if (stats.elapsed >= nextAt) {
@@ -3394,7 +3633,7 @@
       player.lives--;
       player.invincT = 60;
       updateLivesHUD(player.lives);
-      spawnFloatText('-1 LIFE', player.x, worldY + player.screenY - 14, '#ff6b8a');
+      spawnFloatText(t('float.lifeOff'), player.x, worldY + player.screenY - 14, '#ff6b8a');
       return;
     }
     player.crashed = true;
@@ -3542,7 +3781,7 @@
     // they're looking at — the strip changes when the LIVES toggle does.
     const mode = document.createElement('span');
     mode.className = 'lb-mode';
-    mode.textContent = livesMode ? '9 LIVES' : '1 LIFE';
+    mode.textContent = livesMode ? t('lb.modeNine') : t('lb.modeOne');
     leaderboardEl.appendChild(mode);
     for (let i = 0; i < 3; i++) {
       const e = leaderboard[i];
@@ -3713,7 +3952,7 @@
     resetGame();
     spawnCursor = 0;
     maintainWorld();
-    hudWarning.textContent = '! DOG !';
+    hudWarning.textContent = t('warn.dog');
     hudWarning.style.display = 'none';
     overlayStart.classList.add('hidden');
     overlayOver.classList.add('hidden');
