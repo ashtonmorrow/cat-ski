@@ -15,7 +15,7 @@
  * force all old caches to clear on next visit.
  */
 
-const CACHE_NAME = 'cat-ski-v6';
+const CACHE_NAME = 'cat-ski-v7';
 const APP_SHELL = [
   '/',
   '/index.html',

@@ -5,6 +5,23 @@
 <title>CAT SKI // Retro Downhill 1989</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
+<!-- Canonical URL — explicit so search engines don't conflate www/non-www
+     or any tracking-parameter variants. -->
+<link rel="canonical" href="https://ski.mike-lee.me/">
+
+<!-- Crawler hints — explicit index/follow + allow large image previews
+     (lets search engines pull preview.png into rich-result cards). -->
+<meta name="robots" content="index, follow, max-image-preview:large">
+
+<!-- Performance hints: warm up DNS + TLS for the three external origins
+     this page touches before each is needed. fonts.gstatic.com is
+     where the actual font files live (CSS pulls from googleapis); the
+     Supabase domain serves the global leaderboard JSON. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://pdjrvlhepiwkshxerkpz.supabase.co">
+<link rel="dns-prefetch" href="https://www.googletagmanager.com">
+
 <!-- Search Console verification -->
 <meta name="google-site-verification" content="Blnw1PeynoNtYxKYh57M27xYxnoz3UKCrqQ4a3mvxt8">
 
@@ -100,6 +117,7 @@
   @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
 
   :root {
+    /* Core palette — snow whites, ice blues, the warm accent pair. */
     --snow:      #eaf4ff;
     --snow-dim:  #cfe2f5;
     --shadow:    #9fb6cc;
@@ -110,6 +128,32 @@
     --accent-2:  #ffcc00;
     --pine:      #1f6b3a;
     --pine-dk:   #0f4424;
+
+    /* Semantic tones — referenced from many places. Centralizing here
+       so a future palette change stays one-file. */
+    --success:   #6ed26b;   /* PHEW! floater, share-success, positives  */
+    --pink-life: #ff6b8a;   /* cat-face nose accent + life-loss floater */
+    --greyed:    #4a5664;   /* lost-life icon body, disabled / muted    */
+    --link-dim:  #5a7088;   /* small ghost links like [reset] / [reset] */
+
+    /* Translucent ice variants used in chrome borders + glow shadows.
+       Using rgba derived from --ice (#7aa7c7 = 122,167,199). */
+    --ice-15:    rgba(122,167,199,0.15);
+    --ice-22:    rgba(122,167,199,0.22);
+    --ice-35:    rgba(122,167,199,0.35);
+    --ice-60:    rgba(122,167,199,0.60);
+  }
+
+  /* Respect OS-level reduced-motion preference. Disables the blink
+     keyframe (used on hint cursors and the bezel-title dot) and any
+     CSS transitions that would otherwise flash. The game canvas is
+     core gameplay and stays animated regardless. */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -162,7 +206,7 @@
     color: var(--snow-dim);
     margin-bottom: 10px;
     padding: 0 4px;
-    text-shadow: 0 0 6px rgba(122,167,199,.6);
+    text-shadow: 0 0 6px var(--ice-60);
   }
   .bezel-center {
     flex: 1;
@@ -208,9 +252,9 @@
     color: var(--snow-dim);
     margin-bottom: 6px;
     padding: 6px 8px 7px;
-    border-top: 1px solid rgba(122,167,199,0.22);
-    border-bottom: 1px solid rgba(122,167,199,0.22);
-    text-shadow: 0 0 4px rgba(122,167,199,0.35);
+    border-top: 1px solid var(--ice-22);
+    border-bottom: 1px solid var(--ice-22);
+    text-shadow: 0 0 4px var(--ice-35);
     flex-wrap: wrap;
   }
   .leaderboard .lb-row {
@@ -233,7 +277,7 @@
     font-size: 8px;
     align-self: center;
     padding-right: 4px;
-    border-right: 1px solid rgba(122,167,199,0.25);
+    border-right: 1px solid var(--ice-22);
     margin-right: 4px;
   }
   /* Tighter on phones — three entries on one line is the priority. */
@@ -509,7 +553,7 @@
   .reset-best {
     font-family: 'VT323', monospace;
     font-size: 14px;
-    color: #5a7088;
+    color: var(--link-dim);
     text-decoration: none;
     margin-left: 6px;
     letter-spacing: 0;
@@ -532,7 +576,7 @@
   }
   .share-btn:hover { background: rgba(255,204,0,0.12); }
   .share-btn:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 #000; }
-  .share-btn.copied { color: #6ed26b; border-color: #6ed26b; }
+  .share-btn.copied { color: var(--success); border-color: var(--success); }
 
   .footer {
     margin-top: 10px;
@@ -679,18 +723,23 @@
     text-align: left;
   }
 
-  /* 9-lives toggle: button labeled "9", highlights yellow when active */
+  /* 9-lives toggle: button labeled "9", highlights yellow when active.
+     Hover/focus mirror the .diff-swatch tactile feedback so it doesn't
+     feel like a different control type than its neighbors. */
   .lives-toggle {
     font-size: 12px;
     padding: 6px 10px;
     min-width: 32px;
   }
+  .lives-toggle:hover { color: var(--accent-2); }
+  .lives-toggle:active { transform: translate(1px, 1px); }
   .lives-toggle.active {
     background: var(--accent-2);
     color: var(--ink);
     border-color: var(--accent-2);
     box-shadow: 2px 2px 0 #000, inset 0 -2px 0 rgba(0,0,0,0.25);
   }
+  .lives-toggle.active:hover { color: var(--ink); }
 
   /* Lives HUD: row of cat-face SVG icons in the top-right of the game.
      Hidden in 1-life mode. Active lives show yellow; lost lives go grey. */
@@ -708,7 +757,7 @@
     transition: color 200ms, opacity 200ms;
   }
   .life-icon.lost {
-    color: #4a5664;
+    color: var(--greyed);
     opacity: 0.55;
   }
 
@@ -2398,14 +2447,10 @@
     if (typeof applyTouchState === 'function') {
       try { applyTouchState(); } catch (_) {}
     }
-    // Refresh the in-game warning text if a wave is active so it
-    // reflects the current language immediately.
-    if (typeof hudWarning !== 'undefined' && hudWarning && hudWarning.style.display === 'block') {
-      // Best-effort: regenerate from the dog/snowman state. The
-      // updateYeti / updateSnowman loops will overwrite this on the
-      // next frame, so this is just to avoid a stale flash.
-      // (No-op if neither is active.)
-    }
+    // The in-game warning text (! DOG ! / ! SNOWMAN !) is rewritten
+    // every frame by updateYeti / updateSnowman through t(), so a
+    // language flip mid-run propagates on the next tick automatically.
+    // No explicit refresh needed here.
   }
   if (langToggle) {
     langToggle.addEventListener('input', () => {
