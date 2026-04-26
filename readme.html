@@ -18,11 +18,27 @@
 <!-- Search Console verification -->
 <meta name="google-site-verification" content="Blnw1PeynoNtYxKYh57M27xYxnoz3UKCrqQ4a3mvxt8">
 
-<!-- Google Analytics 4 -->
+<!-- Google Analytics 4 with Consent Mode v2.
+     Mirrors the default-denied posture from index.html — GA fires no
+     cookies on this article page until the visitor accepts on the
+     game page (or vice-versa). localStorage carries the decision
+     across both pages. -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-MSN465FL9R"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
+  gtag('consent', 'default', {
+    'ad_storage':         'denied',
+    'ad_user_data':       'denied',
+    'ad_personalization': 'denied',
+    'analytics_storage':  'denied',
+    'wait_for_update':    500
+  });
+  try {
+    if (localStorage.getItem('skior_cookies') === 'accepted') {
+      gtag('consent', 'update', { 'analytics_storage': 'granted' });
+    }
+  } catch (_) {}
   gtag('js', new Date());
   gtag('config', 'G-MSN465FL9R');
 </script>
@@ -287,6 +303,48 @@
   .footer .blink { color: var(--accent-2); animation: blink 1.2s steps(2,end) infinite; }
   @keyframes blink { 50% { opacity: 0; } }
 
+  /* Cookie consent banner — same component as index.html; styled to
+     match the readme's monospace body type. */
+  .cookie-banner {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 9999;
+    background: #050910;
+    border-top: 2px solid #1d2a3c;
+    padding: 12px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    font-family: 'VT323', monospace;
+    font-size: 16px;
+    color: #cfe2f5;
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.5);
+  }
+  .cookie-banner[hidden] { display: none; }
+  .cookie-banner .cb-text { flex: 1 1 280px; min-width: 0; }
+  .cookie-banner .cb-text a { color: var(--accent-2); text-decoration: underline; }
+  .cookie-banner .cb-btn {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    padding: 8px 12px;
+    background: transparent;
+    color: #cfe2f5;
+    border: 2px solid #7aa7c7;
+    cursor: pointer;
+  }
+  .cookie-banner .cb-btn:hover { color: var(--accent-2); border-color: var(--accent-2); }
+  .cookie-banner .cb-btn.cb-accept {
+    background: var(--accent-2);
+    color: #0b1320;
+    border-color: var(--accent-2);
+    box-shadow: 2px 2px 0 #000;
+  }
+  .cookie-banner .cb-btn.cb-accept:hover { color: #0b1320; }
+  .cookie-banner .cb-btn:active { transform: translate(1px, 1px); }
+
   @media (max-width: 600px) {
     body { padding: 10px; }
     .container { padding: 18px 16px 22px; }
@@ -316,6 +374,7 @@
         <li><a href="#colors">Selecting colors from real photographs</a></li>
         <li><a href="#claude">Working with Claude as a design collaborator</a></li>
         <li><a href="#diy">How you can build this yourself</a></li>
+        <li><a href="#privacy">Privacy notes</a></li>
         <li><a href="#resources">Further resources</a></li>
       </ul>
     </nav>
@@ -437,6 +496,49 @@
 
     <p>Three practices kept the build moving. First, treat the conversation with Claude as design work rather than code generation. State the criteria, propose the simplest approach, and identify the trade-offs before any feature is built. Second, deploy frequently. Ship each working commit so the live site stays current with the project. Third, when working on aesthetic decisions, describe the source material in concrete terms. Asking Claude for a palette inspired by "warm afternoon light on sandstone" produces hex codes that read as the place; asking for a palette that feels "rugged" returns generic results. The same pattern holds for sounds, sprites, and animation timing: the more specific the input, the more usable the output.</p>
 
+    <h2 id="privacy">Privacy notes</h2>
+
+    <p>Cat Ski 1989 is a free, single-page browser game with no accounts, no signups, and no email collection. The data the site does touch is described in full below so a player can decide what to consent to.</p>
+
+    <h3>Anonymous analytics</h3>
+
+    <p>The site loads Google Analytics 4 to count plays and surface basic usage patterns (page views, country-level location, device type). GA is configured with Consent Mode v2 and defaults to denied, which means no GA cookies are written and no data is sent until the visitor accepts the cookie banner. Declining the banner leaves analytics off for that browser; the decision is stored in localStorage and respected on subsequent visits. GA does not collect names, email addresses, IP addresses (Google anonymizes the last octet by default), or any personally identifying information.</p>
+
+    <h3>Local game state</h3>
+
+    <p>The game writes the following to the browser's localStorage on the device it runs on. None of it leaves the device:</p>
+
+    <ul>
+      <li>Selected cat color and mountain theme</li>
+      <li>Difficulty slider positions and lives-mode preference</li>
+      <li>Audio on/off, control mode (arrows or WASD), touch mode</li>
+      <li>Language preference (English or Spanish)</li>
+      <li>Best score per intensity / dog count / lives-mode combination</li>
+      <li>A cached copy of the global leaderboard top-3 (so the strip can paint instantly on the next page load)</li>
+      <li>The cookie consent decision</li>
+      <li>The most recent name entered for the leaderboard</li>
+    </ul>
+
+    <p>All localStorage entries are prefixed with <code>skior_</code>. Clearing browser storage for this site removes them entirely.</p>
+
+    <h3>Global leaderboard</h3>
+
+    <p>When a player chooses to submit a high score, the site sends the entered name (up to five characters), the score, and the run's settings (intensity, dog count, lives mode, theme) to a hosted database. The name is whatever the player types; it is not connected to any account or identifier. There is no IP address logging on the database side. Anyone can read the global top-3 through the same anonymous channel, which is what powers the strip at the top of the page.</p>
+
+    <p>To remove a leaderboard entry, contact <a href="https://www.linkedin.com/in/mikelee89/" target="_blank" rel="noopener noreferrer">the project author on LinkedIn</a> with the name and approximate score.</p>
+
+    <h3>Third parties</h3>
+
+    <p>The site is hosted on Vercel, which receives standard HTTP request metadata (URL, user agent, referrer, IP address) for the purposes of serving the page and protecting against abuse. Vercel's privacy policy applies to that traffic. Fonts are loaded from Google Fonts, which Google describes as not setting cookies for font requests. The leaderboard database is hosted on Supabase. No advertising networks, social trackers, or fingerprinting libraries are loaded.</p>
+
+    <h3>Children's privacy</h3>
+
+    <p>The game is appropriate for all ages and does not knowingly collect personal information from anyone, including children under 13.</p>
+
+    <h3>Changes</h3>
+
+    <p>If this notice changes in a substantive way, the date next to <strong>Last updated</strong> below will move forward. Last updated: 26 April 2026.</p>
+
     <h2 id="resources">Further resources</h2>
 
     <ul>
@@ -449,5 +551,38 @@
       <span class="blink">&#9656;</span> <a href="/">PLAY</a> &nbsp; &bull; &nbsp; Made by <a href="https://www.linkedin.com/in/mikelee89/" target="_blank" rel="noopener noreferrer">Whisker Leaks</a>
     </div>
   </div>
+
+  <!-- Cookie consent banner (mirrors index.html). Both pages share the
+       'skior_cookies' localStorage key so a decision on either page
+       persists to the other. -->
+  <div id="cookie-banner" class="cookie-banner" hidden role="dialog" aria-label="Cookie consent">
+    <span class="cb-text">
+      This site uses anonymous analytics cookies to help improve the game.
+      See the <a href="#privacy">privacy notes</a> below for details.
+    </span>
+    <button class="cb-btn cb-accept" id="cookie-accept" type="button">OK</button>
+    <button class="cb-btn cb-decline" id="cookie-decline" type="button">NO THANKS</button>
+  </div>
+  <script>
+    (function() {
+      var KEY = 'skior_cookies';
+      var saved = null;
+      try { saved = localStorage.getItem(KEY); } catch (_) {}
+      var banner = document.getElementById('cookie-banner');
+      if (!banner) return;
+      if (saved !== 'accepted' && saved !== 'declined') banner.hidden = false;
+      function close(decision) {
+        try { localStorage.setItem(KEY, decision); } catch (_) {}
+        banner.hidden = true;
+        if (decision === 'accepted' && typeof gtag === 'function') {
+          gtag('consent', 'update', { 'analytics_storage': 'granted' });
+        }
+      }
+      var ok = document.getElementById('cookie-accept');
+      var no = document.getElementById('cookie-decline');
+      if (ok) ok.addEventListener('click', function() { close('accepted'); });
+      if (no) no.addEventListener('click', function() { close('declined'); });
+    })();
+  </script>
 </body>
 </html>

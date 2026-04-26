@@ -25,11 +25,29 @@
 <!-- Search Console verification -->
 <meta name="google-site-verification" content="Blnw1PeynoNtYxKYh57M27xYxnoz3UKCrqQ4a3mvxt8">
 
-<!-- Google Analytics 4 -->
+<!-- Google Analytics 4 with Consent Mode v2.
+     All storage defaults to denied so GA fires no cookies until the
+     visitor explicitly opts in via the cookie banner (see body).
+     Stored consent is read from localStorage on subsequent visits so
+     the banner only appears once per device. -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-MSN465FL9R"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
+  // Default-deny everything until the user explicitly accepts.
+  gtag('consent', 'default', {
+    'ad_storage':         'denied',
+    'ad_user_data':       'denied',
+    'ad_personalization': 'denied',
+    'analytics_storage':  'denied',
+    'wait_for_update':    500
+  });
+  // Restore previously-granted consent on subsequent visits.
+  try {
+    if (localStorage.getItem('skior_cookies') === 'accepted') {
+      gtag('consent', 'update', { 'analytics_storage': 'granted' });
+    }
+  } catch (_) {}
   gtag('js', new Date());
   gtag('config', 'G-MSN465FL9R');
 </script>
@@ -79,6 +97,7 @@
     "url": "https://mike-lee.me/"
   },
   "datePublished": "2026-04-24",
+  "dateModified": "2026-04-26",
   "softwareVersion": "1.0"
 }
 </script>
@@ -268,6 +287,16 @@
   .leaderboard .lb-name  { color: var(--snow);     min-width: 50px; letter-spacing: 2px; }
   .leaderboard .lb-score { color: var(--snow-dim); min-width: 38px; text-align: right; margin-left: auto; }
   .leaderboard .lb-empty { opacity: 0.45; }
+  /* Shown only when the strip is empty AND the last network fetch
+     failed. Quiet enough that a successful fetch never has to compete
+     with it visually; it only appears to explain the empty state. */
+  .leaderboard .lb-offline {
+    color: var(--accent);
+    opacity: 0.6;
+    font-size: 7px;
+    align-self: center;
+    letter-spacing: 1px;
+  }
   /* Mode label tells the player which of the two global boards is on
      screen (9 LIVES vs 1 LIFE). Lives in accent-2 so it visually
      belongs with the rank numerals; small enough to read as chrome. */
@@ -300,6 +329,17 @@
     .leaderboard .lb-name  { min-width: 38px; letter-spacing: 1.5px; }
     .leaderboard .lb-score { min-width: 30px; }
     .leaderboard .lb-trophy { width: 12px; height: 12px; }
+  }
+  /* Very narrow phones (~360px and under): drop the trophy bookends so
+     the three entries + mode label still fit on one line. The strip
+     would technically wrap with flex-wrap:wrap, but a single dense row
+     reads as a leaderboard better than two stacked rows. */
+  @media (max-width: 380px) {
+    .leaderboard { gap: 8px; font-size: 7px; }
+    .leaderboard .lb-trophy { display: none; }
+    .leaderboard .lb-mode { font-size: 7px; padding-right: 3px; margin-right: 3px; }
+    .leaderboard .lb-name  { min-width: 32px; letter-spacing: 1px; }
+    .leaderboard .lb-score { min-width: 24px; }
   }
 
   /* Name-entry block inside the game-over panel. Only revealed when
@@ -575,6 +615,57 @@
   }
   .readme-link:hover  { color: var(--accent-2); border-bottom-color: var(--accent-2); }
   .readme-link:active { color: var(--accent); }
+
+  /* Cookie consent banner. Fixed to the bottom of the viewport,
+     dismissible, persists the decision in localStorage. Sized to be
+     unobtrusive but readable; matches the bezel-title chrome
+     language so it doesn't feel like a third-party widget. */
+  .cookie-banner {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+    background: var(--ink);
+    border-top: 2px solid var(--ice-22);
+    padding: 12px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    font-family: 'VT323', monospace;
+    font-size: 16px;
+    color: var(--snow-dim);
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.5);
+  }
+  .cookie-banner[hidden] { display: none; }
+  .cookie-banner .cb-text { flex: 1 1 280px; min-width: 0; }
+  .cookie-banner .cb-text a {
+    color: var(--accent-2);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .cookie-banner .cb-btn {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    padding: 8px 12px;
+    background: transparent;
+    color: var(--snow-dim);
+    border: 2px solid var(--ice);
+    cursor: pointer;
+    transition: color 120ms, border-color 120ms;
+  }
+  .cookie-banner .cb-btn:hover { color: var(--accent-2); border-color: var(--accent-2); }
+  .cookie-banner .cb-btn.cb-accept {
+    background: var(--accent-2);
+    color: var(--ink);
+    border-color: var(--accent-2);
+    box-shadow: 2px 2px 0 #000;
+  }
+  .cookie-banner .cb-btn.cb-accept:hover { color: var(--ink); }
+  .cookie-banner .cb-btn:active { transform: translate(1px, 1px); }
   .panel .stat-row {
     display: flex; justify-content: space-between; gap: 30px;
     font-family: 'Press Start 2P', monospace;
@@ -1679,11 +1770,22 @@
           'SNOWMAN: HUNGRY. CAT: TOAST',
         ],
       },
+      // Generic flavor pools that work in both lives modes.
       start1: [
         'Dodge trees. Launch jumps. Grab flags.',
         'Dodge pines. Catch flags. Don\'t get eaten.',
-        'Eight lives to spare. Waste them all.',
         'Snow\'s soft. Trees are not.',
+      ],
+      // Lines that only make sense in 9-lives mode (referencing extras).
+      start1_9lives: [
+        'Eight lives to spare. Waste them all.',
+        'Nine cats, one mountain.',
+      ],
+      // Lines that only make sense in 1-life mode (no second chances).
+      start1_1life: [
+        'One life. Make it count.',
+        'Cats land on their feet. Usually.',
+        'No second chances down this hill.',
       ],
       start2: [
         'Don\'t look behind you.',
@@ -1695,7 +1797,14 @@
         'Take a breath.',
         'Lick a paw.',
         'Cat nap.',
+      ],
+      paused_9lives: [
         'Nine lives accepting applications.',
+        'Plenty more where this one came from.',
+      ],
+      paused_1life: [
+        'This is the only one you get.',
+        'Catch your breath. Carefully.',
       ],
       hints: {
         startKeys:  'PRESS SPACE TO START',
@@ -1794,6 +1903,10 @@
         'lb.newHigh':   'NEW HIGH SCORE!',
         // Tertiary link
         'link.readme':  'READ ME ›',
+        // Cookie consent banner
+        'cookie.text':    'This site uses anonymous analytics cookies to help improve gameplay. See the <a href="/readme.html#privacy">privacy notes</a> for details.',
+        'cookie.accept':  'OK',
+        'cookie.decline': 'NO THANKS',
       },
     },
     es: {
@@ -1836,8 +1949,16 @@
       start1: [
         'Esquivá pinos. Agarrá banderas.',
         'Esquivá pinos. Cuidado con el perro.',
-        'Siete vidas. A gastarlas todas.',
         'La nieve es blanda. Los árboles no.',
+      ],
+      start1_9lives: [
+        'Siete vidas. A gastarlas todas.',
+        'Nueve gatos, una montaña.',
+      ],
+      start1_1life: [
+        'Una sola vida. Que valga la pena.',
+        'No hay segundas chances acá.',
+        'Los gatos siempre caen parados. Casi siempre.',
       ],
       start2: [
         'No mires atrás.',
@@ -1849,7 +1970,14 @@
         'Tomá aire.',
         'Lamete una pata.',
         'Una siestita.',
+      ],
+      paused_9lives: [
         'Siete vidas recibiendo CVs.',
+        'Quedan varias más.',
+      ],
+      paused_1life: [
+        'Esta es la única que tenés.',
+        'Tomate aire. Con cuidado.',
       ],
       hints: {
         startKeys:  'PRESIONÁ SPACE',
@@ -1944,6 +2072,10 @@
         'lb.newHigh':   '¡NUEVO RÉCORD!',
         // Tertiary link
         'link.readme':  'LÉEME ›',
+        // Cookie consent banner
+        'cookie.text':    'Este sitio usa cookies de análisis anónimo para mejorar el juego. Detalles en las <a href="/readme.html#privacy">notas de privacidad</a>.',
+        'cookie.accept':  'OK',
+        'cookie.decline': 'NO',
       },
     },
   };
@@ -1970,8 +2102,21 @@
     return pickFrom(pool, lang + '.' + category + '.' + field);
   }
   function pickList(key) {
-    const pool = MESSAGES[lang][key] || MESSAGES.en[key];
-    return pickFrom(pool, lang + '.' + key);
+    // Merge the generic pool with the lives-mode-specific pool so
+    // 1-life players see "One life. Make it count." and 9-lives
+    // players see "Eight lives to spare." — without crossover.
+    // Mode-specific pools are optional; missing ones gracefully no-op.
+    //
+    // livesMode is declared further down the IIFE — at boot, setLang
+    // → refreshFlavorText → pickList runs before that declaration is
+    // hit. typeof on a let throws ReferenceError, hence the try/catch
+    // with a default that matches the current 9-lives-default product.
+    let live = true;
+    try { live = livesMode; } catch (_) {}
+    const general = MESSAGES[lang][key] || MESSAGES.en[key] || [];
+    const modeKey = key + (live ? '_9lives' : '_1life');
+    const modeSpecific = MESSAGES[lang][modeKey] || MESSAGES.en[modeKey] || [];
+    return pickFrom(general.concat(modeSpecific), lang + '.' + key + '.' + (live ? '9' : '1'));
   }
   function hintText(key) {
     return (MESSAGES[lang].hints && MESSAGES[lang].hints[key]) || MESSAGES.en.hints[key] || '';
@@ -2941,6 +3086,11 @@
     // refresh the displayed best for the current intensity/dogs combo.
     best = currentBest();
     updateLivesHUD();
+    // Re-roll the start-screen flavor pool so lines like "Eight lives
+    // to spare" don't appear in 1-life mode (and vice versa).
+    if (typeof refreshFlavorText === 'function') {
+      try { refreshFlavorText(); } catch (_) {}
+    }
   }
   if (btnLives) {
     // Toggling the mode also swaps which global leaderboard board is
@@ -3782,6 +3932,11 @@
     catch (_) {}
   }
   let leaderboardCache = loadLeaderboardCache();
+  // Tracks the most recent fetch outcome so the empty state can
+  // distinguish "no scores yet, network is fine" from "network down."
+  // 'pending' before any fetch has resolved, 'ok' after success,
+  // 'failed' after a network error or non-200 response.
+  let lbFetchState = 'pending';
 
   // The slot key for the player's current mode. Used to index the
   // cache and to filter the network query.
@@ -3810,11 +3965,16 @@
           'Authorization': 'Bearer ' + SUPABASE_KEY,
         },
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        lbFetchState = 'failed';
+        if (modeSlot() === requestedMode) renderLeaderboard();
+        return;
+      }
       const rows = await res.json();
       const clean = sanitizeBoard(rows);
       leaderboardCache[requestedMode] = clean;
       saveLeaderboardCache();
+      lbFetchState = 'ok';
       // Only update the visible list if the user hasn't toggled away
       // from this mode while the request was in flight.
       if (modeSlot() === requestedMode) {
@@ -3822,7 +3982,11 @@
         renderLeaderboard();
       }
     } catch (_) {
-      // Network down — keep showing whatever was cached. No-op.
+      // Network down — keep showing whatever was cached, but flag
+      // the failure so renderLeaderboard can hint at it if the strip
+      // would otherwise be empty.
+      lbFetchState = 'failed';
+      if (modeSlot() === requestedMode) renderLeaderboard();
     }
   }
 
@@ -3906,6 +4070,16 @@
       s.textContent = e ? String(e.score) : '-----';
       row.appendChild(r); row.appendChild(n); row.appendChild(s);
       leaderboardEl.appendChild(row);
+    }
+    // Empty + offline hint. Shows only if the visible board is empty
+    // AND the most recent fetch attempt failed. With a populated
+    // cache or a successful fetch this stays silent.
+    const hasAnyEntry = leaderboard.length > 0;
+    if (!hasAnyEntry && lbFetchState === 'failed') {
+      const hint = document.createElement('span');
+      hint.className = 'lb-offline';
+      hint.textContent = '(offline)';
+      leaderboardEl.appendChild(hint);
     }
     // Closing trophy bookend.
     leaderboardEl.insertAdjacentHTML('beforeend', TROPHY_SVG);
@@ -5419,6 +5593,46 @@
   render();
   requestAnimationFrame(loop);
 })();
+</script>
+
+<!-- Cookie consent banner. GA4 is loaded with Consent Mode v2
+     defaulting to denied, so this banner is the gate. The decision
+     is stored in localStorage under 'skior_cookies' and read on
+     subsequent visits to keep the banner from re-appearing. Both
+     pages share the same key so a decision on either persists. -->
+<div id="cookie-banner" class="cookie-banner" hidden role="dialog" aria-label="Cookie consent">
+  <span class="cb-text" data-i18n-html="cookie.text">
+    This site uses anonymous analytics cookies to help improve gameplay.
+    See the <a href="/readme.html#privacy">privacy notes</a> for details.
+  </span>
+  <button class="cb-btn cb-accept" id="cookie-accept" type="button" data-i18n="cookie.accept">OK</button>
+  <button class="cb-btn cb-decline" id="cookie-decline" type="button" data-i18n="cookie.decline">NO THANKS</button>
+</div>
+<script>
+  (function() {
+    // Read existing decision; if 'accepted' or 'declined' the banner
+    // stays hidden. Banner only shows for first-time visitors and
+    // anyone who's cleared their localStorage.
+    var KEY = 'skior_cookies';
+    var saved = null;
+    try { saved = localStorage.getItem(KEY); } catch (_) {}
+    var banner = document.getElementById('cookie-banner');
+    if (!banner) return;
+    if (saved !== 'accepted' && saved !== 'declined') {
+      banner.hidden = false;
+    }
+    function close(decision) {
+      try { localStorage.setItem(KEY, decision); } catch (_) {}
+      banner.hidden = true;
+      if (decision === 'accepted' && typeof gtag === 'function') {
+        gtag('consent', 'update', { 'analytics_storage': 'granted' });
+      }
+    }
+    var ok = document.getElementById('cookie-accept');
+    var no = document.getElementById('cookie-decline');
+    if (ok) ok.addEventListener('click', function() { close('accepted'); });
+    if (no) no.addEventListener('click', function() { close('declined'); });
+  })();
 </script>
 </body>
 </html>
