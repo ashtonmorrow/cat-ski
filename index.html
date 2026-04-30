@@ -343,7 +343,6 @@
     flex-shrink: 0;
     filter: drop-shadow(0 0 2px var(--ice-35));
   }
-  /* Tighter on phones — three entries on one line is the priority. */
   @media (max-width: 540px) {
     .leaderboard { gap: 12px; font-size: 8px; padding: 5px 4px; }
     .leaderboard .lb-row { gap: 6px; min-width: 0; }
@@ -351,10 +350,7 @@
     .leaderboard .lb-score { min-width: 30px; }
     .leaderboard .lb-trophy { width: 12px; height: 12px; }
   }
-  /* Very narrow phones (~360px and under): drop the trophy bookends so
-     the three entries + mode label still fit on one line. The strip
-     would technically wrap with flex-wrap:wrap, but a single dense row
-     reads as a leaderboard better than two stacked rows. */
+  /* Under 380px the trophies drop so three entries still fit on one line. */
   @media (max-width: 380px) {
     .leaderboard { gap: 8px; font-size: 7px; }
     .leaderboard .lb-trophy { display: none; }
@@ -363,9 +359,7 @@
     .leaderboard .lb-score { min-width: 24px; }
   }
 
-  /* Name-entry block inside the game-over panel. Only revealed when
-     the run qualifies for top-3. Uses the same pixel font and a
-     monospaced 5-char input that auto-uppercases. */
+  /* Name-entry block inside the game-over panel. */
   .lb-entry {
     margin-top: 10px;
     padding-top: 10px;
@@ -375,10 +369,7 @@
     align-items: center;
     gap: 8px;
   }
-  /* The site's existing `.hidden` rule only matches `.overlay.hidden`,
-     so this scoped variant is needed to actually collapse the entry
-     block when hideLbEntry() runs. Without it the block stayed visible
-     after submit and the user couldn't tell anything had happened. */
+  /* Site's `.hidden` rule only matches `.overlay.hidden`, so this scoped variant is needed. */
   .lb-entry.hidden { display: none; }
   .lb-entry-title {
     font-family: 'Press Start 2P', monospace;
@@ -821,7 +812,6 @@
     background: #1f2e44;
     color: var(--accent-2);
   }
-  /* INSTA preset gets the danger color when active */
   .preset-btn[data-preset="insta"].active {
     border-color: var(--accent);
     box-shadow: 2px 2px 0 #000, 0 0 0 2px var(--accent) inset;
@@ -911,9 +901,6 @@
     opacity: 0.55;
   }
 
-  /* Symbol-based label (replaces text labels to keep the UI
-     language-agnostic). Bigger than the pixel-font labels because
-     emoji glyphs need room to read. */
   .icon-label {
     font-size: 18px;
     line-height: 1;
@@ -923,8 +910,6 @@
     -webkit-user-select: none;
   }
 
-  /* Icon button (e.g. ⏸ ⟳). Wider character set support than the pixel
-     font, and centered so glyphs render on baseline. */
   .icon-btn {
     font-family: 'VT323', monospace;
     font-size: 18px;
@@ -1213,12 +1198,10 @@
     background: #162232;
     color: var(--snow);
   }
-  /* Default collapsed: hide pickers + footer in mobile-layout */
   body.mobile-layout .cat-picker,
   body.mobile-layout .footer {
     display: none;
   }
-  /* Expanded: restore them */
   body.mobile-layout.controls-expanded .cat-picker { display: flex; }
   body.mobile-layout.controls-expanded .footer     { display: block; }
 </style>
@@ -1621,8 +1604,7 @@
         restartRun();
         e.preventDefault();
       }
-      // Trick keys (1 = roll, 2 = twist, 3 = nap). Only fire mid-air.
-      if (state === STATE.PLAY && player && player.air > 0) {
+          if (state === STATE.PLAY && player && player.air > 0) {
         if (e.key === '1') { startTrick('roll');  e.preventDefault(); }
         if (e.key === '2') { startTrick('twist'); e.preventDefault(); }
         if (e.key === '3') { startTrick('nap');   e.preventDefault(); }
@@ -1640,8 +1622,6 @@
   });
 
   // ---------- control mode toggle ----------
-  // Cosmetic only: swaps the displayed key legend between arrows and WASD.
-  // Both sets always function in play.
   let controlMode = localStorage.getItem('skior_controls') || 'arrows';
   if (controlMode !== 'arrows' && controlMode !== 'wasd') controlMode = 'arrows';
 
@@ -1672,17 +1652,9 @@
   setControlMode(controlMode);
 
   // ---------- install prompt (PWA) ----------
-  // Chrome/Edge/Android: the browser fires 'beforeinstallprompt' when
-  // the app meets install criteria. We capture it, then reveal the
-  // INSTALL button; clicking it calls .prompt() to show the native
-  // system dialog.
-  //
-  // iOS Safari: no such event exists. If we detect iOS + not already
-  // running as standalone, we show the INSTALL button anyway, but on
-  // click we show an overlay with manual "Add to Home Screen" steps.
-  //
-  // If the app is ALREADY installed (standalone display-mode or
-  // navigator.standalone on iOS), the button stays hidden.
+  // Chrome path: capture beforeinstallprompt, reveal button, call .prompt() on click.
+  // iOS path: no native event, so show a manual "Add to Home Screen" overlay instead.
+  // Already standalone: button stays hidden.
   let deferredInstall = null;
   const installGroup  = document.getElementById('install-group');
   const btnInstall    = document.getElementById('btn-install');
@@ -1719,7 +1691,6 @@
   if (btnInstall) {
     btnInstall.addEventListener('click', async () => {
       if (deferredInstall) {
-        // Native prompt path (Chrome/Edge/Android)
         deferredInstall.prompt();
         const { outcome } = await deferredInstall.userChoice;
         deferredInstall = null;
@@ -1737,19 +1708,9 @@
   }
 
   // ---------- localized flavor text ----------
-  // Each end-of-run event has its own pool of titles + subtitles. The
-  // system picks one at random per event, avoiding the one it picked
-  // last time so the same line never fires back-to-back. Start screen
-  // and pause screen lines rotate too.
-  //
-  // IMPORTANT: this block must be declared before the touch mode setup
-  // below, because applyTouchState() calls hintText() during its first
-  // invocation (triggered by setTouchMode at init). MESSAGES is a const
-  // and would otherwise be in the temporal dead zone, throwing.
-  //
-  // Spanish is rioplatense (Argentinian) — deliberately, to give the
-  // translation personality. Cultural note: in Spanish-speaking cat
-  // lore, cats have SEVEN lives, not nine.
+  // Pools picked from at random, no-repeat. MUST be declared before touch
+  // mode setup: applyTouchState() calls hintText() which reads MESSAGES,
+  // and a const in TDZ would throw. Spanish is rioplatense (cats have 7 lives).
   const MESSAGES = {
     en: {
       tree: {
@@ -1840,10 +1801,6 @@
         retryKeys:  'SPACE TO TRY AGAIN',
         retryTap:   'TAP TO TRY AGAIN',
       },
-      // UI labels — applied to anything with a data-i18n attribute, plus
-      // the dynamic JS-driven strings (warnings, floaters, leaderboard
-      // mode label, name-entry prompt). Add new keys here AND in the es
-      // block below; missing keys fall back to the en value.
       ui: {
         // HUD (in-game stats)
         'hud.dist':    'DIST',
@@ -2128,15 +2085,9 @@
     return pickFrom(pool, lang + '.' + category + '.' + field);
   }
   function pickList(key) {
-    // Merge the generic pool with the lives-mode-specific pool so
-    // 1-life players see "One life. Make it count." and 9-lives
-    // players see "Eight lives to spare." — without crossover.
-    // Mode-specific pools are optional; missing ones gracefully no-op.
-    //
-    // livesMode is declared further down the IIFE — at boot, setLang
-    // → refreshFlavorText → pickList runs before that declaration is
-    // hit. typeof on a let throws ReferenceError, hence the try/catch
-    // with a default that matches the current 9-lives-default product.
+    // Merge generic pool with the lives-mode-specific pool. livesMode is
+    // declared later in the IIFE; at boot pickList runs while it's in TDZ,
+    // hence the try/catch with a default of 9-lives (the product default).
     let live = true;
     try { live = livesMode; } catch (_) {}
     const general = MESSAGES[lang][key] || MESSAGES.en[key] || [];
@@ -2147,18 +2098,13 @@
   function hintText(key) {
     return (MESSAGES[lang].hints && MESSAGES[lang].hints[key]) || MESSAGES.en.hints[key] || '';
   }
-  // Single-string lookup for UI chrome. Falls back to en, then to the
-  // raw key (so missing translations are visible during development).
   function t(key) {
     return (MESSAGES[lang].ui && MESSAGES[lang].ui[key])
         || (MESSAGES.en.ui  && MESSAGES.en.ui[key])
         || key;
   }
-  // Walk every element with a data-i18n attribute and update its text.
-  // Elements with data-i18n-html allow inline HTML in the translation
-  // (used for the iOS install steps that contain <strong> tags).
-  // data-i18n-title sets the `title` attribute instead of textContent
-  // (used for the [reset] tooltip on the BEST row).
+  // Repaint every [data-i18n*] element. data-i18n-html allows inline tags;
+  // data-i18n-title writes to title attribute instead of textContent.
   function applyUILabels() {
     document.querySelectorAll('[data-i18n]').forEach(el => {
       el.textContent = t(el.dataset.i18n);
@@ -2169,9 +2115,6 @@
     document.querySelectorAll('[data-i18n-title]').forEach(el => {
       el.title = t(el.dataset.i18nTitle);
     });
-    // Mobile collapse toggle: arrow stays in place, only the label
-    // (currently-shown vs hidden state) translates. Read the live
-    // expanded state to pick which key applies.
     const ct = document.getElementById('controls-toggle');
     if (ct) {
       const expanded = ct.getAttribute('aria-expanded') === 'true';
@@ -2180,53 +2123,33 @@
                      (expanded ? 'mobile.hide' : 'mobile.show') +
                      '">' + t(expanded ? 'mobile.hide' : 'mobile.show') + '</span>';
     }
-    // Sound + language slider value labels read straight off the toggle
-    // value, so we re-emit them here in case the lang switch fired.
     const soundValEl = document.getElementById('sound-value');
     const soundTog   = document.getElementById('sound-toggle');
     if (soundValEl && soundTog) {
       soundValEl.textContent = soundTog.value === '1' ? t('switch.on') : t('switch.off');
     }
-    // Leaderboard mode label reads from t() in renderLeaderboard, so
-    // re-render it whenever the language flips.
     if (typeof renderLeaderboard === 'function') {
       try { renderLeaderboard(); } catch (_) {}
     }
   }
 
   // ---------- touch / mobile mode ----------
-  // AUTO: detect by viewport width + coarse pointer (catches phones AND
-  //       tablets including iPads that report desktop UA).
-  // ON:   force touch UI (for testing / desktop users who want the joystick).
-  // OFF:  force desktop UI even on a touch device.
+  // AUTO uses (pointer: coarse). ON / OFF override.
   let touchMode = localStorage.getItem('skior_touch') || 'auto';
   if (!['auto','on','off'].includes(touchMode)) touchMode = 'auto';
 
   function isTouchActive() {
     if (touchMode === 'on')  return true;
     if (touchMode === 'off') return false;
-    // AUTO: use pointer capability as the single reliable signal for
-    // "this is a touch device." Narrow viewport alone doesn't imply
-    // touch — a desktop with a narrow browser window shouldn't get a
-    // thumbstick. coarse pointer catches phones and iPads (via the
-    // (pointer: coarse) CSS media query, which reflects the primary
-    // input device).
+    // AUTO: pointer:coarse media query. Catches phones + iPads, ignores narrow desktop.
     return window.matchMedia('(pointer: coarse)').matches;
   }
 
-  // Swap the hint text on start/gameover panels between keyboard and touch.
-  // Also manage two body classes:
-  //   touch-active   -> stick visible, tap-to-start, touch-action:none
-  //   mobile-layout  -> full-bleed layout (game fills viewport)
-  // mobile-layout is on when touch is active OR the viewport is narrow,
-  // so a phone with TOUCH=OFF still gets a fitted layout instead of
-  // horizontal overflow.
+  // Swaps hint text and toggles body classes:
+  //   touch-active  -> joystick visible, tap-to-start
+  //   mobile-layout -> full-bleed (touch active OR narrow viewport)
   function applyTouchState() {
     const on = isTouchActive();
-    // mobile-layout follows touch state only. A desktop user with a
-    // narrow-ish window but TOUCH=OFF should still see the framed 720x540
-    // desktop look — the game fits any desktop window, and conflating
-    // "narrow viewport" with "should be full-bleed" was wrong.
     document.body.classList.toggle('touch-active', on);
     document.body.classList.toggle('mobile-layout', on);
     const startHint  = document.querySelector('#overlay-start .hint');
@@ -2321,21 +2244,15 @@
   document.getElementById('overlay-start').addEventListener('click', overlayTap);
   document.getElementById('overlay-over').addEventListener('click', overlayTap);
   document.getElementById('overlay-paused').addEventListener('click', overlayTap);
-  // The READ ME link inside the start overlay sits inside the same
-  // click-target the overlayTap listener watches. Without stopPropagation
-  // the click would (a) open the readme in a new tab AND (b) fire
-  // spacePressed, which on tap-active devices starts a run the user
-  // didn't ask for. The existing reset-best link in the over overlay
-  // and the lb-entry block solve the same problem the same way.
+  // README link sits inside overlayTap's click target — stopPropagation
+  // prevents it from also firing spacePressed (which would start a run on tap).
   document.querySelectorAll('.readme-link').forEach(el => {
     el.addEventListener('click', e => e.stopPropagation());
   });
 
   // ---------- share button (game-over panel) ----------
-  // Composes a screenshot of the wreck moment + a banner with the run's
-  // stats, then opens the system share sheet with the image attached
-  // (Web Share Level 2). Falls back to PNG download + URL clipboard
-  // copy on browsers without file-share support.
+  // Composes wreck-screenshot + stats banner into a PNG, opens Web Share
+  // Level 2 with the file attached, falls back to download + clipboard URL.
   const btnShare = document.getElementById('btn-share');
 
   // Build a 720 x 720 PNG: top half is the canvas at 2x, bottom is a
@@ -2348,10 +2265,8 @@
     out.height = H2 + BANNER_H;
     const c = out.getContext('2d');
     c.imageSmoothingEnabled = false;     // crisp 2x pixel upscale
-    // Background
     c.fillStyle = '#0a111c';
     c.fillRect(0, 0, out.width, out.height);
-    // Game canvas at 2x — the wreck scene the player just saw
     c.drawImage(canvas, 0, 0, W2, H2);
     // Divider band between game and banner
     c.fillStyle = '#1d2a3c';
@@ -2462,19 +2377,14 @@
   });
 
   // ---------- pause / restart buttons ----------
-  // Grab button refs here; the pause/resume/restart functions themselves
-  // are defined below and are hoisted into scope so the click callbacks
-  // resolve them at invocation time.
   const btnPause   = document.getElementById('btn-pause');
   const btnRestart = document.getElementById('btn-restart');
   btnPause.addEventListener('click', () => togglePause());
   btnRestart.addEventListener('click', () => restartRun());
 
   // ---------- audio ----------
-  // Procedural Web Audio: every sound built from OscillatorNode /
-  // BufferSource + envelopes. No audio files = still one HTML file,
-  // single-file deploy. AudioContext is created lazily on first user
-  // interaction to respect browser autoplay policies.
+  // Procedural Web Audio (Oscillator + BufferSource + envelopes). No audio files.
+  // AudioContext lazily created on first user interaction (autoplay policies).
   let audioCtx    = null;
   let masterGain  = null;
   let swooshGain  = null;
@@ -2639,7 +2549,6 @@
 
   // ---------- language picker ----------
   function refreshFlavorText() {
-    // Roll new start screen lines in the current language
     const l1 = document.getElementById('start-line-1');
     const l2 = document.getElementById('start-line-2');
     if (l1) l1.textContent = pickList('start1');
@@ -2656,7 +2565,6 @@
     if (langToggle)  langToggle.value = lang === 'es' ? '1' : '0';
     if (langValueEl) langValueEl.textContent = lang === 'es' ? 'ES' : 'EN';
     refreshFlavorText();
-    // Repaint every translatable HTML element + dynamic strings.
     applyUILabels();
     // The hint texts under the start/over/paused panels are flavor and
     // get their own pool-based refresh elsewhere; for the static hint
@@ -2665,10 +2573,6 @@
     if (typeof applyTouchState === 'function') {
       try { applyTouchState(); } catch (_) {}
     }
-    // The in-game warning text (! DOG ! / ! SNOWMAN !) is rewritten
-    // every frame by updateYeti / updateSnowman through t(), so a
-    // language flip mid-run propagates on the next tick automatically.
-    // No explicit refresh needed here.
   }
   if (langToggle) {
     langToggle.addEventListener('input', () => {
@@ -2734,21 +2638,11 @@
   setCatColor(catColor);
 
   // ---------- mountain themes ----------
-  // Pure cosmetic. Each theme defines a palette for the sky, slope,
-  // trees, dog breed, plus three named-peak silhouettes drawn in the
-  // picker swatch (and reusable elsewhere later). Themes don't affect
-  // gameplay difficulty — that's the slider's job.
-  //
-  // IMPORTANT: declared here, before renderPickerPreviews and the
-  // setTheme(mtnTheme) init call below. Function declarations are
-  // hoisted but const/let are in TDZ until executed in order, so
-  // anything that reads THEMES or mtnTheme must come after this block.
+  // Sky/slope/tree palette + dog breed + named-peak silhouettes per theme.
+  // Must declare BEFORE renderPickerPreviews / setTheme call (TDZ).
 
-  // Mountain silhouettes as normalized polygon points. Origin (0,0) is
-  // the bottom-left of the mountain's bounding box; (1,1) is top-right.
-  // y=0 = base of the mountain, y=1 = peak. Each shape also carries an
-  // aspect ratio so the renderer can pick proportions matching the
-  // real mountain (e.g. Annapurna is wide; Matterhorn is taller-than-wide).
+  // Mountain silhouettes as normalized polygons (0,0 = bottom-left, 1,1 = top-right).
+  // Aspect ratio per shape so renderer matches real proportions (Annapurna wide, Matterhorn tall).
   const MOUNTAIN_SHAPES = {
     // Alps
     matterhorn: { aspect: 0.85, points: [
@@ -2809,13 +2703,7 @@
     g.fill();
   }
 
-  // Palettes tuned to how these ranges actually photograph.
-  //   Alps:     cool crisp blue snow, deep emerald Norway spruce,
-  //             granite-gray peaks fading blue with atmospheric haze.
-  //   Rockies:  warm afternoon light on sandstone/granite, slightly
-  //             bluer-green lodgepole pine, rust-toned distant peaks.
-  //   Himalayas:deep saturated alpine sky, brilliant white snow, near-
-  //             black slate rock, sparse dusty juniper at low elevation.
+  // Palettes tuned to how each range photographs: Alps cool/blue, Rockies warm/rust, Himalayas saturated/slate.
   const THEMES = {
     alps: {
       name: 'ALPS',
@@ -2946,22 +2834,10 @@
   setTheme(mtnTheme);
 
   // ---------- difficulty ----------
-  // Four preset "moods" layered on top of the core difficulty ramp.
-  // speedMul     scales the skier's base cruise/tuck speed bands
-  // densityMul   scales object spawn density + tightens strip spacing
-  // rampSeconds  how long it takes the ramp to reach max intensity
-  // baseRamp     starting ramp value so "insta" is never calm
-  // yetiSeconds  seconds at which the dog wakes and starts chasing
-  //              (was previously distance-based, but snowman would kill
-  //              the player before they covered enough distance on easy)
-  // snowmanMin / snowmanWindow: snowman rolls into this window. Always
-  // scheduled AFTER yetiSeconds so players get a dog-chase phase first.
-  // startSpeed   initial player speed at t=0
-  // Difficulty is now driven by two sliders:
-  //   intensity: 0.8 - 5.0 (default 1.0). Scales speed, density,
-  //              spawn cadence, dog tracking. Linear-ish — see diff().
-  //   dogCount:  1 - 10 (default 2). Number of dog waves before snowman.
-  // Both persist to localStorage.
+  // Driven by two sliders, both persisted to localStorage:
+  //   intensity: 0.8 - 5.0 (speed, density, spawn cadence, dog tracking)
+  //   dogCount:  1 - 10   (dog waves before snowman appears)
+  // diff() (below) derives speedMul/densityMul/rampSeconds/yetiSeconds/etc from intensity.
   let intensity = parseFloat(localStorage.getItem('skior_intensity'));
   if (!isFinite(intensity)) intensity = 1.0;
   intensity = Math.max(0.8, Math.min(5.0, intensity));
@@ -2970,24 +2846,13 @@
   if (!isFinite(dogCount)) dogCount = 2;
   dogCount = Math.max(1, Math.min(10, dogCount));
 
-  // 9-lives casual mode. When true, the player has 9 lives instead of 1;
-  // each hit decrements lives, and the run only ends on the 9th hit. The
-  // HUD shows 9 cat-face SVGs that grey out as lives are spent. Best
-  // scores in 9-lives mode are tracked under a separate bestKey, and
-  // the global leaderboard has its own slot per mode (see fetch logic
-  // below).
-  //
-  // Default is ON. Users who explicitly disable it get '0' written to
-  // storage; everyone else (new visitors, returning users without an
-  // explicit pref) starts in 9-lives mode. Casual is the default.
+  // 9-lives casual mode. 9 lives → grey-out HUD icons; only ends run on the 9th hit.
+  // Best scores and the global leaderboard are namespaced separately per mode.
+  // Default is ON; only an explicit '0' in storage opts out.
   let livesMode = localStorage.getItem('skior_lives') !== '0';
 
-  // Difficulty params derived from the intensity slider. Each parameter
-  // scales independently so the game stays playable across the full
-  // 0.8x - 5x range. speedMul uses sqrt curve so 5x intensity isn't 5x
-  // unplayable speed; density grows linearly; spawn timings shrink
-  // inversely; dog horizontal tracking tightens; dog vertical descent
-  // slows (longer pursuit on screen).
+  // Each param scales independently. speedMul uses sqrt so 5x isn't 5x unplayable;
+  // density linear, spawn timings inverse, dog tracking tightens, dog descent slows.
   function diff() {
     const M = intensity;
     return {
@@ -3047,12 +2912,9 @@
     );
   }
 
-  // Best scores per difficulty combo. Declared HERE — before the
-  // applyIntensity/applyDogCount init calls below — because those calls
-  // invoke refreshBestForCombo, which reads `bests`. typeof on a let in
-  // TDZ throws ReferenceError, which would halt the IIFE init and
-  // break the entire game (same bug pattern that broke MESSAGES and
-  // THEMES earlier in the project).
+  // Bests must declare BEFORE the applyIntensity init calls below — those
+  // call refreshBestForCombo which reads `bests`. TDZ on let throws ReferenceError
+  // (same trap that bit MESSAGES and THEMES earlier).
   function bestKey() {
     // 9-lives runs are scored on their own slot per intensity/dogs combo,
     // since "9 hits to die" is a fundamentally different leaderboard than
@@ -3080,12 +2942,8 @@
   applyIntensity(intensity);
   applyDogCount(dogCount);
 
-  // 9-lives toggle wiring. The HUD (9 cat-face SVGs) is in the DOM at
-  // boot but hidden via CSS unless body has the `lives-mode` class. The
-  // toggle button gets `.active` while on. Both states persist via
-  // localStorage. Lives are reset at the start of each run; setLivesMode
-  // refreshes the visual icon row so toggling on the title screen
-  // immediately shows 9 yellow cats.
+  // 9-lives toggle wiring. body.lives-mode reveals the HUD icons; .active
+  // styles the button. State persisted to localStorage.
   const btnLives  = document.getElementById('btn-lives');
   const livesHud  = document.getElementById('lives-hud');
   // Pass the current lives count explicitly. Defaults to "all 9 alive" so
@@ -3119,12 +2977,9 @@
     }
   }
   if (btnLives) {
-    // Toggling the mode also swaps which global leaderboard board is
-    // visible (9-lives vs 1-life). applyLeaderboardForMode is declared
-    // later in the IIFE alongside the leaderboard cache; calling it at
-    // user-click time is safe (everything's initialized by then), but
-    // we deliberately don't call it from setLivesMode itself because
-    // that runs at boot — before the leaderboard block exists. TDZ trap.
+    // Mode toggle also swaps the visible leaderboard board. applyLeaderboardForMode
+    // is declared later, so it's only safe to call from a user click (post-init), not
+    // from setLivesMode itself which runs at boot — TDZ trap.
     btnLives.addEventListener('click', () => {
       setLivesMode(!livesMode);
       if (typeof applyLeaderboardForMode === 'function') {
@@ -3382,23 +3237,12 @@
     spawnEscapeRamps();
   }
 
-  // Place two bonus jump ramps inside the player's viable hit window —
-  // the range of distances where launching off the ramp lands them in
-  // mid-air during the dog's crossing moment. Window math:
-  //
-  //   framesUntilCross = (player.screenY + 30) / yeti.vySpeed
-  //     • screenY: player's fixed screen y (where the cat sits, ~113)
-  //     • +30:     dog's spawn offset above the camera
-  //     • vySpeed: dog's downward speed relative to the camera
-  //
-  //   bonus airMax = 60 frames. So the player is mid-air from t=0 to
-  //   t=60 after they hit a ramp. They want to be mid-air at t=framesUntilCross.
-  //
-  // Hittable distance window: [(framesUntilCross - 60) * speed,
-  //                            framesUntilCross * speed]
-  //
-  // We use the player's CURRENT speed as a proxy for what they'll
-  // continue at. Adapts to carving (slow) vs cruising vs tucking.
+  // Place two ramps inside the viable hit window — distances where launching
+  // lands the player mid-air during the dog's crossing. Window math:
+  //   framesUntilCross = (screenY + 30) / yeti.vySpeed
+  //   bonus airMax = 60 frames
+  //   distance window = [(framesUntilCross - 60) * speed, framesUntilCross * speed]
+  // Uses current speed as proxy; adapts to carving vs tucking.
   function spawnEscapeRamps() {
     if (!yeti) return;
     const framesUntilCross = (player.screenY + 30) / yeti.vySpeed;
@@ -3420,11 +3264,8 @@
     ramps.forEach(p => {
       let x = Math.max(20, Math.min(W - 20, player.x + p.lateral));
       const y = playerWorldY + p.dist;
-      // Avoid overlapping any existing object within a 36-unit radius —
-      // would cause the player to crash AND launch on the same frame.
-      // Try nudging laterally up to 3 times before giving up; if all
-      // attempts conflict we still spawn the ramp (rare edge case on
-      // very dense slopes — better to have a ramp than a missing one).
+      // Avoid overlap with existing obstacles (would crash + launch on same frame).
+      // Nudge laterally up to 3x; spawn anyway if all conflict (better than missing).
       for (let attempt = 0; attempt < 3; attempt++) {
         const conflict = objects.some(o =>
           o.type !== 'jump' &&
@@ -3471,11 +3312,8 @@
     const yDist = Math.abs(yeti.y - py);
     const xDist = Math.abs(yeti.x - player.x);
     if (yDist < 8 && xDist < 12 && !player.grabbed && player.air <= 0 && player.invincT <= 0) {
-      // Lives mode: dog takes a bite (a life) and gives up. Cleaner than
-      // having the dog "hold" a still-skiing player. The player gets the
-      // standard PHEW reward path on the next frame via the despawn
-      // branch — but we set dogClearedAt here so the next-wave scheduler
-      // still fires correctly.
+      // Lives mode: dog takes a life and despawns. Set dogClearedAt so the next
+      // wave scheduler still fires correctly.
       if (livesMode && player.lives > 1) {
         player.lives--;
         player.invincT = 60;
@@ -3548,11 +3386,8 @@
 
     // Close enough? Chomp.
     if (!player.grabbed && Math.abs(snowman.x - player.x) < 10 && player.invincT <= 0) {
-      // Lives mode: snowman takes a bite (a life) and bounces off-screen
-      // so it has to charge again. Without the bounce the snowman would
-      // chomp every frame after the invincT window — it can't be outrun.
-      // Repeated charges still drain lives quickly, so survival depends
-      // on dodges between bounces.
+      // Lives mode: snowman takes a life and bounces off-screen to recharge
+      // (otherwise it chomps every frame post-invincT — it can't be outrun).
       if (livesMode && player.lives > 1) {
         player.lives--;
         player.invincT = 60;
@@ -3726,11 +3561,7 @@
       }
     }
 
-    // Dog wake-up. N waves where N = dogCount slider value.
-    //   Dog 1: spawns at diff().yetiSeconds.
-    //   Dog k (2..N): spawns dogGap seconds after dog (k-1) cleared.
-    // Each subsequent wave is harder via per-wave incremental difficulty
-    // applied in spawnYeti().
+    // Dog wake-up. dogCount waves; first at yetiSeconds, rest dogGap apart. Per-wave difficulty in spawnYeti().
     const D = diff();
     if (stats.dogsSpawned < dogCount) {
       if (stats.dogsSpawned === 0) {
@@ -3911,19 +3742,10 @@
   }
 
   // ---------- top-3 leaderboard (global, Supabase-backed) ----------
-  // Two separate global leaderboards: one for 9-lives runs, one for
-  // 1-life runs. The visible strip toggles based on the player's
-  // current livesMode — switch the toggle and the strip refreshes.
-  // This keeps the boards apples-to-apples (9 hits to die is a very
-  // different game from 1 hit to die).
-  //
-  // localStorage caches BOTH boards under a single key so the strip
-  // paints instantly at boot regardless of which mode is on. On boot,
-  // and on every livesMode toggle, we fetch the relevant board fresh.
-  //
-  // Key + URL are public by design (RLS on the table allows anon
-  // SELECT and INSERT). No service-role key is ever shipped to the
-  // browser. Cheaters welcome — reset is manual.
+  // Two boards (9-lives / 1-life) since the modes are different games.
+  // localStorage caches both so the strip paints instantly at boot.
+  // Anon key + URL are public by design (RLS allows anon SELECT/INSERT only).
+  // No anti-cheat — reset is manual.
   const SUPABASE_URL  = 'https://pdjrvlhepiwkshxerkpz.supabase.co';
   const SUPABASE_KEY  = 'sb_publishable_NrfBsFhfj0DSKqDEKeUCMQ_H5oDG-Zv';
   const SCORES_TABLE  = 'cat_ski_scores';
@@ -4191,12 +4013,9 @@
   function hideLbEntry() {
     lbEntryActive = false;
     if (lbEntry) lbEntry.classList.add('hidden');
-    // Release focus from any element inside the entry block so SPACE
-    // restarts the run instead of either:
-    //   (a) being swallowed by a hidden input (the window keydown
-    //       listener early-returns on INPUT targets), or
-    //   (b) re-triggering the OK button (browsers fire 'click' on a
-    //       focused button when SPACE is pressed).
+    // Release focus so SPACE restarts cleanly. Otherwise it either gets
+    // swallowed by the hidden input (window keydown early-returns on INPUT)
+    // or re-fires the OK button (SPACE on a focused button = synthetic click).
     const active = document.activeElement;
     if (active && lbEntry && lbEntry.contains(active)) {
       try { active.blur(); } catch (_) {}
@@ -4350,12 +4169,8 @@
     }
   }
 
-  // Tree dispatch — pick the regional species based on active theme.
-  // Each variant uses the theme's own needle palette so colors stay
-  // consistent with sky/slope tones, but the silhouette differs:
-  //   Alps:      Norway Spruce — dense conical, pointed.
-  //   Rockies:   Lodgepole Pine — taller, narrower, sparser branches.
-  //   Himalayas: Stunted Juniper / krummholz — short, gnarled, multi-tipped.
+  // Per-theme tree silhouette: Alps spruce (conical), Rockies pine (taller/sparser),
+  // Himalayas juniper (short/gnarled). All use the theme's needle palette.
   function drawTree(x, y) {
     if (mtnTheme === 'rockies')   return drawLodgepolePine(x, y);
     if (mtnTheme === 'himalayas') return drawJuniper(x, y);
@@ -5180,11 +4995,8 @@
     const sx = player.x;
     const sy = player.screenY - player.airHeight;
 
-    // Strobe the skier on every other 5-frame interval while the
-    // post-life-loss invincibility window is ticking down. The shadow
-    // still draws so the silhouette doesn't fully disappear; only the
-    // skis/cat/poles flicker, which reads clearly as "you're hit but
-    // still alive" — a 1980s arcade convention that needs no explanation.
+    // Strobe skier on every other 5-frame interval during invincT.
+    // Shadow stays visible so the silhouette doesn't fully disappear.
     const blinkSkip = player.invincT > 0 && Math.floor(player.invincT / 5) % 2 === 0;
 
     // Shadow (bigger when higher in the air)
@@ -5590,11 +5402,8 @@
   // ---------- main loop ----------
   function loop() {
     // Edge-triggered space: start/retry on title/over, resume on paused.
-    // While the leaderboard name-entry is active, SPACE inside the input
-    // is captured by the input's own keydown (with stopPropagation), so
-    // a SPACE that reaches here came from outside the input — treat it
-    // as "skip naming, just retry." Same for overlay clicks (which set
-    // spacePressed=true via overlayTap).
+    // SPACE while name-entry is active means "skip naming + retry"
+    // (real keystrokes inside the input are captured there with stopPropagation).
     if (spacePressed) {
       spacePressed = false;
       if (lbEntryActive) {
