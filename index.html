@@ -281,12 +281,16 @@
     flex: 1;
     text-align: center;
   }
+  /* Equal flex on both sides keeps the title dead-centre even though the
+     right side is now empty. */
   .bezel-left,
   .bezel-right {
     display: flex;
     align-items: center;
     gap: 10px;
+    flex: 1;
   }
+  .bezel-right { justify-content: flex-end; }
   .bezel-title .dot {
     color: var(--accent);
     animation: blink 1.2s steps(2,end) infinite;
@@ -1240,14 +1244,11 @@
 <div class="frame">
   <div class="bezel-title">
     <span class="bezel-left">
-      <a href="https://mike-lee.me/" class="bezel-link" target="_blank" rel="noopener noreferrer">HOME</a>
+      <a href="https://go.mike-lee.me/" class="bezel-link" target="_blank" rel="noopener noreferrer">HOME</a>
       <a href="/readme.html" class="bezel-link" target="_blank" rel="noopener">READ ME</a>
     </span>
     <span class="bezel-center">CAT SKI <span class="dot">&#9632;</span> 1989</span>
-    <span class="bezel-right">
-      <a href="https://go.mike-lee.me/" class="bezel-link" target="_blank" rel="noopener noreferrer">APP</a>
-      <a href="https://app.stray.tips/" class="bezel-link" target="_blank" rel="noopener noreferrer">STRAY</a>
-    </span>
+    <span class="bezel-right"></span>
   </div>
 
   <!-- Top-3 high-score strip. Populated from localStorage by JS. Always
