@@ -13,9 +13,7 @@
      (lets search engines pull preview.png into rich-result cards). -->
 <meta name="robots" content="index, follow, max-image-preview:large">
 
-<!-- Performance hints: warm up DNS + TLS before each origin is needed.
-     The Supabase domain serves the global leaderboard JSON. -->
-<link rel="preconnect" href="https://pdjrvlhepiwkshxerkpz.supabase.co">
+<!-- Performance hints: warm up DNS + TLS before the origin is needed. -->
 <link rel="dns-prefetch" href="https://www.googletagmanager.com">
 
 <!-- Fonts are same-origin, so they can be preloaded directly rather than
@@ -337,17 +335,7 @@
   .leaderboard .lb-name  { color: var(--snow);     min-width: 50px; letter-spacing: 2px; }
   .leaderboard .lb-score { color: var(--snow-dim); min-width: 38px; text-align: right; margin-left: auto; }
   .leaderboard .lb-empty { opacity: 0.45; }
-  /* Shown only when the strip is empty AND the last network fetch
-     failed. Quiet enough that a successful fetch never has to compete
-     with it visually; it only appears to explain the empty state. */
-  .leaderboard .lb-offline {
-    color: var(--accent);
-    opacity: 0.6;
-    font-size: var(--type-sm);
-    align-self: center;
-    letter-spacing: 1px;
-  }
-  /* Mode label tells the player which of the two global boards is on
+  /* Mode label tells the player which of the two boards is on
      screen (9 LIVES vs 1 LIFE). Lives in accent-2 so it visually
      belongs with the rank numerals; small enough to read as chrome. */
   .leaderboard .lb-mode {
@@ -3742,16 +3730,25 @@
     endRun(msg(cat, 'titles'), msg(cat, 'subs'));
   }
 
-  // ---------- top-3 leaderboard (global, Supabase-backed) ----------
+  // ---------- top-3 leaderboard (device-local) ----------
   // Two boards (9-lives / 1-life) since the modes are different games.
-  // localStorage caches both so the strip paints instantly at boot.
-  // Anon key + URL are public by design (RLS allows anon SELECT/INSERT only).
-  // No anti-cheat — reset is manual.
-  const SUPABASE_URL  = 'https://pdjrvlhepiwkshxerkpz.supabase.co';
-  const SUPABASE_KEY  = 'sb_publishable_NrfBsFhfj0DSKqDEKeUCMQ_H5oDG-Zv';
-  const SCORES_TABLE  = 'cat_ski_scores';
-  const LB_LIMIT      = 3;
-  const LB_CACHE_KEY  = 'skior_leaderboard_v2';
+  // Scores live in localStorage only; nothing leaves the browser. The
+  // starting three are the best runs from the old global board, so a
+  // first-time player has something to chase instead of an empty strip.
+  const LB_LIMIT     = 3;
+  const LB_CACHE_KEY = 'skior_leaderboard_v3';
+  const DEFAULT_BOARDS = {
+    lives9: [
+      { name: 'ACA',   score: 3729 },
+      { name: 'JON',   score: 3545 },
+      { name: 'HELLO', score: 3197 },
+    ],
+    lives1: [
+      { name: 'CLAWS', score: 750 },
+      { name: 'TIGER', score: 500 },
+      { name: 'BOOTS', score: 250 },
+    ],
+  };
 
   function sanitizeBoard(arr) {
     if (!Array.isArray(arr)) return [];
@@ -3760,8 +3757,9 @@
       .slice(0, LB_LIMIT);
   }
   function loadLeaderboardCache() {
-    // Cache shape: { lives9: [...], lives1: [...] }. Each list is the
-    // last successful fetch for that mode.
+    // Shape: { lives9: [...], lives1: [...] }. Absent storage means a new
+    // player, who gets the starting boards rather than an empty strip. A
+    // board the player has since emptied stays empty.
     try {
       const raw = localStorage.getItem(LB_CACHE_KEY);
       if (raw) {
@@ -3774,106 +3772,30 @@
         }
       }
     } catch (_) {}
-    return { lives9: [], lives1: [] };
+    return {
+      lives9: DEFAULT_BOARDS.lives9.slice(),
+      lives1: DEFAULT_BOARDS.lives1.slice(),
+    };
   }
   function saveLeaderboardCache() {
     try { localStorage.setItem(LB_CACHE_KEY, JSON.stringify(leaderboardCache)); }
     catch (_) {}
   }
   let leaderboardCache = loadLeaderboardCache();
-  // Tracks the most recent fetch outcome so the empty state can
-  // distinguish "no scores yet, network is fine" from "network down."
-  // 'pending' before any fetch has resolved, 'ok' after success,
-  // 'failed' after a network error or non-200 response.
-  let lbFetchState = 'pending';
 
-  // The slot key for the player's current mode. Used to index the
-  // cache and to filter the network query.
-  function modeSlot()    { return livesMode ? 'lives9' : 'lives1'; }
-  function modeFilter()  { return livesMode ? 'true' : 'false'; }
+  // The slot key for the player's current mode.
+  function modeSlot() { return livesMode ? 'lives9' : 'lives1'; }
 
   // The visible board is whichever slot matches the current livesMode.
   // setLivesMode (defined elsewhere) calls applyLeaderboardForMode after
   // toggling, which re-points this reference and re-renders.
   let leaderboard = leaderboardCache[modeSlot()];
 
-  // Fetch the global top-3 for the current mode. On success: replace
-  // the in-memory board for that mode, save to cache, re-render IF the
-  // mode is still the current one (user might have toggled mid-flight).
-  async function fetchGlobalLeaderboard() {
-    if (!SUPABASE_URL || !SUPABASE_KEY) return;
-    const requestedMode = modeSlot();
-    const url = SUPABASE_URL + '/rest/v1/' + SCORES_TABLE +
-                '?select=name,score' +
-                '&lives_mode=eq.' + modeFilter() +
-                '&order=score.desc&limit=' + LB_LIMIT;
-    try {
-      const res = await fetch(url, {
-        headers: {
-          'apikey':        SUPABASE_KEY,
-          'Authorization': 'Bearer ' + SUPABASE_KEY,
-        },
-      });
-      if (!res.ok) {
-        lbFetchState = 'failed';
-        if (modeSlot() === requestedMode) renderLeaderboard();
-        return;
-      }
-      const rows = await res.json();
-      const clean = sanitizeBoard(rows);
-      leaderboardCache[requestedMode] = clean;
-      saveLeaderboardCache();
-      lbFetchState = 'ok';
-      // Only update the visible list if the user hasn't toggled away
-      // from this mode while the request was in flight.
-      if (modeSlot() === requestedMode) {
-        leaderboard = clean;
-        renderLeaderboard();
-      }
-    } catch (_) {
-      // Network down — keep showing whatever was cached, but flag
-      // the failure so renderLeaderboard can hint at it if the strip
-      // would otherwise be empty.
-      lbFetchState = 'failed';
-      if (modeSlot() === requestedMode) renderLeaderboard();
-    }
-  }
-
-  // Submit a score row to Supabase. The caller already optimistically
-  // inserted into the in-memory list for the current mode, so the
-  // strip is up to date locally. After the POST resolves we refetch
-  // the same mode's board to merge in any concurrent plays.
-  async function submitGlobalScore(name, score, extra) {
-    if (!SUPABASE_URL || !SUPABASE_KEY) return;
-    const body = Object.assign({ name: name, score: score }, extra || {});
-    try {
-      const res = await fetch(SUPABASE_URL + '/rest/v1/' + SCORES_TABLE, {
-        method: 'POST',
-        headers: {
-          'apikey':        SUPABASE_KEY,
-          'Authorization': 'Bearer ' + SUPABASE_KEY,
-          'Content-Type':  'application/json',
-          'Prefer':        'return=minimal',
-        },
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) return;
-      // Refetch the authoritative top-3 for whichever mode this score
-      // belongs to (could differ from the current visible mode if the
-      // user toggled in the small window between submit and response).
-      fetchGlobalLeaderboard();
-    } catch (_) {
-      // Network down — the optimistic local insert is the best we can do.
-    }
-  }
-
   // Swap the visible board to match the current livesMode. Called from
-  // setLivesMode AFTER it flips the bool. Renders cached data
-  // immediately, then fires a fresh network fetch in the background.
+  // setLivesMode AFTER it flips the bool.
   function applyLeaderboardForMode() {
     leaderboard = leaderboardCache[modeSlot()];
     renderLeaderboard();
-    fetchGlobalLeaderboard();
   }
 
   const leaderboardEl = document.getElementById('leaderboard');
@@ -3897,8 +3819,8 @@
     // trophy SVGs are author-controlled markup so innerHTML there is
     // safe; user data only reaches textContent on lb-name / lb-score.
     leaderboardEl.innerHTML = TROPHY_SVG;
-    // Mode label so players can tell which of the two global boards
-    // they're looking at — the strip changes when the LIVES toggle does.
+    // Mode label so players can tell which of the two boards they're
+    // looking at — the strip changes when the LIVES toggle does.
     const mode = document.createElement('span');
     mode.className = 'lb-mode';
     mode.textContent = livesMode ? t('lb.modeNine') : t('lb.modeOne');
@@ -3920,24 +3842,10 @@
       row.appendChild(r); row.appendChild(n); row.appendChild(s);
       leaderboardEl.appendChild(row);
     }
-    // Empty + offline hint. Shows only if the visible board is empty
-    // AND the most recent fetch attempt failed. With a populated
-    // cache or a successful fetch this stays silent.
-    const hasAnyEntry = leaderboard.length > 0;
-    if (!hasAnyEntry && lbFetchState === 'failed') {
-      const hint = document.createElement('span');
-      hint.className = 'lb-offline';
-      hint.textContent = '(offline)';
-      leaderboardEl.appendChild(hint);
-    }
     // Closing trophy bookend.
     leaderboardEl.insertAdjacentHTML('beforeend', TROPHY_SVG);
   }
   renderLeaderboard();
-  // Kick off the network fetch right after the cached version paints —
-  // user sees the cached strip instantly, then it updates to whatever
-  // the global state is once the round-trip resolves.
-  fetchGlobalLeaderboard();
 
   // True if `score` would land in the top-3 (either there are open
   // slots, or it beats the current 3rd-place score).
@@ -3948,9 +3856,7 @@
   }
 
   // Insert a new entry into the cache slot for the CURRENT mode, sort
-  // high-to-low, trim to 3. Returns the 1-based rank the entry landed
-  // at. The optimistic update keeps the strip responsive; the POST in
-  // submitLbEntry will refetch the authoritative list shortly after.
+  // high-to-low, trim to 3. Returns the 1-based rank the entry landed at.
   function insertLeaderboardEntry(name, score) {
     const clean = String(name || '').toUpperCase().replace(/[^A-Z0-9 ]/g, '').slice(0, 5).trim() || 'CAT';
     const entry = { name: clean, score: score };
@@ -3997,18 +3903,8 @@
       hideLbEntry();
       return;
     }
-    // Optimistic local insert so the strip updates immediately. The POST
-    // below mirrors it to Supabase; on success we refetch the
-    // authoritative top-3 so the strip ends up correct even if a higher
-    // score landed elsewhere between our submit and our response.
     insertLeaderboardEntry(name, score);
     if (name) localStorage.setItem('skior_lb_last_name', name);
-    submitGlobalScore(name || 'CAT', score, {
-      intensity:  intensity,
-      dogs:       dogCount,
-      lives_mode: livesMode,
-      theme:      mtnTheme,
-    });
     hideLbEntry();
   }
   function hideLbEntry() {

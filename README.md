@@ -6,7 +6,7 @@ Play it at https://ski.mike-lee.me
 
 ## What it is
 
-Cat Ski is one self-contained HTML file, about 200 KB of vanilla HTML, CSS, and JavaScript. There is no build step, no framework, and no runtime dependency beyond a Supabase endpoint that stores the global leaderboard. The two fonts are self-hosted. The game draws to an HTML5 canvas at a low internal resolution of 360 by 270 and scales it up with pixelated rendering, so the pixel art stays sharp on any screen.
+Cat Ski is one self-contained HTML file, about 200 KB of vanilla HTML, CSS, and JavaScript. There is no build step, no framework, and no backend. The two fonts are self-hosted, so after the first load the game needs no network at all. The game draws to an HTML5 canvas at a low internal resolution of 360 by 270 and scales it up with pixelated rendering, so the pixel art stays sharp on any screen.
 
 ## Features
 
@@ -16,7 +16,7 @@ Cat Ski is one self-contained HTML file, about 200 KB of vanilla HTML, CSS, and 
 - A snowman chaser in the role of the SkiFree yeti, plus dog breeds that match each region.
 - Two difficulty sliders, intensity and dog count, with four presets from Easy to Insta Death.
 - A 9-lives casual mode on by default, or 1-life classic if you want the original pressure.
-- A global top-3 leaderboard, tracked separately for each mode.
+- A top-3 leaderboard kept in the browser, tracked separately for each mode.
 - Keyboard and touch controls, and English or rioplatense Spanish text.
 - Installable as a Progressive Web App for offline play.
 
@@ -34,7 +34,7 @@ Open http://localhost:8000 and play. There is nothing to compile.
 
 ## Stack
 
-Vanilla HTML, CSS, and JavaScript. HTML5 Canvas for rendering. Web Audio API for procedural sound, so there are no audio files. Supabase Postgres stores the leaderboard, with anonymous read and write through row-level security and no accounts. Hosted on Vercel, deployed automatically from this repository.
+Vanilla HTML, CSS, and JavaScript. HTML5 Canvas for rendering. Web Audio API for procedural sound, so there are no audio files. The leaderboard lives in localStorage, so there is no database and no accounts. Hosted on Vercel, deployed automatically from this repository.
 
 ## More
 

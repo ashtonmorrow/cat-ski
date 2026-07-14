@@ -9,8 +9,7 @@
 <meta name="robots" content="index, follow, max-image-preview:large">
 
 <!-- Performance hints: warm up DNS + TLS for the external origins this
-     page touches. The article doesn't talk to Supabase, so that one
-     stays off the readme. -->
+     page touches. -->
 <link rel="dns-prefetch" href="https://www.googletagmanager.com">
 
 <!-- Fonts are same-origin, so they preload directly. -->
@@ -490,9 +489,9 @@
 
     <p>Cat Ski 1989 is a free browser game inspired by <a href="https://en.wikipedia.org/wiki/SkiFree" target="_blank" rel="noopener noreferrer">SkiFree</a>, the 1991 release that shipped in Microsoft Entertainment Pack 3 for Windows 3.0. The original presented an endless downhill ski run with trees, jumps, and an unkillable abominable yeti that eventually appeared and ended every run. Cat Ski 1989 recreates the same loop with a cat as the player character. The game includes three regional mountain themes (Alps, Rockies, Himalayas), four cat color variants, an in-air trick system with chained scoring, gold escape ramps that spawn alongside each dog wave, and a snowman that takes the role of the original yeti. Difficulty is tunable through two sliders, with four named presets for casual players.</p>
 
-    <p>The game ships with a 9-lives casual mode enabled by default. Each crash, dog grab, or snowman chomp consumes a life, with a brief invincibility window before the next hit registers. A toggle on the picker row drops the cat back to 1-life classic for players who want the original SkiFree edge. A global top-3 leaderboard sits at the top of the page; it splits into separate boards for 9-lives and 1-life so the two modes stay apples-to-apples. Submitting a name is optional and only happens after a qualifying run. The UI is bilingual (English and rioplatense Spanish) via a slider on the controls row.</p>
+    <p>The game ships with a 9-lives casual mode enabled by default. Each crash, dog grab, or snowman chomp consumes a life, with a brief invincibility window before the next hit registers. A toggle on the picker row drops the cat back to 1-life classic for players who want the original SkiFree edge. A top-3 leaderboard sits at the top of the page; it splits into separate boards for 9-lives and 1-life so the two modes stay apples-to-apples. Scores are kept in the browser, so each player builds their own board. Entering a name is optional and only happens after a qualifying run. The UI is bilingual (English and rioplatense Spanish) via a slider on the controls row.</p>
 
-    <p>The project is open source at <a href="https://github.com/ashtonmorrow/cat-ski" target="_blank" rel="noopener noreferrer">github.com/ashtonmorrow/cat-ski</a>. It was developed by <a href="https://www.linkedin.com/in/mikelee89/" target="_blank" rel="noopener noreferrer">Mike Lee</a> using Claude as a coding collaborator. The full game is one self-contained HTML file with no build step or framework, and depends only on a Supabase REST endpoint for the leaderboard. The two fonts are self-hosted. It is installable as a Progressive Web App for offline play. Per-difficulty best scores persist locally; the global leaderboard is shared across all players.</p>
+    <p>The project is open source at <a href="https://github.com/ashtonmorrow/cat-ski" target="_blank" rel="noopener noreferrer">github.com/ashtonmorrow/cat-ski</a>. It was developed by <a href="https://www.linkedin.com/in/mikelee89/" target="_blank" rel="noopener noreferrer">Mike Lee</a> using Claude as a coding collaborator. The full game is one self-contained HTML file with no build step, framework, or backend. The two fonts are self-hosted. It is installable as a Progressive Web App for offline play. Best scores and the leaderboard both persist in the browser, so the game runs with no network at all after the first load.</p>
 
     <h2 id="play">Gameplay details</h2>
 
@@ -504,7 +503,7 @@
 
     <p>Difficulty is set with two sliders. Intensity (0.8x to 5x) scales speed, obstacle density, spawn cadence, and dog tracking. Dog count (1 to 10) sets how many dog waves appear before the snowman. Four named presets (EASY, MEDIUM, HARD, and INSTA DEATH) snap both sliders to canonical positions for players who do not want to tune individual parameters.</p>
 
-    <p>Lives mode (the <strong>9</strong> button on the picker row) gives the cat nine lives instead of one. Each crash, dog grab, or snowman chomp consumes a life with a brief invincibility window before the next hit can register. The global leaderboard splits by mode, so 9-lives runs and 1-life runs are scored on separate boards.</p>
+    <p>Lives mode (the <strong>9</strong> button on the picker row) gives the cat nine lives instead of one. Each crash, dog grab, or snowman chomp consumes a life with a brief invincibility window before the next hit can register. The leaderboard splits by mode, so 9-lives runs and 1-life runs are scored on separate boards.</p>
 
     <h2 id="build">How the game is built</h2>
 
@@ -602,22 +601,20 @@
       <li>Audio on/off, control mode (arrows or WASD), touch mode</li>
       <li>Language preference (English or Spanish)</li>
       <li>Best score per intensity / dog count / lives-mode combination</li>
-      <li>A cached copy of the global leaderboard top-3 (so the strip can paint instantly on the next page load)</li>
+      <li>The top-3 leaderboard for each mode (this is the only place scores are stored)</li>
       <li>The cookie consent decision</li>
       <li>The most recent name entered for the leaderboard</li>
     </ul>
 
     <p>All localStorage entries are prefixed with <code>skior_</code>. Clearing browser storage for this site removes them entirely.</p>
 
-    <h3>Global leaderboard</h3>
+    <h3>Leaderboard</h3>
 
-    <p>When a player chooses to submit a high score, the site sends the entered name (up to five characters), the score, and the run's settings (intensity, dog count, lives mode, theme) to a hosted database. The name is whatever the player types; it is not connected to any account or identifier. There is no IP address logging on the database side. Anyone can read the global top-3 through the same anonymous channel, which is what powers the strip at the top of the page.</p>
-
-    <p>To remove a leaderboard entry, contact <a href="https://www.linkedin.com/in/mikelee89/" target="_blank" rel="noopener noreferrer">the project author on LinkedIn</a> with the name and approximate score.</p>
+    <p>The leaderboard is local to the browser. When a player enters a name after a qualifying run, that name and score are written to localStorage and go nowhere else. Nothing is uploaded, no database receives the run, and one player's board is never visible to another. Clearing browser storage for this site erases the board, and the strip returns to its starting three scores.</p>
 
     <h3>Third parties</h3>
 
-    <p>The site is hosted on Vercel, which receives standard HTTP request metadata (URL, user agent, referrer, IP address) for the purposes of serving the page and protecting against abuse. Vercel's privacy policy applies to that traffic. Fonts are self-hosted, so loading the page makes no font request to any third party. The leaderboard database is hosted on Supabase. No advertising networks, social trackers, or fingerprinting libraries are loaded.</p>
+    <p>The site is hosted on Vercel, which receives standard HTTP request metadata (URL, user agent, referrer, IP address) for the purposes of serving the page and protecting against abuse. Vercel's privacy policy applies to that traffic. Fonts are self-hosted, so loading the page makes no font request to any third party. There is no game database and no backend. No advertising networks, social trackers, or fingerprinting libraries are loaded.</p>
 
     <h3>Children's privacy</h3>
 

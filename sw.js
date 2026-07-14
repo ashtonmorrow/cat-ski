@@ -8,14 +8,14 @@
  *       user getting stuck on a stale index.html).
  *     - Static assets (images, manifest) -> cache-first, update in
  *       background after response is served.
- *     - Cross-origin requests (leaderboard, analytics) pass through directly.
+ *     - Cross-origin requests (analytics) pass through directly.
  * - On activate: delete old caches with different names.
  *
  * When shipping a breaking change, bump CACHE_NAME (e.g. v2 -> v3) to
  * force all old caches to clear on next visit.
  */
 
-const CACHE_NAME = 'cat-ski-v13';
+const CACHE_NAME = 'cat-ski-v14';
 const APP_SHELL = [
   '/',
   '/index.html',
@@ -57,8 +57,8 @@ self.addEventListener('fetch', event => {
 
   const url = new URL(req.url);
 
-  // Let cross-origin (leaderboard, analytics) pass through; the browser
-  // caches those itself and we don't want to complicate the SW.
+  // Let cross-origin (analytics) pass through; the browser caches those
+  // itself and we don't want to complicate the SW.
   if (url.origin !== self.location.origin) return;
 
   // HTML / navigation requests: network-first so deploys surface right
