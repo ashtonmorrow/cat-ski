@@ -245,10 +245,6 @@
     background:
       radial-gradient(ellipse at 50% 0%, var(--bezel-hi) 0%, var(--ink) 60%, var(--void) 100%);
     overflow-x: hidden;
-    /* background-attachment: fixed was removed — it forced a full body
-       repaint on every scroll, especially expensive on mobile. The
-       gradient now scrolls with the body, which is fine because the
-       body is rarely scrolled mid-game. */
   }
 
   .frame {
@@ -1852,22 +1848,18 @@
         retryTap:   'TAP TO TRY AGAIN',
       },
       ui: {
-        // HUD (in-game stats)
         'hud.dist':    'DIST',
         'hud.score':   'SCORE',
         'hud.flags':   'FLAGS',
         'hud.tricks':  'TRICKS',
         'hud.time':    'TIME',
         'hud.spd':     'SPD',
-        // In-canvas warnings (set by JS)
         'warn.dog':    '! DOG !',
         'warn.dogN':   '! DOG #{n} !',
         'warn.snow':   '! SNOWMAN !',
-        // Floating-text events
         'float.phew':    'PHEW!',
         'float.escape':  'ESCAPE!',
         'float.lifeOff': '-1 LIFE',
-        // Picker section labels
         'pick.cat':       'CAT',
         'pick.peak':      'PEAK',
         'pick.mode':      'MODE',
@@ -1875,7 +1867,6 @@
         'pick.dogs':      'DOGS',
         'pick.lives':     'LIVES',
         'pick.keys':      'KEYS',
-        // Cat color names
         'cat.black':   'BLACK',
         'cat.tabby':   'TABBY',
         'cat.calico':  'CALICO',
@@ -1884,40 +1875,32 @@
         'theme.alps':       'ALPS',
         'theme.rockies':    'ROCKIES',
         'theme.himalayas':  'HIMALAYAS',
-        // Difficulty presets
         'preset.easy':    'EASY',
         'preset.medium':  'MEDIUM',
         'preset.hard':    'HARD',
         'preset.insta':   'INSTA DEATH',
-        // Control swatches
         'ctrl.arrows':  'ARROWS',
         'ctrl.wasd':    'WASD',
         'ctrl.auto':    'AUTO',
         'ctrl.on':      'ON',
         'ctrl.off':     'OFF',
-        // Sound + language switch values
         'switch.on':    'ON',
         'switch.off':   'OFF',
-        // Buttons
         'btn.share':    'SHARE',
         'btn.install':  'INSTALL',
         'btn.ok':       'OK',
-        // Game-over panel labels
         'over.time':      'TIME',
         'over.distance':  'DISTANCE',
         'over.score':     'SCORE',
         'over.best':      'BEST',
         'over.reset':     '[reset]',
         'over.resetTitle':'Clear best for this difficulty',
-        // Pause overlay heading
         'pause.title':    'PAUSED',
-        // Start-screen keys legend
         'keys.steer':     'STEER',
         'keys.fast':      'TUCK / FASTER',
         'keys.slow':      'SLOW / CARVE',
         'keys.tricks':    'TRICKS (AIR)',
         'keys.start':     'START / RETRY',
-        // iOS install panel
         'install.title':       'INSTALL',
         'install.subtitle':    'ADD TO HOME SCREEN',
         'install.step1':       '1. Tap the <strong>Share</strong> icon in Safari',
@@ -1927,16 +1910,12 @@
         // Mobile collapse toggle (arrow added by JS)
         'mobile.show':    'SHOW CONTROLS',
         'mobile.hide':    'HIDE CONTROLS',
-        // Footer + credit
         'footer':       'ARROWS ● SPACE ● NO QUARTER REQUIRED',
         'credit.by':    'created by',
-        // Leaderboard
         'lb.modeNine':  '9 LIVES',
         'lb.modeOne':   '1 LIFE',
         'lb.newHigh':   'NEW HIGH SCORE!',
-        // Tertiary link
         'link.readme':  'READ ME ›',
-        // Cookie consent banner
         'cookie.text':    'This site uses anonymous analytics cookies to help improve gameplay. See the <a href="/readme.html#privacy">privacy notes</a> for details.',
         'cookie.accept':  'OK',
         'cookie.decline': 'NO THANKS',
@@ -2021,22 +2000,18 @@
         retryTap:   'TOCÁ PARA REINTENTAR',
       },
       ui: {
-        // HUD
         'hud.dist':    'DIST',
         'hud.score':   'PUNTOS',
         'hud.flags':   'BANDERAS',
         'hud.tricks':  'TRUCOS',
         'hud.time':    'TIEMPO',
         'hud.spd':     'VEL',
-        // Warnings
         'warn.dog':    '¡ PERRO !',
         'warn.dogN':   '¡ PERRO #{n} !',
         'warn.snow':   '¡ MUÑECO !',
-        // Floaters
         'float.phew':    '¡UF!',
         'float.escape':  '¡ESCAPE!',
         'float.lifeOff': '-1 VIDA',
-        // Pickers
         'pick.cat':       'GATO',
         'pick.peak':      'CIMA',
         'pick.mode':      'MODO',
@@ -2044,7 +2019,6 @@
         'pick.dogs':      'PERROS',
         'pick.lives':     'VIDAS',
         'pick.keys':      'TECLAS',
-        // Cat colors
         'cat.black':   'NEGRO',
         'cat.tabby':   'RAYADO',
         'cat.calico':  'TRICOLOR',
@@ -2053,59 +2027,46 @@
         'theme.alps':       'ALPES',
         'theme.rockies':    'ROCALLOSAS',
         'theme.himalayas':  'HIMALAYA',
-        // Presets
         'preset.easy':    'FÁCIL',
         'preset.medium':  'MEDIO',
         'preset.hard':    'DIFÍCIL',
         'preset.insta':   'MUERTE YA',
-        // Controls
         'ctrl.arrows':  'FLECHAS',
         'ctrl.wasd':    'WASD',
         'ctrl.auto':    'AUTO',
         'ctrl.on':      'SI',
         'ctrl.off':     'NO',
-        // Switch values
         'switch.on':    'SI',
         'switch.off':   'NO',
-        // Buttons
         'btn.share':    'COMPARTIR',
         'btn.install':  'INSTALAR',
         'btn.ok':       'OK',
-        // Game-over labels
         'over.time':       'TIEMPO',
         'over.distance':   'DISTANCIA',
         'over.score':      'PUNTOS',
         'over.best':       'MEJOR',
         'over.reset':      '[reiniciar]',
         'over.resetTitle': 'Borrar mejor puntaje',
-        // Pause
         'pause.title':    'PAUSADO',
-        // Keys legend
         'keys.steer':     'DIRIGIR',
         'keys.fast':      'AGACHAR / RÁPIDO',
         'keys.slow':      'LENTO / GIRO',
         'keys.tricks':    'TRUCOS (AIRE)',
         'keys.start':     'EMPEZAR / REINTENTAR',
-        // iOS install
         'install.title':    'INSTALAR',
         'install.subtitle': 'AGREGAR A INICIO',
         'install.step1':    '1. Tocá el ícono <strong>Compartir</strong> en Safari',
         'install.step2':    '2. Bajá la lista',
         'install.step3':    '3. Tocá <strong>Agregar a Inicio</strong>',
         'install.close':    'TOCÁ PARA CERRAR',
-        // Mobile collapse
         'mobile.show':    'MOSTRAR CONTROLES',
         'mobile.hide':    'OCULTAR CONTROLES',
-        // Footer + credit
         'footer':       'FLECHAS ● SPACE ● GRATIS',
         'credit.by':    'creado por',
-        // Leaderboard
         'lb.modeNine':  '9 VIDAS',
         'lb.modeOne':   '1 VIDA',
         'lb.newHigh':   '¡NUEVO RÉCORD!',
-        // Tertiary link
         'link.readme':  'LÉEME ›',
-        // Cookie consent banner
         'cookie.text':    'Este sitio usa cookies de análisis anónimo para mejorar el juego. Detalles en las <a href="/readme.html#privacy">notas de privacidad</a>.',
         'cookie.accept':  'OK',
         'cookie.decline': 'NO',
@@ -2913,8 +2874,8 @@
       baseRamp:      Math.max(0,    Math.min(0.7,  (M - 1) * 0.18)),
       yetiSeconds:   Math.max(6,    Math.min(100,  60 / M)),
       dogGap:        Math.max(5,    Math.min(40,   20 / M)),
-      // Snowman timing is now relative to last-dog-cleared (see update),
-      // but keep these for the random window length only.
+      // Only the random window length; the snowman triggers off
+      // last-dog-cleared (see update).
       snowmanWindow: 30,
       startSpeed:    Math.max(0.6,  Math.min(2.0,  0.8 * Math.pow(M, 0.4))),
       // Per-dog base values; spawnYeti adds wave-by-wave incremental
@@ -2944,10 +2905,6 @@
     if (dogsValue)  dogsValue.textContent = String(dogCount);
     refreshBestForCombo();
   }
-  // Refresh the global `best` when slider values change. Safe to call
-  // because `bests` and `currentBest` are declared earlier in this IIFE
-  // (after the slider listener wiring, before the applyIntensity init
-  // calls). See the bestKey/loadBests block above.
   function refreshBestForCombo() {
     best = currentBest();
   }
@@ -2962,13 +2919,12 @@
     );
   }
 
-  // Bests must declare BEFORE the applyIntensity init calls below — those
-  // call refreshBestForCombo which reads `bests`. TDZ on let throws ReferenceError
-  // (same trap that bit MESSAGES and THEMES earlier).
+  // `bests` must be declared before the applyIntensity init calls below:
+  // they reach refreshBestForCombo, which reads it. A let read ahead of
+  // its declaration throws.
   function bestKey() {
-    // 9-lives runs are scored on their own slot per intensity/dogs combo,
-    // since "9 hits to die" is a fundamentally different leaderboard than
-    // the default 1-hit run.
+    // 9-lives runs score on their own slot per combo: "9 hits to die" is a
+    // different leaderboard than the 1-hit run.
     return intensity.toFixed(1) + '_' + dogCount + (livesMode ? '_9' : '');
   }
   function loadBests() {
@@ -2985,8 +2941,6 @@
   }
   let bests = loadBests();
   function currentBest() { return bests[bestKey()] || 0; }
-  // Backwards-compat: keep `best` as the current-difficulty best so
-  // existing references in update() still work without rewriting.
   let best = currentBest();
 
   applyIntensity(intensity);
@@ -2996,10 +2950,7 @@
   // styles the button. State persisted to localStorage.
   const btnLives  = document.getElementById('btn-lives');
   const livesHud  = document.getElementById('lives-hud');
-  // Pass the current lives count explicitly. Defaults to "all 9 alive" so
-  // we can call this at boot (when `player` is still in TDZ — same trap
-  // that bit MESSAGES, THEMES, and bests earlier; a `let` referenced
-  // before its declaration line throws ReferenceError, not undefined).
+  // Defaults to all-9-alive so this can run at boot, before `player` exists.
   function updateLivesHUD(remaining) {
     if (!livesHud) return;
     if (remaining == null) remaining = livesMode ? 9 : 1;
@@ -4183,7 +4134,6 @@
   }
 
   // ---------- rendering ----------
-  // World->screen: screenY = obj.worldY - worldY
   function toScreenY(wy) { return wy - worldY; }
 
   function drawBackground() {

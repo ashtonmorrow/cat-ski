@@ -8,7 +8,7 @@
  *       user getting stuck on a stale index.html).
  *     - Static assets (images, manifest) -> cache-first, update in
  *       background after response is served.
- *     - Cross-origin requests (e.g. Google Fonts) pass through directly.
+ *     - Cross-origin requests (leaderboard, analytics) pass through directly.
  * - On activate: delete old caches with different names.
  *
  * When shipping a breaking change, bump CACHE_NAME (e.g. v2 -> v3) to
@@ -57,8 +57,8 @@ self.addEventListener('fetch', event => {
 
   const url = new URL(req.url);
 
-  // Let cross-origin (Google Fonts, etc) pass through; the browser will
-  // cache those itself and we don't want to complicate the SW.
+  // Let cross-origin (leaderboard, analytics) pass through; the browser
+  // caches those itself and we don't want to complicate the SW.
   if (url.origin !== self.location.origin) return;
 
   // HTML / navigation requests: network-first so deploys surface right

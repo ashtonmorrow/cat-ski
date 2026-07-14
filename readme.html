@@ -492,7 +492,7 @@
 
     <p>The game ships with a 9-lives casual mode enabled by default. Each crash, dog grab, or snowman chomp consumes a life, with a brief invincibility window before the next hit registers. A toggle on the picker row drops the cat back to 1-life classic for players who want the original SkiFree edge. A global top-3 leaderboard sits at the top of the page; it splits into separate boards for 9-lives and 1-life so the two modes stay apples-to-apples. Submitting a name is optional and only happens after a qualifying run. The UI is bilingual (English and rioplatense Spanish) via a slider on the controls row.</p>
 
-    <p>The project is open source at <a href="https://github.com/ashtonmorrow/cat-ski" target="_blank" rel="noopener noreferrer">github.com/ashtonmorrow/cat-ski</a>. It was developed by <a href="https://www.linkedin.com/in/mikelee89/" target="_blank" rel="noopener noreferrer">Mike Lee</a> using Claude as a coding collaborator. The full game is one self-contained HTML file with no build step or framework, and depends only on Google Fonts at runtime plus a Supabase REST endpoint for the leaderboard. It is installable as a Progressive Web App for offline play. Per-difficulty best scores persist locally; the global leaderboard is shared across all players.</p>
+    <p>The project is open source at <a href="https://github.com/ashtonmorrow/cat-ski" target="_blank" rel="noopener noreferrer">github.com/ashtonmorrow/cat-ski</a>. It was developed by <a href="https://www.linkedin.com/in/mikelee89/" target="_blank" rel="noopener noreferrer">Mike Lee</a> using Claude as a coding collaborator. The full game is one self-contained HTML file with no build step or framework, and depends only on a Supabase REST endpoint for the leaderboard. The two fonts are self-hosted. It is installable as a Progressive Web App for offline play. Per-difficulty best scores persist locally; the global leaderboard is shared across all players.</p>
 
     <h2 id="play">Gameplay details</h2>
 
@@ -508,7 +508,7 @@
 
     <h2 id="build">How the game is built</h2>
 
-    <p>The game is contained in a single HTML file of approximately 140 KB, with a separate service worker for offline support and a manifest file for PWA installability. There is no build step, framework, or runtime dependency beyond two Google Fonts. The constraint of keeping the game in one file is partly a tribute to the original SkiFree, which fit in 60 KB on a 3.5-inch floppy disk. The practical benefit is that every change is deployable in under a minute. A push to the GitHub repository triggers an automatic Vercel rebuild, and the new version is served from the CDN with no build pipeline to wait for.</p>
+    <p>The game is contained in a single HTML file of approximately 140 KB, with a separate service worker for offline support and a manifest file for PWA installability. There is no build step, framework, or third-party runtime dependency. The two fonts are served from the same origin. The constraint of keeping the game in one file is partly a tribute to the original SkiFree, which fit in 60 KB on a 3.5-inch floppy disk. The practical benefit is that every change is deployable in under a minute. A push to the GitHub repository triggers an automatic Vercel rebuild, and the new version is served from the CDN with no build pipeline to wait for.</p>
 
     <table>
       <thead>
@@ -617,7 +617,7 @@
 
     <h3>Third parties</h3>
 
-    <p>The site is hosted on Vercel, which receives standard HTTP request metadata (URL, user agent, referrer, IP address) for the purposes of serving the page and protecting against abuse. Vercel's privacy policy applies to that traffic. Fonts are loaded from Google Fonts, which Google describes as not setting cookies for font requests. The leaderboard database is hosted on Supabase. No advertising networks, social trackers, or fingerprinting libraries are loaded.</p>
+    <p>The site is hosted on Vercel, which receives standard HTTP request metadata (URL, user agent, referrer, IP address) for the purposes of serving the page and protecting against abuse. Vercel's privacy policy applies to that traffic. Fonts are self-hosted, so loading the page makes no font request to any third party. The leaderboard database is hosted on Supabase. No advertising networks, social trackers, or fingerprinting libraries are loaded.</p>
 
     <h3>Children's privacy</h3>
 

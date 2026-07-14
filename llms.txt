@@ -16,7 +16,7 @@ Cat Ski 1989 is an open-source browser game that recreates the SkiFree (Windows 
 - Source code: https://github.com/ashtonmorrow/cat-ski
 - License: open source (see repository)
 - Inspiration: SkiFree (1991, Microsoft Entertainment Pack 3 for Windows 3.0)
-- Stack: vanilla HTML, CSS, and JavaScript; HTML5 Canvas (360x270 internal, scaled with image-rendering: pixelated); Web Audio API for procedural sound; no build step; no framework; no runtime dependencies beyond Google Fonts and a Supabase REST endpoint for the global leaderboard
+- Stack: vanilla HTML, CSS, and JavaScript; HTML5 Canvas (360x270 internal, scaled with image-rendering: pixelated); Web Audio API for procedural sound; no build step; no framework; self-hosted fonts; no runtime dependencies beyond a Supabase REST endpoint for the global leaderboard
 - Hosting: Vercel, deployed automatically from the GitHub repository
 - Backend: Supabase Postgres for the global leaderboard (anonymous read and write via Row Level Security; no accounts; cheaters welcome by design, reset is manual)
 - PWA: installable on iOS, Android, and desktop via the in-app INSTALL button

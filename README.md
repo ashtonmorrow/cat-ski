@@ -6,7 +6,7 @@ Play it at https://ski.mike-lee.me
 
 ## What it is
 
-Cat Ski is one self-contained HTML file, about 200 KB of vanilla HTML, CSS, and JavaScript. There is no build step, no framework, and no runtime dependency beyond Google Fonts and a Supabase endpoint that stores the global leaderboard. The game draws to an HTML5 canvas at a low internal resolution of 360 by 270 and scales it up with pixelated rendering, so the pixel art stays sharp on any screen.
+Cat Ski is one self-contained HTML file, about 200 KB of vanilla HTML, CSS, and JavaScript. There is no build step, no framework, and no runtime dependency beyond a Supabase endpoint that stores the global leaderboard. The two fonts are self-hosted. The game draws to an HTML5 canvas at a low internal resolution of 360 by 270 and scales it up with pixelated rendering, so the pixel art stays sharp on any screen.
 
 ## Features
 
