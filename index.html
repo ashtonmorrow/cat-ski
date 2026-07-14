@@ -13,21 +13,15 @@
      (lets search engines pull preview.png into rich-result cards). -->
 <meta name="robots" content="index, follow, max-image-preview:large">
 
-<!-- Performance hints: warm up DNS + TLS for the three external origins
-     this page touches before each is needed. fonts.gstatic.com is
-     where the actual font files live (CSS pulls from googleapis); the
-     Supabase domain serves the global leaderboard JSON. -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Performance hints: warm up DNS + TLS before each origin is needed.
+     The Supabase domain serves the global leaderboard JSON. -->
 <link rel="preconnect" href="https://pdjrvlhepiwkshxerkpz.supabase.co">
 <link rel="dns-prefetch" href="https://www.googletagmanager.com">
 
-<!-- Preload the Google Fonts stylesheet so the browser parses the
-     @font-face declarations before encountering the @import in our
-     own <style> block. Cuts ~50-100ms off the FOUT window on first
-     paint. The font files themselves are version-stamped URLs we
-     can't preload directly without parsing the CSS first. -->
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap">
+<!-- Fonts are same-origin, so they can be preloaded directly rather than
+     waiting on a third-party stylesheet to parse first. -->
+<link rel="preload" as="font" type="font/woff2" href="fonts/press-start-2p.woff2" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="fonts/vt323.woff2" crossorigin>
 
 <!-- Search Console verification -->
 <meta name="google-site-verification" content="Blnw1PeynoNtYxKYh57M27xYxnoz3UKCrqQ4a3mvxt8">
@@ -140,7 +134,19 @@
      warm accent for flags and warnings. Pixel-perfect rendering on the
      canvas (image-rendering: pixelated) so scaled shapes stay crisp. */
 
-  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+  /* Self-hosted so an installed PWA has type when offline, and so the
+     first paint isn't blocked on a third-party stylesheet. Both faces
+     are SIL Open Font License. */
+  @font-face {
+    font-family: 'Press Start 2P';
+    src: url('fonts/press-start-2p.woff2') format('woff2');
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'VT323';
+    src: url('fonts/vt323.woff2') format('woff2');
+    font-display: swap;
+  }
 
   :root {
     /* Core palette — snow whites, ice blues, the warm accent pair. */
@@ -152,15 +158,38 @@
     --ink:       #0b1320;
     --accent:    #ff3b30;
     --accent-2:  #ffcc00;
-    --pine:      #1f6b3a;
-    --pine-dk:   #0f4424;
 
     /* Semantic tones — referenced from many places. Centralizing here
        so a future palette change stays one-file. */
-    --success:   #6ed26b;   /* PHEW! floater, share-success, positives  */
-    --pink-life: #ff6b8a;   /* cat-face nose accent + life-loss floater */
-    --greyed:    #4a5664;   /* lost-life icon body, disabled / muted    */
-    --link-dim:  #5a7088;   /* small ghost links like [reset] / [reset] */
+    --success:     #6ed26b;   /* PHEW! floater, share-success, positives  */
+    --pink-life:   #ff6b8a;   /* cat-face nose accent + life-loss floater */
+    --greyed:      #617083;   /* lost-life icon body, disabled / muted    */
+    --text-dim:    #798fa6;   /* footer + ghost links like [reset]        */
+    --accent-2-hi: #fff088;   /* gold specular stop                       */
+    --accent-2-dk: #c89800;   /* gold shaded stop                         */
+
+    /* Chrome surfaces, deepest to lightest. Controls carry their own
+       rest/hover/active trio. */
+    --void:         #050910;   /* outer vignette edge, page backdrop    */
+    --sunken:       #0a111c;   /* recessed wells (canvas surround)      */
+    --sunken-hi:    #111a27;   /* top stop of the sunken gradient       */
+    --panel:        #0e1826;   /* panel + tooltip body                  */
+    --panel-border: #1d2a3c;   /* panel edge, focus outline base        */
+    --bezel-hi:     #24384f;   /* bezel inner rim, vignette crown       */
+    --ctl:          #182638;   /* button / swatch at rest               */
+    --ctl-hover:    #1d2c42;
+    --ctl-active:   #1f2e44;
+    --ctl-pressed:  #162232;   /* touch :active, darker than rest        */
+    --ctl-border:   #2b3c54;
+
+    /* Press Start 2P is drawn on an 8px grid, so it only renders crisp
+       at whole multiples of 8. Every size below is one; nothing else
+       should set a pixel-font size. */
+    --font-display: 'Press Start 2P', monospace;
+    --font-body:    'VT323', monospace;
+    --type-sm:   8px;
+    --type-md:  16px;
+    --type-lg:  24px;
 
     /* Translucent ice variants used in chrome borders + glow shadows.
        Using rgba derived from --ice (#7aa7c7 = 122,167,199). */
@@ -201,7 +230,7 @@
   html, body {
     background: var(--ink);
     color: var(--snow);
-    font-family: 'VT323', monospace;
+    font-family: var(--font-body);
   }
 
   body {
@@ -214,7 +243,7 @@
     place-items: center;
     padding: 12px 0;
     background:
-      radial-gradient(ellipse at 50% 0%, #24384f 0%, #0b1320 60%, #050910 100%);
+      radial-gradient(ellipse at 50% 0%, var(--bezel-hi) 0%, var(--ink) 60%, var(--void) 100%);
     overflow-x: hidden;
     /* background-attachment: fixed was removed — it forced a full body
        repaint on every scroll, especially expensive on mobile. The
@@ -227,9 +256,9 @@
     padding: 14px 14px 18px;
     border-radius: 6px;
     background:
-      linear-gradient(#111a27, #0a111c);
+      linear-gradient(var(--sunken-hi), var(--sunken));
     box-shadow:
-      0 0 0 2px #1d2a3c,
+      0 0 0 2px var(--panel-border),
       0 0 0 4px #000,
       0 30px 60px rgba(0,0,0,.6),
       inset 0 0 40px rgba(0,0,0,.6);
@@ -240,8 +269,8 @@
     justify-content: space-between;
     align-items: center;
     gap: 12px;
-    font-family: 'Press Start 2P', monospace;
-    font-size: 11px;
+    font-family: var(--font-display);
+    font-size: var(--type-sm);
     letter-spacing: 2px;
     color: var(--snow-dim);
     margin-bottom: 10px;
@@ -286,8 +315,8 @@
     display: flex;
     justify-content: center;
     gap: 28px;
-    font-family: 'Press Start 2P', monospace;
-    font-size: 9px;
+    font-family: var(--font-display);
+    font-size: var(--type-sm);
     letter-spacing: 1.5px;
     color: var(--snow-dim);
     margin-bottom: 6px;
@@ -314,7 +343,7 @@
   .leaderboard .lb-offline {
     color: var(--accent);
     opacity: 0.6;
-    font-size: 7px;
+    font-size: var(--type-sm);
     align-self: center;
     letter-spacing: 1px;
   }
@@ -324,7 +353,7 @@
   .leaderboard .lb-mode {
     color: var(--accent-2);
     letter-spacing: 2px;
-    font-size: 8px;
+    font-size: var(--type-sm);
     align-self: center;
     padding-right: 4px;
     border-right: 1px solid var(--ice-22);
@@ -344,7 +373,7 @@
     filter: drop-shadow(0 0 2px var(--ice-35));
   }
   @media (max-width: 540px) {
-    .leaderboard { gap: 12px; font-size: 8px; padding: 5px 4px; }
+    .leaderboard { gap: 12px; font-size: var(--type-sm); padding: 5px 4px; }
     .leaderboard .lb-row { gap: 6px; min-width: 0; }
     .leaderboard .lb-name  { min-width: 38px; letter-spacing: 1.5px; }
     .leaderboard .lb-score { min-width: 30px; }
@@ -352,9 +381,9 @@
   }
   /* Under 380px the trophies drop so three entries still fit on one line. */
   @media (max-width: 380px) {
-    .leaderboard { gap: 8px; font-size: 7px; }
+    .leaderboard { gap: 8px; font-size: var(--type-sm); }
     .leaderboard .lb-trophy { display: none; }
-    .leaderboard .lb-mode { font-size: 7px; padding-right: 3px; margin-right: 3px; }
+    .leaderboard .lb-mode { font-size: var(--type-sm); padding-right: 3px; margin-right: 3px; }
     .leaderboard .lb-name  { min-width: 32px; letter-spacing: 1px; }
     .leaderboard .lb-score { min-width: 24px; }
   }
@@ -372,8 +401,8 @@
   /* Site's `.hidden` rule only matches `.overlay.hidden`, so this scoped variant is needed. */
   .lb-entry.hidden { display: none; }
   .lb-entry-title {
-    font-family: 'Press Start 2P', monospace;
-    font-size: 10px;
+    font-family: var(--font-display);
+    font-size: var(--type-sm);
     color: var(--accent-2);
     letter-spacing: 2px;
     text-shadow: 0 0 6px rgba(255,204,0,0.4);
@@ -384,8 +413,8 @@
     gap: 8px;
   }
   .lb-name-input {
-    font-family: 'Press Start 2P', monospace;
-    font-size: 14px;
+    font-family: var(--font-display);
+    font-size: var(--type-md);
     letter-spacing: 4px;
     /* 5 chars * (~14px glyph + 4px letter-spacing) = ~90px, plus the
        trailing letter-spacing slot, plus padding + border. ~140px keeps
@@ -405,8 +434,8 @@
     box-shadow: 0 0 0 2px rgba(255,204,0,0.3);
   }
   .lb-submit {
-    font-family: 'Press Start 2P', monospace;
-    font-size: 10px;
+    font-family: var(--font-display);
+    font-size: var(--type-sm);
     padding: 8px 12px;
     background: var(--accent-2);
     color: var(--ink);
@@ -438,7 +467,7 @@
     border-radius: 4px;
     overflow: hidden;
     background: #000;
-    box-shadow: inset 0 0 0 2px #000, inset 0 0 0 4px #24384f;
+    box-shadow: inset 0 0 0 2px #000, inset 0 0 0 4px var(--bezel-hi);
   }
 
   canvas {
@@ -514,8 +543,8 @@
     display: flex;
     justify-content: space-between;
     padding: 10px 14px;
-    font-family: 'Press Start 2P', monospace;
-    font-size: 10px;
+    font-family: var(--font-display);
+    font-size: var(--type-sm);
     letter-spacing: 1px;
     color: var(--snow);
     text-shadow: 2px 2px 0 #000;
@@ -554,14 +583,14 @@
 
   .panel {
     border: 2px solid var(--snow-dim);
-    background: #0b1320;
+    background: var(--ink);
     padding: 22px 28px;
     box-shadow: 6px 6px 0 #000, 0 0 0 2px #000 inset;
     max-width: 520px;
   }
   .panel h1 {
-    font-family: 'Press Start 2P', monospace;
-    font-size: 22px;
+    font-family: var(--font-display);
+    font-size: var(--type-lg);
     color: var(--snow);
     line-height: 1.4;
     margin-bottom: 8px;
@@ -569,8 +598,8 @@
   }
   .panel h1 .alt { color: var(--accent); }
   .panel h2 {
-    font-family: 'Press Start 2P', monospace;
-    font-size: 14px;
+    font-family: var(--font-display);
+    font-size: var(--type-md);
     color: var(--accent-2);
     margin-bottom: 14px;
   }
@@ -585,8 +614,8 @@
     grid-template-columns: auto auto;
     gap: 4px 14px;
     margin: 14px 0 8px;
-    font-family: 'Press Start 2P', monospace;
-    font-size: 10px;
+    font-family: var(--font-display);
+    font-size: var(--type-sm);
     color: var(--snow);
     text-align: left;
   }
@@ -594,15 +623,15 @@
     display: inline-block;
     padding: 4px 7px;
     border: 1px solid var(--snow-dim);
-    background: #182638;
+    background: var(--ctl);
     color: var(--snow);
-    font-family: 'Press Start 2P', monospace;
-    font-size: 9px;
+    font-family: var(--font-display);
+    font-size: var(--type-sm);
     box-shadow: 2px 2px 0 #000;
   }
   .panel .hint {
-    font-family: 'Press Start 2P', monospace;
-    font-size: 10px;
+    font-family: var(--font-display);
+    font-size: var(--type-sm);
     color: var(--snow);
     margin-top: 16px;
     letter-spacing: 1px;
@@ -616,12 +645,12 @@
   .readme-link {
     display: inline-block;
     margin-top: 10px;
-    font-family: 'Press Start 2P', monospace;
-    font-size: 8px;
+    font-family: var(--font-display);
+    font-size: var(--type-sm);
     letter-spacing: 1px;
-    color: var(--link-dim);
+    color: var(--text-dim);
     text-decoration: none;
-    border-bottom: 1px dotted var(--link-dim);
+    border-bottom: 1px dotted var(--text-dim);
     padding-bottom: 1px;
     transition: color 120ms, border-color 120ms;
   }
@@ -646,7 +675,7 @@
     align-items: center;
     justify-content: center;
     gap: 12px;
-    font-family: 'VT323', monospace;
+    font-family: var(--font-body);
     font-size: 16px;
     color: var(--snow-dim);
     box-shadow: 0 -4px 16px rgba(0,0,0,0.5);
@@ -659,8 +688,8 @@
     text-underline-offset: 2px;
   }
   .cookie-banner .cb-btn {
-    font-family: 'Press Start 2P', monospace;
-    font-size: 9px;
+    font-family: var(--font-display);
+    font-size: var(--type-sm);
     letter-spacing: 1px;
     padding: 8px 12px;
     background: transparent;
@@ -685,16 +714,16 @@
   body.cookie-banner-active .trick-pad { display: none !important; }
   .panel .stat-row {
     display: flex; justify-content: space-between; gap: 30px;
-    font-family: 'Press Start 2P', monospace;
-    font-size: 11px;
+    font-family: var(--font-display);
+    font-size: var(--type-sm);
     color: var(--snow);
     margin: 6px 0;
   }
   .panel .stat-row .v { color: var(--accent-2); }
   .reset-best {
-    font-family: 'VT323', monospace;
+    font-family: var(--font-body);
     font-size: 14px;
-    color: var(--link-dim);
+    color: var(--text-dim);
     text-decoration: none;
     margin-left: 6px;
     letter-spacing: 0;
@@ -705,11 +734,11 @@
     display: block;
     margin: 14px auto 0;
     padding: 6px 14px;
-    background: #182638;
+    background: var(--ctl);
     border: 2px solid var(--accent-2);
     color: var(--accent-2);
-    font-family: 'Press Start 2P', monospace;
-    font-size: 9px;
+    font-family: var(--font-display);
+    font-size: var(--type-sm);
     letter-spacing: 2px;
     cursor: pointer;
     box-shadow: 2px 2px 0 #000;
@@ -722,10 +751,10 @@
   .footer {
     margin-top: 10px;
     text-align: center;
-    font-family: 'Press Start 2P', monospace;
-    font-size: 8px;
+    font-family: var(--font-display);
+    font-size: var(--type-sm);
     letter-spacing: 2px;
-    color: #4e6b8a;
+    color: var(--text-dim);
   }
 
   .cat-picker {
@@ -735,13 +764,13 @@
     gap: 8px;
     margin-top: 12px;
     padding: 8px 10px;
-    background: #0e1826;
-    border: 2px solid #1d2a3c;
+    background: var(--panel);
+    border: 2px solid var(--panel-border);
     box-shadow: inset 0 0 0 2px #000;
   }
   .cat-picker-label {
-    font-family: 'Press Start 2P', monospace;
-    font-size: 9px;
+    font-family: var(--font-display);
+    font-size: var(--type-sm);
     letter-spacing: 2px;
     color: var(--snow-dim);
     margin-right: 4px;
@@ -752,8 +781,8 @@
     align-items: center;
     gap: 3px;
     padding: 5px 6px 4px;
-    background: #182638;
-    border: 2px solid #2b3c54;
+    background: var(--ctl);
+    border: 2px solid var(--ctl-border);
     cursor: pointer;
     box-shadow: 2px 2px 0 #000;
     transition: transform 80ms, border-color 80ms, background 80ms;
@@ -765,20 +794,20 @@
     image-rendering: auto;
   }
   .cat-swatch .cat-name {
-    font-family: 'Press Start 2P', monospace;
-    font-size: 7px;
+    font-family: var(--font-display);
+    font-size: var(--type-sm);
     letter-spacing: 1px;
     color: var(--snow-dim);
   }
   .cat-swatch:hover {
     transform: translate(-1px, -1px);
     border-color: var(--snow-dim);
-    background: #1d2c42;
+    background: var(--ctl-hover);
   }
   .cat-swatch.active {
     border-color: var(--accent-2);
     box-shadow: 2px 2px 0 #000, 0 0 0 2px var(--accent-2) inset;
-    background: #1f2e44;
+    background: var(--ctl-active);
   }
   .cat-swatch.active .cat-name {
     color: var(--accent-2);
@@ -789,13 +818,13 @@
     margin-top: 8px;
   }
   .diff-swatch {
-    font-family: 'Press Start 2P', monospace;
-    font-size: 8px;
+    font-family: var(--font-display);
+    font-size: var(--type-sm);
     letter-spacing: 2px;
     color: var(--snow-dim);
     padding: 8px 10px;
-    background: #182638;
-    border: 2px solid #2b3c54;
+    background: var(--ctl);
+    border: 2px solid var(--ctl-border);
     cursor: pointer;
     box-shadow: 2px 2px 0 #000;
     transition: transform 80ms, border-color 80ms, background 80ms, color 80ms;
@@ -803,13 +832,13 @@
   .diff-swatch:hover {
     transform: translate(-1px, -1px);
     border-color: var(--snow-dim);
-    background: #1d2c42;
+    background: var(--ctl-hover);
     color: var(--snow);
   }
   .diff-swatch.active {
     border-color: var(--accent-2);
     box-shadow: 2px 2px 0 #000, 0 0 0 2px var(--accent-2) inset;
-    background: #1f2e44;
+    background: var(--ctl-active);
     color: var(--accent-2);
   }
   .preset-btn[data-preset="insta"].active {
@@ -825,8 +854,8 @@
     appearance: none;
     width: 140px;
     height: 14px;
-    background: #182638;
-    border: 2px solid #2b3c54;
+    background: var(--ctl);
+    border: 2px solid var(--ctl-border);
     box-shadow: inset 0 0 0 1px #000;
     outline: none;
     cursor: pointer;
@@ -840,7 +869,7 @@
     width: 12px;
     height: 18px;
     background: var(--accent-2);
-    border: 2px solid #0b1320;
+    border: 2px solid var(--ink);
     box-shadow: 1px 1px 0 #000;
     cursor: pointer;
     border-radius: 0;
@@ -849,14 +878,14 @@
     width: 12px;
     height: 18px;
     background: var(--accent-2);
-    border: 2px solid #0b1320;
+    border: 2px solid var(--ink);
     box-shadow: 1px 1px 0 #000;
     cursor: pointer;
     border-radius: 0;
   }
   .slider-value {
-    font-family: 'Press Start 2P', monospace;
-    font-size: 8px;
+    font-family: var(--font-display);
+    font-size: var(--type-sm);
     letter-spacing: 1px;
     color: var(--accent-2);
     min-width: 30px;
@@ -867,7 +896,7 @@
      Hover/focus mirror the .diff-swatch tactile feedback so it doesn't
      feel like a different control type than its neighbors. */
   .lives-toggle {
-    font-size: 12px;
+    font-size: var(--type-sm);
     padding: 6px 10px;
     min-width: 32px;
   }
@@ -911,7 +940,7 @@
   }
 
   .icon-btn {
-    font-family: 'VT323', monospace;
+    font-family: var(--font-body);
     font-size: 18px;
     letter-spacing: 0;
     padding: 4px 12px;
@@ -997,7 +1026,7 @@
     margin-top: -26px;
     border-radius: 50%;
     background: rgba(255, 204, 0, 0.95);
-    border: 2px solid #0b1320;
+    border: 2px solid var(--ink);
     box-shadow: 2px 2px 0 rgba(0,0,0,0.5);
     pointer-events: none;
     transition: transform 40ms linear;
@@ -1030,11 +1059,11 @@
     height: 62px;
     padding: 0;
     border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, #fff088 0%, #ffcc00 45%, #c89800 100%);
-    border: 3px solid #0b1320;
-    color: #0b1320;
-    font-family: 'Press Start 2P', monospace;
-    font-size: 8px;
+    background: radial-gradient(circle at 35% 30%, var(--accent-2-hi) 0%, var(--accent-2) 45%, var(--accent-2-dk) 100%);
+    border: 3px solid var(--ink);
+    color: var(--ink);
+    font-family: var(--font-display);
+    font-size: var(--type-sm);
     letter-spacing: 0.5px;
     text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.35);
     box-shadow:
@@ -1110,7 +1139,7 @@
     align-items: flex-start;
     overflow-y: auto;
     padding: 0;
-    background: #050910;
+    background: var(--void);
   }
   body.mobile-layout .frame {
     padding: 0;
@@ -1119,11 +1148,11 @@
     margin: 0;
     border-radius: 0;
     box-shadow: none;
-    background: #0a111c;
+    background: var(--sunken);
   }
   body.mobile-layout .bezel-title {
     padding: 8px 10px;
-    font-size: 10px;
+    font-size: var(--type-sm);
     letter-spacing: 1px;
     margin-bottom: 0;
   }
@@ -1139,7 +1168,7 @@
     border-radius: 0;
     box-shadow: inset 0 0 0 2px #000;
   }
-  body.mobile-layout .hud { padding: 8px 10px; font-size: 9px; }
+  body.mobile-layout .hud { padding: 8px 10px; font-size: var(--type-sm); }
   body.mobile-layout .cat-picker {
     flex-wrap: wrap;
     padding: 8px 10px;
@@ -1147,20 +1176,20 @@
     margin: 8px 8px 0;
   }
   body.mobile-layout .cat-picker-label { margin-right: 2px; }
-  body.mobile-layout .diff-swatch { padding: 10px 12px; font-size: 9px; }
+  body.mobile-layout .diff-swatch { padding: 10px 12px; font-size: var(--type-sm); }
   body.mobile-layout .panel { padding: 16px 18px; max-width: 92%; }
-  body.mobile-layout .panel h1 { font-size: 20px; margin-bottom: 6px; }
-  body.mobile-layout .panel h2 { font-size: 12px; margin-bottom: 10px; }
+  body.mobile-layout .panel h1 { font-size: var(--type-md); margin-bottom: 6px; }
+  body.mobile-layout .panel h2 { font-size: var(--type-sm); margin-bottom: 10px; }
   body.mobile-layout .panel p  { font-size: 17px; }
-  body.mobile-layout .panel .keys { gap: 4px 12px; margin: 10px 0 6px; font-size: 9px; }
-  body.mobile-layout .panel .hint { font-size: 10px; margin-top: 12px; }
-  body.mobile-layout .footer { font-size: 7px; padding: 8px 0; }
+  body.mobile-layout .panel .keys { gap: 4px 12px; margin: 10px 0 6px; font-size: var(--type-sm); }
+  body.mobile-layout .panel .hint { font-size: var(--type-sm); margin-top: 12px; }
+  body.mobile-layout .footer { font-size: var(--type-sm); padding: 8px 0; }
 
   /* Credit line — small but visible, dotted underline on the link */
   .credit {
     margin-top: 12px;
     text-align: center;
-    font-family: 'VT323', monospace;
+    font-family: var(--font-body);
     font-size: 15px;
     letter-spacing: 1px;
     color: var(--snow-dim);
@@ -1182,20 +1211,20 @@
     display: block;
     width: 100%;
     padding: 14px 10px;
-    background: #0e1826;
-    border: 2px solid #1d2a3c;
+    background: var(--panel);
+    border: 2px solid var(--panel-border);
     border-left: none;
     border-right: none;
     color: var(--snow-dim);
-    font-family: 'Press Start 2P', monospace;
-    font-size: 10px;
+    font-family: var(--font-display);
+    font-size: var(--type-sm);
     letter-spacing: 2px;
     cursor: pointer;
     text-align: center;
     -webkit-tap-highlight-color: transparent;
   }
   body.mobile-layout .controls-toggle:active {
-    background: #162232;
+    background: var(--ctl-pressed);
     color: var(--snow);
   }
   body.mobile-layout .cat-picker,
@@ -1526,6 +1555,26 @@
 
   const W = canvas.width;   // 360
   const H = canvas.height;  // 270
+
+  // The HUD/feedback layer canvas draws (score floaters, puffs, share card)
+  // shares the chrome palette with the CSS, so it reads the tokens rather
+  // than repeating their values. Sprite art keeps its own literals: a cat's
+  // eye is not a semantic token and must not move when the chrome does.
+  const UI = (() => {
+    const cs = getComputedStyle(document.documentElement);
+    const v = name => cs.getPropertyValue(name).trim();
+    return {
+      gold:        v('--accent-2'),
+      red:         v('--accent'),
+      pink:        v('--pink-life'),
+      green:       v('--success'),
+      snow:        v('--snow'),
+      snowDim:     v('--snow-dim'),
+      textDim:     v('--text-dim'),
+      sunken:      v('--sunken'),
+      panelBorder: v('--panel-border'),
+    };
+  })();
 
   // HUD elements
   const hudDist    = document.getElementById('hud-dist');
@@ -2265,33 +2314,33 @@
     out.height = H2 + BANNER_H;
     const c = out.getContext('2d');
     c.imageSmoothingEnabled = false;     // crisp 2x pixel upscale
-    c.fillStyle = '#0a111c';
+    c.fillStyle = UI.sunken;
     c.fillRect(0, 0, out.width, out.height);
     c.drawImage(canvas, 0, 0, W2, H2);
     // Divider band between game and banner
-    c.fillStyle = '#1d2a3c';
+    c.fillStyle = UI.panelBorder;
     c.fillRect(0, H2, W2, 3);
     // Banner content
     c.textAlign = 'center';
     // Big score
-    c.fillStyle = '#ffcc00';
+    c.fillStyle = UI.gold;
     c.font = 'bold 48px "Press Start 2P", monospace';
     c.fillText(String(stats.score), W2 / 2, H2 + 70);
     // SCORE label
-    c.fillStyle = '#cfe2f5';
-    c.font = 'bold 14px "Press Start 2P", monospace';
+    c.fillStyle = UI.snowDim;
+    c.font = 'bold 16px "Press Start 2P", monospace';
     c.fillText('SCORE', W2 / 2, H2 + 95);
     // Distance + time
-    c.fillStyle = '#eaf4ff';
-    c.font = 'bold 14px "Press Start 2P", monospace';
+    c.fillStyle = UI.snow;
+    c.font = 'bold 16px "Press Start 2P", monospace';
     c.fillText(`${stats.distance}M    ${formatTime(stats.elapsed)}`, W2 / 2, H2 + 130);
     // Difficulty / cat / theme line
-    c.fillStyle = '#7c8da0';
+    c.fillStyle = UI.textDim;
     c.font = '20px "VT323", monospace';
     const meta = `${catColor.toUpperCase()} CAT  ${THEMES[mtnTheme].name}  ${intensity.toFixed(1)}x  ${dogCount} DOG${dogCount > 1 ? 'S' : ''}`;
     c.fillText(meta, W2 / 2, H2 + 158);
     // URL
-    c.fillStyle = '#ffcc00';
+    c.fillStyle = UI.gold;
     c.font = 'bold 16px "Press Start 2P", monospace';
     c.fillText('SKI.MIKE-LEE.ME', W2 / 2, H2 + 188);
     return new Promise(resolve => out.toBlob(resolve, 'image/png'));
@@ -3320,7 +3369,7 @@
         updateLivesHUD(player.lives);
         sfx.chomp();
         if (navigator.vibrate) navigator.vibrate([20, 40]);
-        spawnFloatText(t('float.lifeOff'), player.x, worldY + player.screenY - 14, '#ff6b8a');
+        spawnFloatText(t('float.lifeOff'), player.x, worldY + player.screenY - 14, UI.pink);
         yeti = null;
         hudWarning.style.display = 'none';
         stats.dogClearedAt = stats.elapsed;
@@ -3342,7 +3391,7 @@
     if (yetiScreenY > H + 30) {
       yeti = null;
       hudWarning.style.display = 'none';
-      spawnFloatText(t('float.phew'), player.x, worldY + player.screenY - 14, '#6ed26b');
+      spawnFloatText(t('float.phew'), player.x, worldY + player.screenY - 14, UI.green);
       stats.dogClearedAt = stats.elapsed;
     }
   }
@@ -3394,7 +3443,7 @@
         updateLivesHUD(player.lives);
         sfx.chomp();
         if (navigator.vibrate) navigator.vibrate(120);
-        spawnFloatText(t('float.lifeOff'), player.x, worldY + player.screenY - 14, '#ff6b8a');
+        spawnFloatText(t('float.lifeOff'), player.x, worldY + player.screenY - 14, UI.pink);
         snowman.chompT = 20;
         snowman.x = snowman.x < player.x ? -40 : W + 40;
         return;
@@ -3483,7 +3532,7 @@
           stats.trickScore += bonus;
           // Floating "+N" text over landing point, bigger for bigger combos
           spawnFloatText('+' + bonus, player.x, worldY + player.screenY - 4,
-                         n >= 3 ? '#ff3b30' : '#ffcc00');
+                         n >= 3 ? UI.red : UI.gold);
           player.trickChain = [];
         }
       }
@@ -3524,8 +3573,8 @@
           o.hit = true;
           if (o.bonus) {
             player.airMax = 60;     // ~1 second airborne (vs 0.63 normal)
-            spawnFloatText(t('float.escape'), player.x, worldY + player.screenY - 14, '#ffcc00');
-            spawnPuff(player.x, worldY + player.screenY, 18, '#ffcc00');
+            spawnFloatText(t('float.escape'), player.x, worldY + player.screenY - 14, UI.gold);
+            spawnPuff(player.x, worldY + player.screenY, 18, UI.gold);
             spawnPuff(player.x, worldY + player.screenY - 4, 8, '#ffffff');
           } else {
             player.airMax = o.type === 'jump' ? 38 : 22;
@@ -3547,7 +3596,7 @@
           stats.flags++;
           sfx.flag();
           // Big yellow puff + a second smaller one for a "pop" feel.
-          spawnPuff(o.x, o.y, 12, '#ffcc00');
+          spawnPuff(o.x, o.y, 12, UI.gold);
           spawnPuff(o.x, o.y - 4, 6, '#ffffff');
         }
         continue;
@@ -3666,7 +3715,7 @@
 
   // Floating text particle — rises, fades, lives in world coords so it
   // scrolls with the terrain. Used for trick bonuses on landing.
-  function spawnFloatText(text, x, y, color = '#ffcc00') {
+  function spawnFloatText(text, x, y, color = UI.gold) {
     particles.push({
       x, y,
       vx: 0,
@@ -3732,7 +3781,7 @@
       player.lives--;
       player.invincT = 60;
       updateLivesHUD(player.lives);
-      spawnFloatText(t('float.lifeOff'), player.x, worldY + player.screenY - 14, '#ff6b8a');
+      spawnFloatText(t('float.lifeOff'), player.x, worldY + player.screenY - 14, UI.pink);
       return;
     }
     player.crashed = true;
@@ -5358,7 +5407,7 @@
         ctx.save();
         ctx.globalAlpha = alpha;
         ctx.fillStyle = p.color;
-        ctx.font = 'bold 9px "Press Start 2P", monospace';
+        ctx.font = 'bold 8px "Press Start 2P", monospace';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         // Outline for readability

@@ -11,13 +11,11 @@
 <!-- Performance hints: warm up DNS + TLS for the external origins this
      page touches. The article doesn't talk to Supabase, so that one
      stays off the readme. -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="dns-prefetch" href="https://www.googletagmanager.com">
 
-<!-- Preload the Google Fonts stylesheet so the browser parses
-     @font-face before reaching our <style> block. -->
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap">
+<!-- Fonts are same-origin, so they preload directly. -->
+<link rel="preload" as="font" type="font/woff2" href="fonts/press-start-2p.woff2" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="fonts/vt323.woff2" crossorigin>
 
 <!-- Search Console verification -->
 <meta name="google-site-verification" content="Blnw1PeynoNtYxKYh57M27xYxnoz3UKCrqQ4a3mvxt8">
@@ -171,7 +169,17 @@
 </script>
 
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+  /* Self-hosted, SIL Open Font License. See index.html. */
+  @font-face {
+    font-family: 'Press Start 2P';
+    src: url('fonts/press-start-2p.woff2') format('woff2');
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'VT323';
+    src: url('fonts/vt323.woff2') format('woff2');
+    font-display: swap;
+  }
 
   :root {
     --snow:      #eaf4ff;
@@ -179,19 +187,35 @@
     --ink:       #0b1320;
     --accent:    #ff3b30;
     --accent-2:  #ffcc00;
+    --void:      #050910;
+    --bezel-hi:  #24384f;
+    --sunken:       #0a111c;
+    --sunken-hi:    #111a27;
+    --deep:         #1a2838;
+    --panel-border: #1d2a3c;
+    --ctl-border:   #2b3c54;
+    --ice:          #7aa7c7;
+    --text-dim:     #798fa6;
+
+    /* Same 8px grid as the game. See index.html. */
+    --font-display: 'Press Start 2P', monospace;
+    --font-body:    'VT323', monospace;
+    --type-sm:   8px;
+    --type-md:  16px;
+    --type-lg:  24px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   html, body {
     background: var(--ink);
     color: var(--snow);
-    font-family: 'VT323', monospace;
+    font-family: var(--font-body);
   }
   body {
     min-height: 100vh;
     padding: 20px;
     background:
-      radial-gradient(ellipse at 50% 0%, #24384f 0%, #0b1320 60%, #050910 100%);
+      radial-gradient(ellipse at 50% 0%, var(--bezel-hi) 0%, var(--ink) 60%, var(--void) 100%);
     background-attachment: fixed;
     overflow-x: hidden;
   }
@@ -200,10 +224,10 @@
     max-width: 740px;
     margin: 0 auto;
     padding: 26px 30px 30px;
-    background: linear-gradient(#111a27, #0a111c);
+    background: linear-gradient(var(--sunken-hi), var(--sunken));
     border-radius: 6px;
     box-shadow:
-      0 0 0 2px #1d2a3c,
+      0 0 0 2px var(--panel-border),
       0 0 0 4px #000,
       0 30px 60px rgba(0,0,0,.6);
   }
@@ -215,11 +239,11 @@
     gap: 12px;
     margin-bottom: 22px;
     padding-bottom: 14px;
-    border-bottom: 2px solid #1d2a3c;
+    border-bottom: 2px solid var(--panel-border);
   }
   .header h1 {
-    font-family: 'Press Start 2P', monospace;
-    font-size: 14px;
+    font-family: var(--font-display);
+    font-size: var(--type-lg);
     letter-spacing: 2px;
     color: var(--snow);
     text-shadow: 0 0 6px rgba(122,167,199,.6);
@@ -227,8 +251,8 @@
   .header h1 .alt   { color: var(--accent); }
   .header h1 .label { color: var(--snow-dim); margin-left: 8px; }
   .nav-back {
-    font-family: 'Press Start 2P', monospace;
-    font-size: 9px;
+    font-family: var(--font-display);
+    font-size: var(--type-sm);
     letter-spacing: 2px;
     color: var(--snow-dim);
     text-decoration: underline;
@@ -238,20 +262,20 @@
   .nav-back:hover { color: var(--accent-2); }
 
   h2 {
-    font-family: 'Press Start 2P', monospace;
-    font-size: 12px;
+    font-family: var(--font-display);
+    font-size: var(--type-md);
     letter-spacing: 2px;
     color: var(--accent-2);
     margin: 32px 0 14px;
     padding-bottom: 8px;
-    border-bottom: 1px solid #1d2a3c;
+    border-bottom: 1px solid var(--panel-border);
     scroll-margin-top: 16px;
   }
   .toc {
     margin: 4px 0 24px;
     padding: 14px 16px;
     background: rgba(26, 40, 56, 0.5);
-    border: 1px solid #1d2a3c;
+    border: 1px solid var(--panel-border);
   }
   .toc ul { margin: 0; }
   .toc li {
@@ -261,12 +285,12 @@
   }
   .toc a {
     color: var(--snow-dim);
-    border-bottom: 1px dotted #4e6b8a;
+    border-bottom: 1px dotted var(--text-dim);
   }
   .toc a:hover { color: var(--accent-2); border-bottom-color: var(--accent-2); }
   h3 {
-    font-family: 'Press Start 2P', monospace;
-    font-size: 10px;
+    font-family: var(--font-display);
+    font-size: var(--type-sm);
     letter-spacing: 2px;
     color: var(--snow);
     margin: 22px 0 8px;
@@ -305,11 +329,11 @@
   }
   strong { color: var(--snow); }
   code {
-    font-family: 'VT323', monospace;
+    font-family: var(--font-body);
     font-size: 0.95em;
-    background: #1a2838;
+    background: var(--deep);
     padding: 1px 5px;
-    border: 1px solid #2b3c54;
+    border: 1px solid var(--ctl-border);
     color: var(--accent-2);
   }
 
@@ -327,7 +351,7 @@
     margin: 10px 0;
   }
   ol.numbered li::before { content: ''; }
-  ol.numbered li::marker { color: var(--accent-2); font-family: 'Press Start 2P', monospace; font-size: 12px; }
+  ol.numbered li::marker { color: var(--accent-2); font-family: var(--font-display); font-size: var(--type-sm); }
 
   table {
     width: 100%;
@@ -339,26 +363,26 @@
   th, td {
     text-align: left;
     padding: 8px 10px;
-    border-bottom: 1px solid #1d2a3c;
+    border-bottom: 1px solid var(--panel-border);
     vertical-align: top;
     line-height: 1.4;
   }
   th {
-    font-family: 'Press Start 2P', monospace;
-    font-size: 9px;
+    font-family: var(--font-display);
+    font-size: var(--type-sm);
     letter-spacing: 1px;
     color: var(--accent-2);
-    border-bottom: 2px solid #2b3c54;
+    border-bottom: 2px solid var(--ctl-border);
   }
   td:first-child { color: var(--snow); }
 
   .footer {
     margin-top: 32px;
     padding-top: 16px;
-    border-top: 2px solid #1d2a3c;
+    border-top: 2px solid var(--panel-border);
     text-align: center;
     font-size: 14px;
-    color: #7c8da0;
+    color: var(--text-dim);
     letter-spacing: 1px;
   }
   .footer .blink { color: var(--accent-2); animation: blink 1.2s steps(2,end) infinite; }
@@ -370,40 +394,40 @@
     position: fixed;
     bottom: 0; left: 0; right: 0;
     z-index: 9999;
-    background: #050910;
-    border-top: 2px solid #1d2a3c;
+    background: var(--void);
+    border-top: 2px solid var(--panel-border);
     padding: 12px 16px;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: center;
     gap: 12px;
-    font-family: 'VT323', monospace;
+    font-family: var(--font-body);
     font-size: 16px;
-    color: #cfe2f5;
+    color: var(--snow-dim);
     box-shadow: 0 -4px 16px rgba(0,0,0,0.5);
   }
   .cookie-banner[hidden] { display: none; }
   .cookie-banner .cb-text { flex: 1 1 280px; min-width: 0; }
   .cookie-banner .cb-text a { color: var(--accent-2); text-decoration: underline; }
   .cookie-banner .cb-btn {
-    font-family: 'Press Start 2P', monospace;
-    font-size: 9px;
+    font-family: var(--font-display);
+    font-size: var(--type-sm);
     letter-spacing: 1px;
     padding: 8px 12px;
     background: transparent;
-    color: #cfe2f5;
-    border: 2px solid #7aa7c7;
+    color: var(--snow-dim);
+    border: 2px solid var(--ice);
     cursor: pointer;
   }
   .cookie-banner .cb-btn:hover { color: var(--accent-2); border-color: var(--accent-2); }
   .cookie-banner .cb-btn.cb-accept {
     background: var(--accent-2);
-    color: #0b1320;
+    color: var(--ink);
     border-color: var(--accent-2);
     box-shadow: 2px 2px 0 #000;
   }
-  .cookie-banner .cb-btn.cb-accept:hover { color: #0b1320; }
+  .cookie-banner .cb-btn.cb-accept:hover { color: var(--ink); }
   .cookie-banner .cb-btn:active { transform: translate(1px, 1px); }
 
   @media (max-width: 600px) {

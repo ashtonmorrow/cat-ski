@@ -15,7 +15,7 @@
  * force all old caches to clear on next visit.
  */
 
-const CACHE_NAME = 'cat-ski-v12';
+const CACHE_NAME = 'cat-ski-v13';
 const APP_SHELL = [
   '/',
   '/index.html',
@@ -29,6 +29,8 @@ const APP_SHELL = [
   '/apple-touch-icon.png',
   '/icon-192.png',
   '/icon-512.png',
+  '/fonts/press-start-2p.woff2',
+  '/fonts/vt323.woff2',
 ];
 
 self.addEventListener('install', event => {
