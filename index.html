@@ -50,6 +50,26 @@
   gtag('js', new Date());
   gtag('config', 'G-MSN465FL9R');
 </script>
+
+<!-- Mixpanel product analytics, gated behind the same cookie banner as
+     GA above. The SDK loads opted-out; a run only reaches Mixpanel once
+     the visitor accepts (or has accepted before). No event fires before
+     consent. Anonymous only — the game has no accounts, so identity is
+     Mixpanel's auto device id. -->
+<script>
+(function(f,b){if(!b.__SV){var e,g,i,h;window.mixpanel=b;b._i=[];b.init=function(e,f,c){function g(a,d){var b=d.split(".");2==b.length&&(a=a[b[0]],d=b[1]);a[d]=function(){a.push([d].concat(Array.prototype.slice.call(arguments,0)))}}var a=b;"undefined"!==typeof c?a=b[c]=[]:c="mixpanel";a.people=a.people||[];a.toString=function(a){var d="mixpanel";"mixpanel"!==c&&(d+="."+c);a||(d+=" (stub)");return d};a.people.toString=function(){return a.toString(1)+".people (stub)"};i="disable time_event track track_pageview track_links track_forms track_with_groups add_group set_group remove_group register register_once alias unregister identify name_tag set_config reset opt_in_tracking opt_out_tracking has_opted_in_tracking has_opted_out_tracking clear_opt_in_out_tracking start_batch_senders people.set people.set_once people.unset people.increment people.append people.union people.track_charge people.clear_charges people.delete_user people.remove".split(" ");for(h=0;h<i.length;h++)g(a,i[h]);var j="set set_once union unset remove delete".split(" ");a.get_group=function(){function b(c){d[c]=function(){call2_args=arguments;call2=[c].concat(Array.prototype.slice.call(call2_args,0));a.push([e,call2])}}for(var d={},e=["get_group"].concat(Array.prototype.slice.call(arguments,0)),c=0;c<j.length;c++)b(j[c]);return d};b._i.push([e,f,c])};b.__SV=1.2;e=f.createElement("script");e.type="text/javascript";e.async=!0;e.src="undefined"!==typeof MIXPANEL_CUSTOM_LIB_URL?MIXPANEL_CUSTOM_LIB_URL:"file:"===f.location.protocol&&"//cdn.mxpnl.com/libs/mixpanel-2-latest.min.js".match(/^\/\//)?"https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js":"//cdn.mxpnl.com/libs/mixpanel-2-latest.min.js";g=f.getElementsByTagName("script")[0];g.parentNode.insertBefore(e,g)}})(document,window.mixpanel||[]);
+  mixpanel.init('8d35acd5df03b804face1caa86c659b4', {
+    opt_out_tracking_by_default: true,
+    persistence: 'localStorage',
+    track_pageview: false,
+    ignore_dnt: false,
+  });
+  // Returning visitor who already accepted: opt in now. First-time accept
+  // is handled by the cookie banner's OK button (see body).
+  try {
+    if (localStorage.getItem('skior_cookies') === 'accepted') mixpanel.opt_in_tracking();
+  } catch (_) {}
+</script>
 <meta name="description" content="A free browser game inspired by SkiFree (1991). Play as a cat skiing down an endless mountain. Three regional themes (Alps, Rockies, Himalayas), four cat color variants, mid-air tricks, dog and snowman chasers, tunable difficulty. Installable as a Progressive Web App.">
 
 <!-- Favicons -->
@@ -1580,6 +1600,30 @@
   const overScore    = document.getElementById('over-score');
   const overBest     = document.getElementById('over-best');
 
+  // ---------- analytics (Mixpanel, consent-gated) ----------
+  // Thin wrapper so call sites stay one line. Mixpanel drops events while
+  // opted out, so gating lives entirely in consent (see head + banner) and
+  // these calls are always safe to make. Wrapped in try/catch because an
+  // ad blocker can leave mixpanel undefined.
+  function analytics(event, props) {
+    try {
+      if (window.mixpanel && mixpanel.track) mixpanel.track(event, props || {});
+    } catch (_) {}
+  }
+  function registerSuperProps() {
+    try {
+      if (!window.mixpanel || !mixpanel.register) return;
+      const standalone = (window.matchMedia &&
+        matchMedia('(display-mode: standalone)').matches) || navigator.standalone;
+      mixpanel.register({
+        platform:     'web',
+        environment:  location.hostname === 'ski.mike-lee.me' ? 'production' : 'development',
+        display_mode: standalone ? 'standalone' : 'browser',
+        language:     lang,
+      });
+    } catch (_) {}
+  }
+
   // Format elapsed seconds as M:SS for the HUD
   function formatTime(sec) {
     const s = Math.floor(sec);
@@ -1717,6 +1761,7 @@
   window.addEventListener('appinstalled', () => {
     deferredInstall = null;
     hideInstall();
+    analytics('pwa_installed', {});
   });
 
   // iOS: no event fires, so reveal the button by heuristic
@@ -2064,6 +2109,7 @@
 
   let lang = localStorage.getItem('skior_lang') || 'en';
   if (!MESSAGES[lang]) lang = 'en';
+  registerSuperProps();
 
   // Remember last selection per array so we never fire the same line
   // twice in a row. Keyed by 'lang.category.field'.
@@ -2319,14 +2365,18 @@
       if (navigator.canShare({ files: [file] })) {
         try {
           await navigator.share({ title: 'Cat Ski', text, url, files: [file] });
+          analytics('run_shared', { method: 'web_share_file', score: stats.score });
           return;
         } catch (_) { /* user cancelled, fall through */ }
       }
     }
     // Path 2: Web Share Level 1 — text + URL only
     if (navigator.share) {
-      try { await navigator.share({ title: 'Cat Ski', text, url }); return; }
-      catch (_) {}
+      try {
+        await navigator.share({ title: 'Cat Ski', text, url });
+        analytics('run_shared', { method: 'web_share_text', score: stats.score });
+        return;
+      } catch (_) {}
     }
     // Path 3: download the PNG + copy text+URL
     if (blob) {
@@ -2337,12 +2387,14 @@
       URL.revokeObjectURL(link.href);
       try { await navigator.clipboard.writeText(`${text} ${url}`); } catch (_) {}
       flashShareLabel('SAVED');
+      analytics('run_shared', { method: 'download', score: stats.score });
       return;
     }
     // Path 4: last resort — clipboard text only
     try {
       await navigator.clipboard.writeText(`${text} ${url}`);
       flashShareLabel('COPIED');
+      analytics('run_shared', { method: 'clipboard', score: stats.score });
     } catch (_) {
       window.prompt('Copy this link:', url);
     }
@@ -2561,6 +2613,7 @@
     if (!MESSAGES[name]) return;
     lang = name;
     localStorage.setItem('skior_lang', name);
+    registerSuperProps();
     if (langToggle)  langToggle.value = lang === 'es' ? '1' : '0';
     if (langValueEl) langValueEl.textContent = lang === 'es' ? 'ES' : 'EN';
     refreshFlavorText();
@@ -3320,7 +3373,7 @@
       sfx.chomp();
       silenceSwoosh();
       if (navigator.vibrate) navigator.vibrate([20, 40, 80]);
-      endRun(msg('dog', 'titles'), msg('dog', 'subs'));
+      endRun(msg('dog', 'titles'), msg('dog', 'subs'), 'dog');
       return;
     }
 
@@ -3393,7 +3446,7 @@
       sfx.chomp();
       silenceSwoosh();
       if (navigator.vibrate) navigator.vibrate(300);
-      endRun(msg('snowman', 'titles'), msg('snowman', 'subs'));
+      endRun(msg('snowman', 'titles'), msg('snowman', 'subs'), 'snowman');
     }
   }
 
@@ -3727,7 +3780,7 @@
     player.crashed = true;
     silenceSwoosh();
     const cat = cause === 'tree' ? 'tree' : 'log';
-    endRun(msg(cat, 'titles'), msg(cat, 'subs'));
+    endRun(msg(cat, 'titles'), msg(cat, 'subs'), cat);
   }
 
   // ---------- top-3 leaderboard (device-local) ----------
@@ -3903,8 +3956,14 @@
       hideLbEntry();
       return;
     }
-    insertLeaderboardEntry(name, score);
+    const rank = insertLeaderboardEntry(name, score);
     if (name) localStorage.setItem('skior_lb_last_name', name);
+    analytics('leaderboard_submitted', {
+      score:       score,
+      rank:        rank,
+      lives_mode:  livesMode,
+      name_length: (name || 'CAT').length,
+    });
     hideLbEntry();
   }
   function hideLbEntry() {
@@ -3950,7 +4009,7 @@
     lbEntry.addEventListener('click', e => e.stopPropagation());
   }
 
-  function endRun(title, sub) {
+  function endRun(title, sub, cause) {
     state = STATE.OVER;
     if (stats.score > best) {
       best = stats.score;
@@ -3964,6 +4023,21 @@
     overScore.textContent = stats.score;
     overBest.textContent  = best;
     overlayOver.classList.remove('hidden');
+    analytics('run_completed', {
+      score:                    stats.score,
+      distance_m:               stats.distance,
+      duration_seconds:         Math.round(stats.elapsed),
+      cause:                    cause || 'unknown',
+      cat_color:                catColor,
+      mountain_theme:           mtnTheme,
+      intensity:                intensity,
+      dog_count:                dogCount,
+      lives_mode:               livesMode,
+      tricks_landed:            stats.tricks,
+      flags_collected:          stats.flags,
+      jumps:                    stats.jumps,
+      qualified_for_leaderboard: qualifiesForLeaderboard(stats.score),
+    });
     // Reveal the name-entry block if this run cracked the top-3. Default
     // hidden by HTML, hidden again by hideLbEntry() once submitted.
     if (qualifiesForLeaderboard(stats.score)) {
@@ -3992,6 +4066,15 @@
     ensureAudio();   // unlocks audio on first start
     sfx.start();
     startSwoosh();
+    analytics('game_started', {
+      cat_color:      catColor,
+      mountain_theme: mtnTheme,
+      intensity:      intensity,
+      dog_count:      dogCount,
+      lives_mode:     livesMode,
+      control_mode:   controlMode,
+      is_touch:       isTouchActive(),
+    });
   }
 
   // ---------- pause / resume / restart ----------
@@ -5360,8 +5443,11 @@
       try { localStorage.setItem(KEY, decision); } catch (_) {}
       banner.hidden = true;
       document.body.classList.remove('cookie-banner-active');
-      if (decision === 'accepted' && typeof gtag === 'function') {
-        gtag('consent', 'update', { 'analytics_storage': 'granted' });
+      if (decision === 'accepted') {
+        if (typeof gtag === 'function') {
+          gtag('consent', 'update', { 'analytics_storage': 'granted' });
+        }
+        try { if (window.mixpanel && mixpanel.opt_in_tracking) mixpanel.opt_in_tracking(); } catch (_) {}
       }
     }
     var ok = document.getElementById('cookie-accept');
