@@ -1601,10 +1601,13 @@
   const overBest     = document.getElementById('over-best');
 
   // ---------- analytics (Mixpanel, consent-gated) ----------
-  // Thin wrapper so call sites stay one line. Mixpanel drops events while
-  // opted out, so gating lives entirely in consent (see head + banner) and
-  // these calls are always safe to make. Wrapped in try/catch because an
-  // ad blocker can leave mixpanel undefined.
+  // The tracking plan lives here, not in gameplay code. Game logic calls
+  // the intent-named track* functions below and never builds a Mixpanel
+  // property bag itself, so the event schema has one home.
+  //
+  // Every send routes through analytics(), which is a no-op while opted
+  // out — the consent gate lives entirely in the head + cookie banner —
+  // and is guarded so an ad blocker that removes mixpanel can't throw.
   function analytics(event, props) {
     try {
       if (window.mixpanel && mixpanel.track) mixpanel.track(event, props || {});
@@ -1622,6 +1625,50 @@
         language:     lang,
       });
     } catch (_) {}
+  }
+
+  // The current run's setup, shared by every event that reports it, so the
+  // two payloads below can't drift apart.
+  function runContext() {
+    return {
+      cat_color:      catColor,
+      mountain_theme: mtnTheme,
+      intensity:      intensity,
+      dog_count:      dogCount,
+      lives_mode:     livesMode,
+    };
+  }
+  function trackGameStarted() {
+    analytics('game_started', Object.assign(runContext(), {
+      control_mode: controlMode,
+      is_touch:     isTouchActive(),
+    }));
+  }
+  function trackRunCompleted(cause) {
+    analytics('run_completed', Object.assign(runContext(), {
+      score:                     stats.score,
+      distance_m:                stats.distance,
+      duration_seconds:          Math.round(stats.elapsed),
+      cause:                     cause || 'unknown',
+      tricks_landed:             stats.tricks,
+      flags_collected:           stats.flags,
+      jumps:                     stats.jumps,
+      qualified_for_leaderboard: qualifiesForLeaderboard(stats.score),
+    }));
+  }
+  function trackLeaderboardSubmitted(score, rank, name) {
+    analytics('leaderboard_submitted', {
+      score:       score,
+      rank:        rank,
+      lives_mode:  livesMode,
+      name_length: (name || 'CAT').length,
+    });
+  }
+  function trackRunShared(method) {
+    analytics('run_shared', { method: method, score: stats.score });
+  }
+  function trackPwaInstalled() {
+    analytics('pwa_installed', {});
   }
 
   // Format elapsed seconds as M:SS for the HUD
@@ -1761,7 +1808,7 @@
   window.addEventListener('appinstalled', () => {
     deferredInstall = null;
     hideInstall();
-    analytics('pwa_installed', {});
+    trackPwaInstalled();
   });
 
   // iOS: no event fires, so reveal the button by heuristic
@@ -2365,7 +2412,7 @@
       if (navigator.canShare({ files: [file] })) {
         try {
           await navigator.share({ title: 'Cat Ski', text, url, files: [file] });
-          analytics('run_shared', { method: 'web_share_file', score: stats.score });
+          trackRunShared('web_share_file');
           return;
         } catch (_) { /* user cancelled, fall through */ }
       }
@@ -2374,7 +2421,7 @@
     if (navigator.share) {
       try {
         await navigator.share({ title: 'Cat Ski', text, url });
-        analytics('run_shared', { method: 'web_share_text', score: stats.score });
+        trackRunShared('web_share_text');
         return;
       } catch (_) {}
     }
@@ -2387,14 +2434,14 @@
       URL.revokeObjectURL(link.href);
       try { await navigator.clipboard.writeText(`${text} ${url}`); } catch (_) {}
       flashShareLabel('SAVED');
-      analytics('run_shared', { method: 'download', score: stats.score });
+      trackRunShared('download');
       return;
     }
     // Path 4: last resort — clipboard text only
     try {
       await navigator.clipboard.writeText(`${text} ${url}`);
       flashShareLabel('COPIED');
-      analytics('run_shared', { method: 'clipboard', score: stats.score });
+      trackRunShared('clipboard');
     } catch (_) {
       window.prompt('Copy this link:', url);
     }
@@ -3958,12 +4005,7 @@
     }
     const rank = insertLeaderboardEntry(name, score);
     if (name) localStorage.setItem('skior_lb_last_name', name);
-    analytics('leaderboard_submitted', {
-      score:       score,
-      rank:        rank,
-      lives_mode:  livesMode,
-      name_length: (name || 'CAT').length,
-    });
+    trackLeaderboardSubmitted(score, rank, name);
     hideLbEntry();
   }
   function hideLbEntry() {
@@ -4023,21 +4065,7 @@
     overScore.textContent = stats.score;
     overBest.textContent  = best;
     overlayOver.classList.remove('hidden');
-    analytics('run_completed', {
-      score:                    stats.score,
-      distance_m:               stats.distance,
-      duration_seconds:         Math.round(stats.elapsed),
-      cause:                    cause || 'unknown',
-      cat_color:                catColor,
-      mountain_theme:           mtnTheme,
-      intensity:                intensity,
-      dog_count:                dogCount,
-      lives_mode:               livesMode,
-      tricks_landed:            stats.tricks,
-      flags_collected:          stats.flags,
-      jumps:                    stats.jumps,
-      qualified_for_leaderboard: qualifiesForLeaderboard(stats.score),
-    });
+    trackRunCompleted(cause);
     // Reveal the name-entry block if this run cracked the top-3. Default
     // hidden by HTML, hidden again by hideLbEntry() once submitted.
     if (qualifiesForLeaderboard(stats.score)) {
@@ -4066,15 +4094,7 @@
     ensureAudio();   // unlocks audio on first start
     sfx.start();
     startSwoosh();
-    analytics('game_started', {
-      cat_color:      catColor,
-      mountain_theme: mtnTheme,
-      intensity:      intensity,
-      dog_count:      dogCount,
-      lives_mode:     livesMode,
-      control_mode:   controlMode,
-      is_touch:       isTouchActive(),
-    });
+    trackGameStarted();
   }
 
   // ---------- pause / resume / restart ----------
