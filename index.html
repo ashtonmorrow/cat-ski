@@ -971,6 +971,9 @@
     align-items: center;
     gap: 8px;
   }
+  /* The flex display above beats the UA [hidden] rule, so the install
+     group needs an explicit hide or its `hidden` attribute does nothing. */
+  #install-group[hidden] { display: none; }
 
   /* Action buttons (PAUSE / RESTART) — same chassis as diff-swatch,
      restart gets a red accent because it throws away progress. */
