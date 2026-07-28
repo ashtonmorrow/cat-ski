@@ -247,6 +247,10 @@
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  /* A plain display rule on a class beats the UA [hidden] rule, so the
+     attribute silently fails to hide without this. Make it authoritative
+     everywhere rather than per-element. */
+  [hidden] { display: none !important; }
 
   html, body {
     background: var(--ink);
@@ -691,7 +695,6 @@
     color: var(--snow-dim);
     box-shadow: 0 -4px 16px rgba(0,0,0,0.5);
   }
-  .cookie-banner[hidden] { display: none; }
   .cookie-banner .cb-text { flex: 1 1 280px; min-width: 0; }
   .cookie-banner .cb-text a {
     color: var(--accent-2);
@@ -971,9 +974,6 @@
     align-items: center;
     gap: 8px;
   }
-  /* The flex display above beats the UA [hidden] rule, so the install
-     group needs an explicit hide or its `hidden` attribute does nothing. */
-  #install-group[hidden] { display: none; }
 
   /* Action buttons (PAUSE / RESTART) — same chassis as diff-swatch,
      restart gets a red accent because it throws away progress. */
