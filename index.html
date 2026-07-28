@@ -1792,6 +1792,11 @@
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches
                     || window.navigator.standalone === true;
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  // On iOS only Safari can Add to Home Screen; Chrome/Firefox/Edge (CriOS/
+  // FxiOS/EdgiOS) and in-app webviews can't, so the button is hidden there
+  // rather than dead-ending.
+  const isIOSSafari = isIOS && /Safari/.test(navigator.userAgent) &&
+                      !/CriOS|FxiOS|EdgiOS|OPiOS|GSA/i.test(navigator.userAgent);
 
   function revealInstall() {
     if (!installGroup || isStandalone) return;
@@ -1815,8 +1820,9 @@
     trackPwaInstalled();
   });
 
-  // iOS: no event fires, so reveal the button by heuristic
-  if (isIOS && !isStandalone) revealInstall();
+  // iOS Safari: no beforeinstallprompt event, so reveal the button by
+  // heuristic. Other iOS browsers can't install, so it stays hidden.
+  if (isIOSSafari && !isStandalone) revealInstall();
 
   if (btnInstall) {
     btnInstall.addEventListener('click', async () => {
@@ -1825,8 +1831,8 @@
         const { outcome } = await deferredInstall.userChoice;
         deferredInstall = null;
         if (outcome === 'accepted') hideInstall();
-      } else if (isIOS) {
-        // iOS fallback: show instructions
+      } else if (isIOSSafari) {
+        // iOS Safari fallback: show the Add to Home Screen instructions
         overlayIosInstall.classList.remove('hidden');
       }
     });
