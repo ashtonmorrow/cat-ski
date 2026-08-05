@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>How to Use Claude to Build a Browser Game | Cat Ski README</title>
+<title>Cat Ski README: how to play, controls, and gameplay</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <!-- Crawler hints — explicit index/follow + allow large image previews. -->
@@ -43,14 +43,14 @@
   gtag('js', new Date());
   gtag('config', 'G-MSN465FL9R');
 </script>
-<meta name="description" content="A walkthrough of building a browser-based skiing game with Claude as a design collaborator. Covers stack choices, per-element design criteria, color palettes derived from photography, and a free toolchain (HTML, GitHub, Vercel) you can use to ship a similar project.">
-<meta name="keywords" content="claude, claude ai, claude code, build a game with claude, browser game, javascript game, html5 canvas, web audio api, pwa, skifree, retro game, vibe coding tutorial">
+<meta name="description" content="How to play Cat Ski, the free SkiFree-style browser skiing game. Controls, the cats and the mountains, the dog and the snowman, plus privacy notes and answers to common questions.">
+<meta name="keywords" content="cat ski, how to play cat ski, cat ski controls, cat ski game, skifree online, browser skiing game, free skiing game, retro skiing game">
 <link rel="canonical" href="https://ski.unwoke.ninja/readme.html">
 
 <!-- Open Graph -->
 <meta property="og:type" content="article">
-<meta property="og:title" content="How to Use Claude to Build a Browser Game">
-<meta property="og:description" content="Walkthrough of building Cat Ski, a browser-based SkiFree tribute, using Claude as a design collaborator. Stack, design criteria, color palettes from photography, and a free deploy toolchain.">
+<meta property="og:title" content="Cat Ski README: how to play">
+<meta property="og:description" content="How to play Cat Ski, the free SkiFree-style browser skiing game. Controls, the cats and the mountains, and the dog on your tail.">
 <meta property="og:image" content="https://ski.unwoke.ninja/preview.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -61,8 +61,8 @@
 
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="How to Use Claude to Build a Browser Game">
-<meta name="twitter:description" content="Walkthrough of building a SkiFree-style browser game with Claude. Stack, design criteria, photography-derived color palettes, free toolchain.">
+<meta name="twitter:title" content="Cat Ski README: how to play">
+<meta name="twitter:description" content="How to play Cat Ski, the free browser skiing game. Controls, cats, mountains, and the dog on your tail.">
 <meta name="twitter:image" content="https://ski.unwoke.ninja/preview.png">
 
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
@@ -506,6 +506,8 @@
     <p>Lives mode (the <strong>9</strong> button on the picker row) gives the cat nine lives instead of one. Each crash, dog grab, or snowman chomp consumes a life with a brief invincibility window before the next hit can register. The leaderboard splits by mode, so 9-lives runs and 1-life runs are scored on separate boards.</p>
 
     <h2 id="build">How the game is built</h2>
+
+    <p><em>Prefer the short version? The story of how Cat Ski got built with an AI coding agent lives at <a href="https://unwoke.ninja/cat-ski/built-with-ai" target="_blank" rel="noopener">unwoke.ninja/cat-ski/built-with-ai</a>. The full reference is below.</em></p>
 
     <p>The game is contained in a single HTML file of approximately 140 KB, with a separate service worker for offline support and a manifest file for PWA installability. There is no build step, framework, or third-party runtime dependency. The two fonts are served from the same origin. The constraint of keeping the game in one file is partly a tribute to the original SkiFree, which fit in 60 KB on a 3.5-inch floppy disk. The practical benefit is that every change is deployable in under a minute. A push to the GitHub repository triggers an automatic Vercel rebuild, and the new version is served from the CDN with no build pipeline to wait for.</p>
 
