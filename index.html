@@ -7,7 +7,7 @@
 
 <!-- Canonical URL — explicit so search engines don't conflate www/non-www
      or any tracking-parameter variants. -->
-<link rel="canonical" href="https://ski.mike-lee.me/">
+<link rel="canonical" href="https://ski.unwoke.ninja/">
 
 <!-- Crawler hints — explicit index/follow + allow large image previews
      (lets search engines pull preview.png into rich-result cards). -->
@@ -93,8 +93,8 @@
   "name": "Cat Ski 1989",
   "alternateName": "cat-ski",
   "description": "A free browser game inspired by SkiFree (1991). Play as a cat skiing down an endless mountain. Three regional themes (Alps, Rockies, Himalayas), four cat color variants, mid-air tricks, dog and snowman chasers, tunable difficulty, and a 9-lives mode. Installable as a Progressive Web App for offline play.",
-  "url": "https://ski.mike-lee.me/",
-  "image": "https://ski.mike-lee.me/preview.png",
+  "url": "https://ski.unwoke.ninja/",
+  "image": "https://ski.unwoke.ninja/preview.png",
   "inLanguage": ["en", "es"],
   "applicationCategory": "GameApplication",
   "gamePlatform": ["Web Browser", "PWA"],
@@ -133,13 +133,13 @@
 <!-- Open Graph (iMessage, Slack, Discord, Facebook, LinkedIn, WhatsApp) -->
 <meta property="og:title" content="CAT SKI // 1989">
 <meta property="og:description" content="A free browser game inspired by SkiFree (1991). Play as a cat down an endless mountain. Three themes, mid-air tricks, dog and snowman chasers, tunable difficulty.">
-<meta property="og:image" content="https://ski.mike-lee.me/preview.png">
-<meta property="og:image:secure_url" content="https://ski.mike-lee.me/preview.png">
+<meta property="og:image" content="https://ski.unwoke.ninja/preview.png">
+<meta property="og:image:secure_url" content="https://ski.unwoke.ninja/preview.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Pixel-art downhill skiing scene with a cat, a dog, a yeti, and a skier on a peak">
-<meta property="og:url" content="https://ski.mike-lee.me/">
+<meta property="og:url" content="https://ski.unwoke.ninja/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="cat-ski">
 
@@ -147,7 +147,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="CAT SKI // 1989">
 <meta name="twitter:description" content="A free browser game inspired by SkiFree (1991). Play as a cat down an endless mountain. Three themes, mid-air tricks, dog and snowman chasers, tunable difficulty.">
-<meta name="twitter:image" content="https://ski.mike-lee.me/preview.png">
+<meta name="twitter:image" content="https://ski.unwoke.ninja/preview.png">
 <meta name="twitter:image:alt" content="Pixel-art downhill skiing scene with a cat, a dog, a yeti, and a skier on a peak">
 <style>
   /* ---------- RETRO PIXEL AESTHETIC ----------
@@ -1627,7 +1627,7 @@
       mixpanel.register({
         app:          'cat_ski',
         platform:     'web',
-        environment:  location.hostname === 'ski.mike-lee.me' ? 'production' : 'development',
+        environment:  location.hostname === 'ski.unwoke.ninja' ? 'production' : 'development',
         display_mode: standalone ? 'standalone' : 'browser',
         language:     lang,
       });
@@ -2416,7 +2416,7 @@
 
   async function shareRun() {
     const text = `I scored ${stats.score} on Cat Ski (${stats.distance}m). Beat me:`;
-    const url = 'https://ski.mike-lee.me/';
+    const url = 'https://ski.unwoke.ninja/';
     let blob = null;
     try { blob = await composeShareImage(); } catch (_) {}
     // Path 1: Web Share Level 2 with file — best UX on mobile

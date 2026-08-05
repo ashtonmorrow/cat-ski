@@ -6,8 +6,8 @@ Cat Ski 1989 is an open-source browser game that recreates the SkiFree (Windows 
 
 ## Pages
 
-- [Play Cat Ski](https://ski.mike-lee.me/): The game itself. Loads in a browser and is playable on desktop or mobile. Press SPACE on desktop or tap on mobile to start.
-- [How to play and how the game is built](https://ski.mike-lee.me/readme.html): An article covering quick-start gameplay (controls table at the top), the project's stack, per-element design criteria, the photography-derived color palette approach for the three mountain themes, the workflow used to build it with Claude as a design collaborator, a free toolchain readers can use to build a similar project, and privacy notes covering analytics and the leaderboard.
+- [Play Cat Ski](https://ski.unwoke.ninja/): The game itself. Loads in a browser and is playable on desktop or mobile. Press SPACE on desktop or tap on mobile to start.
+- [How to play and how the game is built](https://ski.unwoke.ninja/readme.html): An article covering quick-start gameplay (controls table at the top), the project's stack, per-element design criteria, the photography-derived color palette approach for the three mountain themes, the workflow used to build it with Claude as a design collaborator, a free toolchain readers can use to build a similar project, and privacy notes covering analytics and the leaderboard.
 
 ## About the project
 
@@ -24,7 +24,7 @@ Cat Ski 1989 is an open-source browser game that recreates the SkiFree (Windows 
 
 ## Privacy
 
-The game does not collect names, emails, or accounts. All game state (cat color, theme, difficulty, best scores, leaderboard, language preference, cookie consent decision) lives in localStorage on the user's device. Leaderboard names and scores are never uploaded. See the in-page privacy notes for details: https://ski.mike-lee.me/readme.html#privacy
+The game does not collect names, emails, or accounts. All game state (cat color, theme, difficulty, best scores, leaderboard, language preference, cookie consent decision) lives in localStorage on the user's device. Leaderboard names and scores are never uploaded. See the in-page privacy notes for details: https://ski.unwoke.ninja/readme.html#privacy
 
 ## Optional
 
