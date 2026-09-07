@@ -138,7 +138,7 @@
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Cat Ski's brown tabby with green goggles and wooden skis, with spruce trees, flags, a shepherd dog, and the snowman">
+<meta property="og:image:alt" content="Pixel-art downhill skiing scene with a cat, a dog, a yeti, and a skier on a peak">
 <meta property="og:url" content="https://ski.unwoke.ninja/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="cat-ski">
@@ -148,7 +148,7 @@
 <meta name="twitter:title" content="CAT SKI // 1989">
 <meta name="twitter:description" content="A free browser game inspired by SkiFree (1991). Play as a cat down an endless mountain. Three themes, mid-air tricks, dog and snowman chasers, tunable difficulty.">
 <meta name="twitter:image" content="https://ski.unwoke.ninja/preview.png">
-<meta name="twitter:image:alt" content="Cat Ski's brown tabby with green goggles and wooden skis, with spruce trees, flags, a shepherd dog, and the snowman">
+<meta name="twitter:image:alt" content="Pixel-art downhill skiing scene with a cat, a dog, a yeti, and a skier on a peak">
 <style>
   /* ---------- RETRO PIXEL AESTHETIC ----------
      Chunky HUD with a CRT vibe. Cool blue snow palette with a single
@@ -583,20 +583,17 @@
   }
   .overlay.hidden { display: none; }
 
-  /* The 4:3 title artwork fits the game window without cropping the cat.
-     The social preview uses a separate landscape export of this scene. */
+  /* Start screen uses the social preview image as its backdrop for
+     visual continuity with shared links. A dark gradient on top keeps
+     the panel legible. Image scaled with crisp-edges to keep its
+     pixel-art character at the rendered size. */
   #overlay-start {
-    background: url('title-scene.png') center/cover no-repeat;
+    background:
+      linear-gradient(rgba(5,10,20,0.55), rgba(5,10,20,0.85)),
+      url('preview.png') center/cover no-repeat;
     image-rendering: pixelated;
     image-rendering: crisp-edges;
     backdrop-filter: none;
-    padding: clamp(12px, 3%, 28px);
-  }
-  #overlay-start .panel {
-    justify-self: start;
-    width: clamp(260px, 52%, 420px);
-    max-width: 100%;
-    padding: 22px 20px;
   }
 
   .panel {
@@ -1200,20 +1197,6 @@
   body.mobile-layout .panel p  { font-size: 17px; }
   body.mobile-layout .panel .keys { gap: 4px 12px; margin: 10px 0 6px; font-size: var(--type-sm); }
   body.mobile-layout .panel .hint { font-size: var(--type-sm); margin-top: 12px; }
-  /* Leave room for the cat on touch screens; keyboard help is desktop-only. */
-  body.mobile-layout #overlay-start .panel {
-    width: 60%;
-    padding: 14px 12px;
-  }
-  body.touch-active #overlay-start .keys { display: none; }
-  @media (max-width: 600px) {
-    #overlay-start .panel { width: 60%; padding: 12px 10px; }
-    #overlay-start .panel h1 { font-size: var(--type-md); margin-bottom: 6px; }
-    #overlay-start .panel h2 { font-size: var(--type-sm); margin-bottom: 10px; }
-    #overlay-start .panel p { font-size: 17px; }
-    #overlay-start .panel .keys { display: none; }
-    #overlay-start .panel .hint { font-size: var(--type-sm); margin-top: 12px; }
-  }
   body.mobile-layout .footer { font-size: var(--type-sm); padding: 8px 0; }
 
   /* Credit line — small but visible, dotted underline on the link */
