@@ -119,7 +119,7 @@
     "url": "https://go.mike-lee.me/"
   },
   "datePublished": "2026-04-24",
-  "dateModified": "2026-04-26",
+  "dateModified": "2026-09-07",
   "softwareVersion": "1.0"
 }
 </script>
@@ -336,6 +336,18 @@
      animation, minimum vertical real-estate. Each entry is fixed-width
      so rank/name/score columns line up vertically across the three
      entries — reads as a tiny arcade leaderboard, not a run-on string. */
+  .lb-context {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    margin-bottom: 4px;
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.15;
+    color: var(--snow-dim);
+  }
+  .lb-starter { color: var(--accent-2); margin-left: 2px; }
   .leaderboard {
     display: flex;
     justify-content: center;
@@ -657,6 +669,13 @@
     letter-spacing: 1px;
   }
   .panel .hint .blink { color: var(--accent-2); animation: blink 1s steps(2,end) infinite; }
+  #overlay-start .panel { max-width: 350px; padding: 16px 20px; }
+  #overlay-start h1 { font-size: 24px; }
+  #overlay-start h2 { font-size: 12px; margin-bottom: 10px; }
+  #overlay-start p { font-size: 18px; margin: 4px 0; }
+  #overlay-start .keys { margin: 8px 0 4px; gap: 3px 12px; }
+  #overlay-start .keys kbd { padding: 2px 5px; }
+  #overlay-start .hint { margin-top: 10px; }
   /* Secondary link below the start prompt — points players at the
      readme for a deeper TLDR + controls reference. Subtle on purpose:
      SPACE-to-start is the primary CTA, this is the tertiary "help me"
@@ -1021,11 +1040,11 @@
   }
   body.touch-active .stick-area { display: block; }
   body.controls-swapped .stick-area { left: auto; right: 18px; }
-  body.touch-active .screen-wrap { touch-action: none; }
+  body.touch-active #game { touch-action: none; }
   .stick {
     position: relative;
-    width: 130px;
-    height: 130px;
+    width: min(130px, calc(50vw - 52px));
+    height: min(130px, calc(50vw - 52px));
     border-radius: 50%;
     background: rgba(10, 20, 35, 0.55);
     border: 3px solid rgba(234, 244, 255, 0.55);
@@ -1128,8 +1147,8 @@
     bottom: max(60px, calc(env(safe-area-inset-bottom, 0px) + 60px));
     left: 50%;
     transform: translateX(-50%);
-    width: 42px;
-    height: 42px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     background: rgba(10, 20, 35, 0.55);
     border: 2px solid rgba(234, 244, 255, 0.45);
@@ -1149,6 +1168,27 @@
     background: rgba(255, 204, 0, 0.25);
     color: var(--accent-2);
   }
+  .touch-pause {
+    display: none;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    z-index: 11;
+    border: 2px solid var(--snow-dim);
+    background: var(--panel);
+    color: var(--snow);
+    font-size: 20px;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  body.mobile-layout .touch-pause { display: block; }
+  body.touch-active .touch-pause {
+    position: fixed;
+    bottom: max(158px, calc(env(safe-area-inset-bottom, 0px) + 158px));
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .touch-pause:disabled { opacity: .45; cursor: default; }
 
   /* ---------- Mobile / full-bleed layout ----------
      Triggered by body.mobile-layout (JS toggles this on when touch is
@@ -1175,6 +1215,10 @@
     letter-spacing: 1px;
     margin-bottom: 0;
   }
+  body.mobile-layout .bezel-left { flex: 1; }
+  body.mobile-layout .bezel-center { flex: none; white-space: nowrap; }
+  body.mobile-layout .bezel-right { display: none; }
+  body.mobile-layout .bezel-link { white-space: nowrap; letter-spacing: 1px; }
   /* Screen-wrap takes the maximum 4:3 rectangle that fits in the
      viewport, centered horizontally. min() picks whichever dimension
      is the binding constraint. */
@@ -1196,7 +1240,8 @@
   }
   body.mobile-layout .cat-picker-label { margin-right: 2px; }
   body.mobile-layout .diff-swatch { padding: 10px 12px; font-size: var(--type-sm); }
-  body.mobile-layout .panel { padding: 16px 18px; max-width: 92%; }
+  body.mobile-layout .overlay { padding: 10px; }
+  body.mobile-layout .panel { padding: 16px 18px; max-width: 92%; max-height: 100%; overflow-y: auto; }
   body.mobile-layout .panel h1 { font-size: var(--type-md); margin-bottom: 6px; }
   body.mobile-layout .panel h2 { font-size: var(--type-sm); margin-bottom: 10px; }
   body.mobile-layout .panel p  { font-size: 17px; }
@@ -1214,10 +1259,9 @@
   body.mobile-layout #overlay-start .hint { font-size: 8px; margin-top: 8px; }
   body.mobile-layout #overlay-start .readme-link { font-size: 8px; margin-top: 6px; }
   body.touch-active #overlay-start .keys { display: none; }
-  @media (max-width: 600px) {
-    body:not(.mobile-layout) #overlay-start { display: flex; justify-content: center; padding: 12px; }
-    body:not(.mobile-layout) #overlay-start .panel { max-height: 100%; overflow-y: auto; }
-  }
+  .touch-help { display: none; }
+  body.touch-active #overlay-start .touch-help { display: block; max-width: 28ch; margin: 8px auto 0; }
+  body.mobile-layout #overlay-start .panel { max-height: 100%; overflow-y: auto; }
   body.mobile-layout .footer { font-size: var(--type-sm); padding: 8px 0; }
 
   /* Credit line — small but visible, dotted underline on the link */
@@ -1242,6 +1286,7 @@
      game dominates the viewport. A full-width strip below the game
      expands them on demand. Bezel-title stays visible for branding. */
   .controls-toggle { display: none; }
+  .mobile-actions { display: flex; align-items: center; }
   body.mobile-layout .controls-toggle {
     display: block;
     width: 100%;
@@ -1276,7 +1321,7 @@
   <div class="bezel-title">
     <span class="bezel-left">
       <a href="https://go.mike-lee.me/" class="bezel-link" target="_blank" rel="noopener noreferrer">HOME</a>
-      <a href="/readme.html" class="bezel-link" target="_blank" rel="noopener">READ ME</a>
+      <a href="/readme.html" class="bezel-link" target="_blank" rel="noopener" data-i18n="link.help">HOW TO PLAY</a>
     </span>
     <span class="bezel-center">CAT SKI <span class="dot">&#9632;</span> 1989</span>
     <span class="bezel-right"></span>
@@ -1285,7 +1330,11 @@
   <!-- Top-3 high-score strip. Populated from localStorage by JS. Always
        visible: empty slots render as "1. ---  -----" so the strip's
        footprint stays consistent before any scores are recorded. -->
-  <div class="leaderboard" id="leaderboard" aria-label="Top three high scores"></div>
+  <div class="lb-context">
+    <span data-i18n="lb.local">ON THIS DEVICE</span>
+    <span id="lb-starter-note" hidden data-i18n="lb.starterNote">* STARTER SCORE</span>
+  </div>
+  <div class="leaderboard" id="leaderboard" data-i18n-aria="lb.label" aria-label="Top three scores on this device"></div>
 
   <div class="screen-wrap" id="screen">
     <canvas id="game" width="360" height="270"></canvas>
@@ -1305,7 +1354,7 @@
         <!-- Lives HUD: 9 cat-face SVGs, only visible in lives-mode.
              Active lives show in --accent-2 (yellow); spent lives gain
              .lost class (grey + lower opacity). -->
-        <div class="lives-hud" id="lives-hud" aria-label="Lives remaining">
+        <div class="lives-hud" id="lives-hud" data-i18n-aria="aria.livesRemaining" aria-label="Lives remaining">
           <svg class="life-icon" viewBox="0 0 14 12" aria-hidden="true"><polygon points="1,0 1,4 4,4" fill="currentColor"/><polygon points="13,0 13,4 10,4" fill="currentColor"/><rect x="1" y="3" width="12" height="8" fill="currentColor"/><rect x="4" y="6" width="2" height="2" fill="#0b1320"/><rect x="8" y="6" width="2" height="2" fill="#0b1320"/><rect x="6" y="9" width="2" height="1" fill="#ff6b8a"/></svg>
           <svg class="life-icon" viewBox="0 0 14 12" aria-hidden="true"><polygon points="1,0 1,4 4,4" fill="currentColor"/><polygon points="13,0 13,4 10,4" fill="currentColor"/><rect x="1" y="3" width="12" height="8" fill="currentColor"/><rect x="4" y="6" width="2" height="2" fill="#0b1320"/><rect x="8" y="6" width="2" height="2" fill="#0b1320"/><rect x="6" y="9" width="2" height="1" fill="#ff6b8a"/></svg>
           <svg class="life-icon" viewBox="0 0 14 12" aria-hidden="true"><polygon points="1,0 1,4 4,4" fill="currentColor"/><polygon points="13,0 13,4 10,4" fill="currentColor"/><rect x="1" y="3" width="12" height="8" fill="currentColor"/><rect x="4" y="6" width="2" height="2" fill="#0b1320"/><rect x="8" y="6" width="2" height="2" fill="#0b1320"/><rect x="6" y="9" width="2" height="1" fill="#ff6b8a"/></svg>
@@ -1334,7 +1383,8 @@
           <kbd>SPACE</kbd><span data-i18n="keys.start">START / RETRY</span>
         </div>
         <div class="hint"><span class="blink">&gt;</span> PRESS SPACE TO START</div>
-        <a href="/readme.html" class="readme-link" target="_blank" rel="noopener" data-i18n="link.readme">READ ME &rsaquo;</a>
+        <p class="touch-help" data-i18n="touch.help">Drag the joystick to steer. Up slows; down speeds up.</p>
+        <a href="/readme.html" class="readme-link" target="_blank" rel="noopener" data-i18n="link.readme">HOW TO PLAY &rsaquo;</a>
       </div>
     </div>
 
@@ -1371,7 +1421,7 @@
           <span><span data-i18n="over.best">BEST</span> <a href="#" class="reset-best" id="reset-best" data-i18n="over.reset" data-i18n-title="over.resetTitle" title="Clear best for this difficulty">[reset]</a></span>
           <span class="v" id="over-best">0</span>
         </div>
-        <button class="share-btn" id="btn-share" type="button" aria-label="Share your run" data-i18n="btn.share">SHARE</button>
+        <button class="share-btn" id="btn-share" type="button" data-i18n-aria="btn.share" aria-label="Share your run" data-i18n="btn.share">SHARE</button>
         <!-- Name-entry block. Hidden unless the run cracked the top-3.
              Submitting writes the name to the leaderboard, hides this
              block, and updates the strip at the top of the page. -->
@@ -1381,7 +1431,7 @@
             <input class="lb-name-input" id="lb-name-input" type="text"
                    maxlength="5" autocomplete="off" autocapitalize="characters"
                    spellcheck="false" inputmode="text"
-                   aria-label="Enter your initials, up to 5 characters">
+                   data-i18n-aria="aria.initials" aria-label="Enter your initials, up to 5 characters">
             <button class="lb-submit" id="lb-submit" type="button" data-i18n="btn.ok">OK</button>
           </div>
         </div>
@@ -1395,44 +1445,47 @@
   <!-- Collapse/expand bar for mobile. Only visible in mobile-layout;
        default state is collapsed so the game dominates the phone
        screen. Tap to toggle the picker controls below. -->
-  <button class="controls-toggle" id="controls-toggle" aria-expanded="false" type="button">
-    &#9660; <span data-i18n="mobile.show">SHOW CONTROLS</span>
-  </button>
+  <div class="mobile-actions">
+    <button class="controls-toggle" id="controls-toggle" aria-expanded="false" type="button">
+      &#9660; <span data-i18n="mobile.show">SETTINGS</span>
+    </button>
+    <button class="touch-pause" id="btn-touch-pause" type="button" aria-label="Pause" title="Pause" disabled>&#x23F8;</button>
+  </div>
 
   <!-- Cat + Theme pickers on one row. Each swatch renders a tiny preview
        (cats use the actual cat sprite; themes use a mini scene). -->
   <div class="cat-picker combo-picker">
-    <div class="sub-picker" role="radiogroup" aria-label="Cat color">
+    <div class="sub-picker" role="group" data-i18n-aria="aria.catGroup" aria-label="Cat color">
       <span class="cat-picker-label" data-i18n="pick.cat">CAT</span>
-      <button class="cat-swatch" data-cat="black"  aria-label="Black cat">
-        <canvas width="48" height="48"></canvas>
+      <button class="cat-swatch" data-cat="black" type="button" aria-pressed="false">
+        <canvas width="48" height="48" aria-hidden="true"></canvas>
         <span class="cat-name" data-i18n="cat.black">BLACK</span>
       </button>
-      <button class="cat-swatch" data-cat="tabby"  aria-label="Tabby cat">
-        <canvas width="48" height="48"></canvas>
+      <button class="cat-swatch" data-cat="tabby" type="button" aria-pressed="false">
+        <canvas width="48" height="48" aria-hidden="true"></canvas>
         <span class="cat-name" data-i18n="cat.tabby">TABBY</span>
       </button>
-      <button class="cat-swatch" data-cat="calico" aria-label="Calico cat">
-        <canvas width="48" height="48"></canvas>
+      <button class="cat-swatch" data-cat="calico" type="button" aria-pressed="false">
+        <canvas width="48" height="48" aria-hidden="true"></canvas>
         <span class="cat-name" data-i18n="cat.calico">CALICO</span>
       </button>
-      <button class="cat-swatch" data-cat="orange" aria-label="Orange cat">
-        <canvas width="48" height="48"></canvas>
+      <button class="cat-swatch" data-cat="orange" type="button" aria-pressed="false">
+        <canvas width="48" height="48" aria-hidden="true"></canvas>
         <span class="cat-name" data-i18n="cat.orange">ORANGE</span>
       </button>
     </div>
-    <div class="sub-picker" role="radiogroup" aria-label="Mountain theme">
+    <div class="sub-picker" role="group" data-i18n-aria="aria.themeGroup" aria-label="Mountain theme">
       <span class="cat-picker-label" data-i18n="pick.peak">PEAK</span>
-      <button class="cat-swatch" data-theme="alps" aria-label="Alps">
-        <canvas width="48" height="48"></canvas>
+      <button class="cat-swatch" data-theme="alps" type="button" aria-pressed="false">
+        <canvas width="48" height="48" aria-hidden="true"></canvas>
         <span class="cat-name" data-i18n="theme.alps">ALPS</span>
       </button>
-      <button class="cat-swatch" data-theme="rockies" aria-label="Rockies">
-        <canvas width="48" height="48"></canvas>
+      <button class="cat-swatch" data-theme="rockies" type="button" aria-pressed="false">
+        <canvas width="48" height="48" aria-hidden="true"></canvas>
         <span class="cat-name" data-i18n="theme.rockies">ROCKIES</span>
       </button>
-      <button class="cat-swatch" data-theme="himalayas" aria-label="Himalayas">
-        <canvas width="48" height="48"></canvas>
+      <button class="cat-swatch" data-theme="himalayas" type="button" aria-pressed="false">
+        <canvas width="48" height="48" aria-hidden="true"></canvas>
         <span class="cat-name" data-i18n="theme.himalayas">HIMALAYAS</span>
       </button>
     </div>
@@ -1440,12 +1493,12 @@
 
   <!-- Quick preset buttons. Each one snaps both sliders to canonical
        values; you can fine-tune from there with the sliders below. -->
-  <div class="cat-picker diff-picker" role="group" aria-label="Difficulty preset">
+  <div class="cat-picker diff-picker" role="group" data-i18n-aria="aria.presetGroup" aria-label="Difficulty preset">
     <span class="cat-picker-label" data-i18n="pick.mode">MODE</span>
-    <button class="diff-swatch preset-btn" data-preset="easy"   type="button" data-i18n="preset.easy">EASY</button>
-    <button class="diff-swatch preset-btn" data-preset="medium" type="button" data-i18n="preset.medium">MEDIUM</button>
-    <button class="diff-swatch preset-btn" data-preset="hard"   type="button" data-i18n="preset.hard">HARD</button>
-    <button class="diff-swatch preset-btn" data-preset="insta"  type="button" data-i18n="preset.insta">INSTA DEATH</button>
+    <button class="diff-swatch preset-btn" data-preset="easy"   type="button" aria-pressed="false" data-i18n="preset.easy">EASY</button>
+    <button class="diff-swatch preset-btn" data-preset="medium" type="button" aria-pressed="false" data-i18n="preset.medium">MEDIUM</button>
+    <button class="diff-swatch preset-btn" data-preset="hard"   type="button" aria-pressed="false" data-i18n="preset.hard">HARD</button>
+    <button class="diff-swatch preset-btn" data-preset="insta"  type="button" aria-pressed="false" data-i18n="preset.insta">INSTA DEATH</button>
   </div>
 
   <!-- Continuous tuners. INTENSITY scales speed/density/spawn cadence/
@@ -1455,20 +1508,20 @@
       <span class="cat-picker-label" data-i18n="pick.diff">DIFF</span>
       <input type="range" class="retro-slider" id="diff-slider"
              min="80" max="500" value="100" step="10"
-             aria-label="Difficulty intensity">
+             data-i18n-aria="aria.intensity" aria-label="Difficulty intensity">
       <span class="slider-value" id="diff-value">1x</span>
     </div>
     <div class="sub-picker">
       <span class="cat-picker-label" data-i18n="pick.dogs">DOGS</span>
       <input type="range" class="retro-slider" id="dogs-slider"
              min="1" max="10" value="2" step="1"
-             aria-label="Number of dog waves">
+             data-i18n-aria="aria.dogs" aria-label="Number of dog waves">
       <span class="slider-value" id="dogs-value">2</span>
     </div>
     <div class="sub-picker">
       <span class="cat-picker-label" data-i18n="pick.lives">LIVES</span>
       <button class="diff-swatch lives-toggle" id="btn-lives" type="button"
-              aria-label="Toggle 9 lives mode" title="9 lives mode">9</button>
+              aria-pressed="false" data-i18n-aria="aria.lives" data-i18n-title="aria.lives" aria-label="9 lives mode" title="9 lives mode">9</button>
     </div>
   </div>
 
@@ -1477,16 +1530,16 @@
        whether to show the virtual joystick: AUTO detects a touch device
        via viewport + pointer capability; ON / OFF force it. -->
   <div class="cat-picker diff-picker combo-picker">
-    <div class="sub-picker" role="radiogroup" aria-label="Controls">
+    <div class="sub-picker" role="group" data-i18n-aria="aria.controlsGroup" aria-label="Controls">
       <span class="cat-picker-label" data-i18n="pick.keys">KEYS</span>
-      <button class="diff-swatch ctrl-swatch" data-ctrl="arrows" aria-label="Arrow keys" data-i18n="ctrl.arrows">ARROWS</button>
-      <button class="diff-swatch ctrl-swatch" data-ctrl="wasd"   aria-label="WASD" data-i18n="ctrl.wasd">WASD</button>
+      <button class="diff-swatch ctrl-swatch" data-ctrl="arrows" type="button" aria-pressed="false" data-i18n="ctrl.arrows">ARROWS</button>
+      <button class="diff-swatch ctrl-swatch" data-ctrl="wasd" type="button" aria-pressed="false" data-i18n="ctrl.wasd">WASD</button>
     </div>
-    <div class="sub-picker" role="radiogroup" aria-label="Touch mode">
-      <span class="icon-label" aria-hidden="true" title="Touch mode">&#x1F446;</span>
-      <button class="diff-swatch touch-swatch" data-touch="auto" aria-label="Auto-detect touch" data-i18n="ctrl.auto">AUTO</button>
-      <button class="diff-swatch touch-swatch" data-touch="on"   aria-label="Force touch on"   data-i18n="ctrl.on">ON</button>
-      <button class="diff-swatch touch-swatch" data-touch="off"  aria-label="Force touch off"  data-i18n="ctrl.off">OFF</button>
+    <div class="sub-picker" role="group" data-i18n-aria="aria.touchGroup" aria-label="Touch mode">
+      <span class="icon-label" aria-hidden="true" data-i18n-title="aria.touchGroup" title="Touch mode">&#x1F446;</span>
+      <button class="diff-swatch touch-swatch" data-touch="auto" type="button" aria-pressed="false" data-i18n-aria="aria.touchAuto" aria-label="Auto-detect touch" data-i18n="ctrl.auto">AUTO</button>
+      <button class="diff-swatch touch-swatch" data-touch="on" type="button" aria-pressed="false" data-i18n-aria="aria.touchOn" aria-label="Force touch on"   data-i18n="ctrl.on">ON</button>
+      <button class="diff-swatch touch-swatch" data-touch="off" type="button" aria-pressed="false" data-i18n-aria="aria.touchOff" aria-label="Force touch off"  data-i18n="ctrl.off">OFF</button>
     </div>
   </div>
 
@@ -1495,26 +1548,26 @@
        language-agnostic. Pause/restart also on keyboard: P/Esc pause,
        R restart. -->
   <div class="cat-picker diff-picker combo-picker">
-    <div class="sub-picker" role="group" aria-label="Game controls">
+    <div class="sub-picker" role="group" data-i18n-aria="aria.gameControls" aria-label="Game controls">
       <button class="diff-swatch icon-btn action-btn" id="btn-pause"   type="button" aria-label="Pause / resume" title="Pause / Resume">&#x23F8;</button>
-      <button class="diff-swatch icon-btn action-btn" id="btn-restart" type="button" aria-label="Restart run" title="Restart">&#x27F3;</button>
+      <button class="diff-swatch icon-btn action-btn" id="btn-restart" type="button" data-i18n-aria="btn.restart" data-i18n-title="btn.restart" aria-label="Restart run" title="Restart">&#x27F3;</button>
     </div>
-    <div class="sub-picker" aria-label="Sound">
-      <span class="icon-label" aria-hidden="true" title="Sound">&#x1F50A;</span>
+    <div class="sub-picker" data-i18n-aria="aria.sound" aria-label="Sound">
+      <span class="icon-label" aria-hidden="true" data-i18n-title="aria.sound" title="Sound">&#x1F50A;</span>
       <input type="range" class="retro-slider toggle-slider" id="sound-toggle"
-             min="0" max="1" value="1" step="1" aria-label="Sound on/off">
+             min="0" max="1" value="1" step="1" data-i18n-aria="aria.sound" aria-label="Sound on/off">
       <span class="slider-value" id="sound-value">ON</span>
     </div>
-    <div class="sub-picker" aria-label="Language">
-      <span class="icon-label" aria-hidden="true" title="Language">&#x1F5E3;</span>
+    <div class="sub-picker" data-i18n-aria="aria.language" aria-label="Language">
+      <span class="icon-label" aria-hidden="true" data-i18n-title="aria.language" title="Language">&#x1F5E3;</span>
       <input type="range" class="retro-slider toggle-slider" id="lang-toggle"
-             min="0" max="1" value="0" step="1" aria-label="Language">
+             min="0" max="1" value="0" step="1" data-i18n-aria="aria.language" aria-label="Language">
       <span class="slider-value" id="lang-value">EN</span>
     </div>
     <!-- INSTALL button: hidden by default. Shown when beforeinstallprompt
          fires (Chrome/Android) or on iOS Safari not yet standalone. -->
     <div class="sub-picker" id="install-group" hidden>
-      <button class="diff-swatch install-btn" id="btn-install" type="button" aria-label="Install as app" title="Install">&#x1F4F2; <span data-i18n="btn.install">INSTALL</span></button>
+      <button class="diff-swatch install-btn" id="btn-install" type="button" data-i18n-aria="btn.install" aria-label="Install as app" data-i18n-title="btn.install" title="Install">&#x1F4F2; <span data-i18n="btn.install">INSTALL</span></button>
     </div>
   </div>
 
@@ -1541,14 +1594,14 @@
      swapped). Always visible during touch mode but disabled+dimmed while
      the cat is grounded; brighten and become tappable in mid-air. -->
 <div class="trick-pad" id="trick-pad" aria-hidden="true">
-  <button class="trick-btn" data-trick="roll"  type="button">ROLL</button>
-  <button class="trick-btn" data-trick="twist" type="button">TWIST</button>
-  <button class="trick-btn" data-trick="nap"   type="button">NAP</button>
+  <button class="trick-btn" data-trick="roll"  type="button" data-i18n="btn.roll">ROLL</button>
+  <button class="trick-btn" data-trick="twist" type="button" data-i18n="btn.twist">TWIST</button>
+  <button class="trick-btn" data-trick="nap"   type="button" data-i18n="btn.nap">NAP</button>
 </div>
 
 <!-- Swap button (mobile): toggles which side has the joystick vs the
      trick pad, so left-handers can mirror the layout. -->
-<button class="swap-btn" id="btn-swap" type="button" aria-label="Swap control layout" title="Swap control sides">&#x21C4;</button>
+<button class="swap-btn" id="btn-swap" type="button" data-i18n-aria="aria.swap" aria-label="Swap control layout" data-i18n-title="aria.swap" title="Swap control sides">&#x21C4;</button>
 
 <!-- Service worker registration — enables offline play via sw.js.
      Registered after 'load' so it doesn't delay first paint. -->
@@ -1729,13 +1782,14 @@
     return null;
   }
 
+  function isUiTarget(target) {
+    return target instanceof Element &&
+      !!target.closest('button, a, input, textarea, select, [role="button"], [contenteditable]:not([contenteditable="false"])');
+  }
+
   window.addEventListener('keydown', e => {
-    // If the user is typing into a form input (the leaderboard name
-    // entry, primarily), don't intercept keys for game controls. Without
-    // this guard, typing 'R' restarts the run and 'P' pauses it, which
-    // makes it impossible to spell anything starting with those letters.
-    const tag = e.target && e.target.tagName;
-    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    // Let focused controls handle Space, arrows, and typing normally.
+    if (isUiTarget(e.target)) return;
 
     const dir = normalizeKey(e);
     if (dir) e.preventDefault();
@@ -1765,9 +1819,8 @@
     }
   });
   window.addEventListener('keyup', e => {
-    const tag = e.target && e.target.tagName;
-    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-    const dir = normalizeKey(e);
+    // Always release a held direction, even if focus or modifiers changed.
+    const dir = normalizeKey({ key: e.key });
     if (dir === 'left')  keys.left = false;
     if (dir === 'right') keys.right = false;
     if (dir === 'up')    keys.up = false;
@@ -1789,12 +1842,17 @@
     fast.innerHTML  = wasd ? 'S'              : '&darr;';
   }
 
+  function setPressed(btn, selected) {
+    btn.classList.toggle('active', selected);
+    btn.setAttribute('aria-pressed', String(selected));
+  }
+
   function setControlMode(name) {
     if (name !== 'arrows' && name !== 'wasd') return;
     controlMode = name;
     localStorage.setItem('skior_controls', name);
     document.querySelectorAll('.ctrl-swatch').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.ctrl === name);
+      setPressed(btn, btn.dataset.ctrl === name);
     });
     updateKeysLegend();
   }
@@ -1870,7 +1928,7 @@
   // ---------- localized flavor text ----------
   // Pools picked from at random, no-repeat. MUST be declared before touch
   // mode setup: applyTouchState() calls hintText() which reads MESSAGES,
-  // and a const in TDZ would throw. Spanish is rioplatense (cats have 7 lives).
+  // and a const in TDZ would throw. Spanish is rioplatense; displayed life counts match gameplay.
   const MESSAGES = {
     en: {
       tree: {
@@ -2022,15 +2080,51 @@
         'install.step3':       '3. Tap <strong>Add to Home Screen</strong>',
         'install.close':       'TAP TO CLOSE',
         // Mobile collapse toggle (arrow added by JS)
-        'mobile.show':    'SHOW CONTROLS',
-        'mobile.hide':    'HIDE CONTROLS',
+        'mobile.show':    'SETTINGS',
+        'mobile.hide':    'CLOSE SETTINGS',
         'footer':       'NO QUARTER REQUIRED, NO QUARTER GIVEN',
         'credit.by':    'created by',
+        "lb.local": "ON THIS DEVICE",
+        "lb.starter": "Starter score",
+        "lb.starterNote": "* STARTER SCORE",
+        "lb.label": "Top three scores on this device",
+        "aria.catGroup": "Cat color",
+        "aria.themeGroup": "Mountain theme",
+        "aria.presetGroup": "Difficulty preset",
+        "aria.controlsGroup": "Keyboard controls",
+        "aria.touchGroup": "Touch controls",
+        "aria.touchAuto": "Detect touch controls automatically",
+        "aria.touchOn": "Touch controls on",
+        "aria.touchOff": "Touch controls off",
+        "aria.intensity": "Difficulty intensity",
+        "aria.intensityValue": "{n} times",
+        "aria.dogs": "Number of dog waves",
+        "aria.lives": "9 lives mode",
+        "aria.livesRemaining": "Lives remaining",
+        "aria.initials": "Enter your initials, up to 5 characters",
+        "aria.gameControls": "Game controls",
+        "aria.sound": "Sound",
+        "aria.language": "Language",
+        "aria.swap": "Swap control sides",
+        "aria.cookie": "Cookie preferences",
+        "btn.pause": "Pause",
+        "btn.resume": "Resume",
+        "btn.restart": "Restart run",
+        "btn.roll": "ROLL",
+        "btn.twist": "TWIST",
+        "btn.nap": "NAP",
+        "share.saved": "SAVED",
+        "share.copied": "COPIED",
+        "share.copyPrompt": "Copy this link:",
+        "share.text": "I scored {score} on Cat Ski ({distance}m). Beat me:",
+        "over.resetConfirm": "Clear best score for this difficulty?",
         'lb.modeNine':  '9 LIVES',
         'lb.modeOne':   '1 LIFE',
         'lb.newHigh':   'NEW HIGH SCORE!',
-        'link.readme':  'READ ME ›',
-        'cookie.text':    'This site uses anonymous analytics cookies to help improve gameplay. See the <a href="/readme.html#privacy">privacy notes</a> for details.',
+        'link.help':    'HOW TO PLAY',
+        'link.readme':  'HOW TO PLAY ›',
+        'touch.help':   'Drag the joystick to steer. Up slows; down speeds up.',
+        'cookie.text':    'Allow Google Analytics and Mixpanel to help improve Cat Ski? Google may send limited cookieless measurements if you decline. See the <a href="/readme.html#privacy">privacy notes</a> for details.',
         'cookie.accept':  'OK',
         'cookie.decline': 'NO THANKS',
       },
@@ -2069,7 +2163,7 @@
           'LO COMIÓ UN MUÑECO DE NIEVE',
           'FRIO, PERO FATAL',
           'EL MUÑECO TENÍA HAMBRE',
-          'NI LAS SIETE VIDAS LO SALVARON',
+          'EL MUÑECO NO PERDONA',
         ],
       },
       start1: [
@@ -2078,7 +2172,7 @@
         'La nieve es blanda. Los árboles no.',
       ],
       start1_9lives: [
-        'Siete vidas. A gastarlas todas.',
+        'Nueve vidas. A gastarlas todas.',
         'Nueve gatos, una montaña.',
       ],
       start1_1life: [
@@ -2098,7 +2192,7 @@
         'Una siestita.',
       ],
       paused_9lives: [
-        'Siete vidas recibiendo CVs.',
+        'Nueve vidas recibiendo CVs.',
         'Quedan varias más.',
       ],
       paused_1life: [
@@ -2148,9 +2242,9 @@
         'ctrl.arrows':  'FLECHAS',
         'ctrl.wasd':    'WASD',
         'ctrl.auto':    'AUTO',
-        'ctrl.on':      'SI',
+        'ctrl.on':      'SÍ',
         'ctrl.off':     'NO',
-        'switch.on':    'SI',
+        'switch.on':    'SÍ',
         'switch.off':   'NO',
         'btn.share':    'COMPARTIR',
         'btn.install':  'INSTALAR',
@@ -2173,15 +2267,51 @@
         'install.step2':    '2. Bajá la lista',
         'install.step3':    '3. Tocá <strong>Agregar a Inicio</strong>',
         'install.close':    'TOCÁ PARA CERRAR',
-        'mobile.show':    'MOSTRAR CONTROLES',
-        'mobile.hide':    'OCULTAR CONTROLES',
+        'mobile.show':    'AJUSTES',
+        'mobile.hide':    'CERRAR AJUSTES',
         'footer':       'GRATIS',
         'credit.by':    'creado por',
+        "lb.local": "EN ESTE DISPOSITIVO",
+        "lb.starter": "Puntaje inicial",
+        "lb.starterNote": "* PUNTAJE INICIAL",
+        "lb.label": "Los tres mejores puntajes de este dispositivo",
+        "aria.catGroup": "Color del gato",
+        "aria.themeGroup": "Montaña",
+        "aria.presetGroup": "Nivel de dificultad",
+        "aria.controlsGroup": "Controles del teclado",
+        "aria.touchGroup": "Controles táctiles",
+        "aria.touchAuto": "Detectar los controles táctiles automáticamente",
+        "aria.touchOn": "Controles táctiles activados",
+        "aria.touchOff": "Controles táctiles desactivados",
+        "aria.intensity": "Intensidad de la dificultad",
+        "aria.intensityValue": "{n} veces",
+        "aria.dogs": "Cantidad de tandas de perros",
+        "aria.lives": "Modo de 9 vidas",
+        "aria.livesRemaining": "Vidas restantes",
+        "aria.initials": "Ingresá tus iniciales, hasta 5 caracteres",
+        "aria.gameControls": "Controles del juego",
+        "aria.sound": "Sonido",
+        "aria.language": "Idioma",
+        "aria.swap": "Cambiar de lado los controles",
+        "aria.cookie": "Preferencias de cookies",
+        "btn.pause": "Pausar",
+        "btn.resume": "Seguir",
+        "btn.restart": "Reiniciar la partida",
+        "btn.roll": "VUELTA",
+        "btn.twist": "GIRO",
+        "btn.nap": "SIESTA",
+        "share.saved": "GUARDADO",
+        "share.copied": "COPIADO",
+        "share.copyPrompt": "Copiá este enlace:",
+        "share.text": "Hice {score} puntos en Cat Ski ({distance}m). ¡Superame!",
+        "over.resetConfirm": "¿Borrar el mejor puntaje de esta dificultad?",
         'lb.modeNine':  '9 VIDAS',
         'lb.modeOne':   '1 VIDA',
         'lb.newHigh':   '¡NUEVO RÉCORD!',
-        'link.readme':  'LÉEME ›',
-        'cookie.text':    'Este sitio usa cookies de análisis anónimo para mejorar el juego. Detalles en las <a href="/readme.html#privacy">notas de privacidad</a>.',
+        'link.help':    'CÓMO JUGAR',
+        'link.readme':  'CÓMO JUGAR ›',
+        'touch.help':   'Arrastrá el joystick para dirigir. Arriba frena; abajo acelera.',
+        'cookie.text':    '¿Permitís que Google Analytics y Mixpanel ayuden a mejorar Cat Ski? Si rechazás las cookies, Google puede enviar mediciones limitadas sin cookies. Consultá las <a href="/readme.html#privacy">notas de privacidad</a> para más detalles.',
         'cookie.accept':  'OK',
         'cookie.decline': 'NO',
       },
@@ -2229,6 +2359,14 @@
         || (MESSAGES.en.ui  && MESSAGES.en.ui[key])
         || key;
   }
+  function syncSettingValueText() {
+    const sound = document.getElementById('sound-toggle');
+    if (sound) sound.setAttribute('aria-valuetext', t(sound.value === '1' ? 'switch.on' : 'switch.off'));
+    const language = document.getElementById('lang-toggle');
+    if (language) language.setAttribute('aria-valuetext', language.value === '1' ? 'Español' : 'English');
+    const difficulty = document.getElementById('diff-slider');
+    if (difficulty) difficulty.setAttribute('aria-valuetext', t('aria.intensityValue').replace('{n}', String(Number(difficulty.value) / 100)));
+  }
   // Repaint every [data-i18n*] element. data-i18n-html allows inline tags;
   // data-i18n-title writes to title attribute instead of textContent.
   function applyUILabels() {
@@ -2241,6 +2379,15 @@
     document.querySelectorAll('[data-i18n-title]').forEach(el => {
       el.title = t(el.dataset.i18nTitle);
     });
+    document.querySelectorAll('[data-i18n-aria]').forEach(el => {
+      el.setAttribute('aria-label', t(el.dataset.i18nAria));
+    });
+    const remainingHud = document.getElementById('lives-hud');
+    if (remainingHud && remainingHud.dataset.remaining != null) {
+      remainingHud.setAttribute('aria-label', t('aria.livesRemaining') + ': ' + remainingHud.dataset.remaining);
+    }
+    syncSettingValueText();
+    syncPauseButtons();
     const ct = document.getElementById('controls-toggle');
     if (ct) {
       const expanded = ct.getAttribute('aria-expanded') === 'true';
@@ -2277,7 +2424,7 @@
   function applyTouchState() {
     const on = isTouchActive();
     document.body.classList.toggle('touch-active', on);
-    document.body.classList.toggle('mobile-layout', on);
+    document.body.classList.toggle('mobile-layout', on || window.matchMedia('(max-width: 600px)').matches);
     const startHint  = document.querySelector('#overlay-start .hint');
     const overHint   = document.querySelector('#overlay-over  .hint');
     const pausedHint = document.getElementById('paused-hint');
@@ -2294,7 +2441,7 @@
     touchMode = name;
     localStorage.setItem('skior_touch', name);
     document.querySelectorAll('.touch-swatch').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.touch === name);
+      setPressed(btn, btn.dataset.touch === name);
     });
     applyTouchState();
   }
@@ -2335,6 +2482,23 @@
     stickKnob.style.transform = '';
     keys.left = keys.right = keys.up = keys.down = false;
   }
+  function clearInput() {
+    spacePressed = false;
+    if (stickPointerId !== null) {
+      try { stickEl.releasePointerCapture(stickPointerId); } catch (_) {}
+      stickPointerId = null;
+    }
+    resetStick();
+  }
+  function suspendGame() {
+    clearInput();
+    pauseGame();
+  }
+  window.addEventListener('blur', suspendGame);
+  window.addEventListener('pagehide', suspendGame);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) suspendGame();
+  });
   stickEl.addEventListener('pointerdown', e => {
     if (stickPointerId !== null) return;
     // If not in play state, treat a stick tap as "start/retry" rather
@@ -2355,7 +2519,7 @@
     updateStick(e);
     e.preventDefault();
   });
-  ['pointerup', 'pointercancel'].forEach(ev => {
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => {
     stickEl.addEventListener(ev, e => {
       if (e.pointerId !== stickPointerId) return;
       stickPointerId = null;
@@ -2364,9 +2528,10 @@
   });
 
   // ---------- tap-to-start ----------
-  // Clicking anywhere on either overlay triggers SPACE. Works for mouse
-  // clicks AND touch taps, so desktop users get a small UX upgrade too.
-  const overlayTap = () => { spacePressed = true; };
+  // Blank overlay space starts/resumes; its links and controls act normally.
+  const overlayTap = e => {
+    if (!isUiTarget(e.target)) spacePressed = true;
+  };
   document.getElementById('overlay-start').addEventListener('click', overlayTap);
   document.getElementById('overlay-over').addEventListener('click', overlayTap);
   document.getElementById('overlay-paused').addEventListener('click', overlayTap);
@@ -2406,7 +2571,7 @@
     // SCORE label
     c.fillStyle = UI.snowDim;
     c.font = 'bold 16px "Press Start 2P", monospace';
-    c.fillText('SCORE', W2 / 2, H2 + 95);
+    c.fillText(t('hud.score'), W2 / 2, H2 + 95);
     // Distance + time
     c.fillStyle = UI.snow;
     c.font = 'bold 16px "Press Start 2P", monospace';
@@ -2414,29 +2579,27 @@
     // Difficulty / cat / theme line
     c.fillStyle = UI.textDim;
     c.font = '20px "VT323", monospace';
-    const meta = `${catColor.toUpperCase()} CAT  ${THEMES[mtnTheme].name}  ${intensity.toFixed(1)}x  ${dogCount} DOG${dogCount > 1 ? 'S' : ''}`;
+    const meta = `${t('cat.' + catColor)} · ${t('theme.' + mtnTheme)} · ${intensity.toFixed(1)}x · ${t('pick.dogs')} ${dogCount}`;
     c.fillText(meta, W2 / 2, H2 + 158);
     // URL
     c.fillStyle = UI.gold;
     c.font = 'bold 16px "Press Start 2P", monospace';
-    c.fillText('SKI.MIKE-LEE.ME', W2 / 2, H2 + 188);
+    c.fillText('SKI.UNWOKE.NINJA', W2 / 2, H2 + 188);
     return new Promise(resolve => out.toBlob(resolve, 'image/png'));
   }
 
   function flashShareLabel(text) {
     if (!btnShare) return;
-    const original = btnShare.dataset.label || btnShare.textContent;
-    btnShare.dataset.label = original;
     btnShare.textContent = text;
     btnShare.classList.add('copied');
     setTimeout(() => {
-      btnShare.textContent = original;
+      btnShare.textContent = t('btn.share');
       btnShare.classList.remove('copied');
     }, 1800);
   }
 
   async function shareRun() {
-    const text = `I scored ${stats.score} on Cat Ski (${stats.distance}m). Beat me:`;
+    const text = t('share.text').replace('{score}', stats.score).replace('{distance}', stats.distance);
     const url = 'https://ski.unwoke.ninja/';
     let blob = null;
     try { blob = await composeShareImage(); } catch (_) {}
@@ -2467,17 +2630,17 @@
       link.click();
       URL.revokeObjectURL(link.href);
       try { await navigator.clipboard.writeText(`${text} ${url}`); } catch (_) {}
-      flashShareLabel('SAVED');
+      flashShareLabel(t('share.saved'));
       trackRunShared('download');
       return;
     }
     // Path 4: last resort — clipboard text only
     try {
       await navigator.clipboard.writeText(`${text} ${url}`);
-      flashShareLabel('COPIED');
+      flashShareLabel(t('share.copied'));
       trackRunShared('clipboard');
     } catch (_) {
-      window.prompt('Copy this link:', url);
+      window.prompt(t('share.copyPrompt'), url);
     }
   }
 
@@ -2488,7 +2651,7 @@
   if (resetBestLink) {
     resetBestLink.addEventListener('click', (e) => {
       e.preventDefault();
-      if (!confirm('Clear best score for this difficulty combo?')) return;
+      if (!confirm(t('over.resetConfirm'))) return;
       delete bests[bestKey()];
       saveBests(bests);
       best = 0;
@@ -2510,9 +2673,24 @@
 
   // ---------- pause / restart buttons ----------
   const btnPause   = document.getElementById('btn-pause');
+  const btnTouchPause = document.getElementById('btn-touch-pause');
   const btnRestart = document.getElementById('btn-restart');
   btnPause.addEventListener('click', () => togglePause());
+  btnTouchPause.addEventListener('click', () => togglePause());
   btnRestart.addEventListener('click', () => restartRun());
+
+  function syncPauseButtons() {
+    const paused = !document.getElementById('overlay-paused').classList.contains('hidden');
+    const inactive = !document.getElementById('overlay-start').classList.contains('hidden') ||
+                     !document.getElementById('overlay-over').classList.contains('hidden');
+    document.querySelectorAll('#btn-pause, #btn-touch-pause').forEach(btn => {
+      btn.classList.toggle('paused', paused);
+      btn.textContent = paused ? '▶' : '⏸';
+      btn.setAttribute('aria-label', t(paused ? 'btn.resume' : 'btn.pause'));
+      btn.title = t(paused ? 'btn.resume' : 'btn.pause');
+      btn.disabled = inactive;
+    });
+  }
 
   // ---------- audio ----------
   // Procedural Web Audio (Oscillator + BufferSource + envelopes). No audio files.
@@ -2670,6 +2848,7 @@
     }
     if (soundToggle)  soundToggle.value = on ? '1' : '0';
     if (soundValueEl) soundValueEl.textContent = on ? t('switch.on') : t('switch.off');
+    syncSettingValueText();
   }
   if (soundToggle) {
     soundToggle.addEventListener('input', () => {
@@ -2693,6 +2872,7 @@
   function setLang(name) {
     if (!MESSAGES[name]) return;
     lang = name;
+    document.documentElement.lang = lang;
     localStorage.setItem('skior_lang', name);
     registerSuperProps();
     if (langToggle)  langToggle.value = lang === 'es' ? '1' : '0';
@@ -2713,6 +2893,8 @@
     });
   }
   setLang(lang);
+  // The cookie banner follows this script in the document.
+  document.addEventListener('DOMContentLoaded', applyUILabels, { once: true });
 
   // ---------- mobile trick buttons ----------
   // One handler per button; delegates to startTrick(name). Using
@@ -2754,18 +2936,19 @@
   };
 
   let catColor = localStorage.getItem('skior_cat') || 'tabby';
+  if (!CAT_PALETTES[catColor]) catColor = 'tabby';
   function cat() { return CAT_PALETTES[catColor] || CAT_PALETTES.tabby; }
 
   function setCatColor(name) {
     if (!CAT_PALETTES[name]) return;
     catColor = name;
     localStorage.setItem('skior_cat', name);
-    document.querySelectorAll('.cat-swatch').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.cat === name);
+    document.querySelectorAll('button[data-cat]').forEach(btn => {
+      setPressed(btn, btn.dataset.cat === name);
     });
   }
 
-  document.querySelectorAll('.cat-swatch').forEach(btn => {
+  document.querySelectorAll('button[data-cat]').forEach(btn => {
     btn.addEventListener('click', () => setCatColor(btn.dataset.cat));
   });
   setCatColor(catColor);
@@ -2883,7 +3066,7 @@
     mtnTheme = name;
     localStorage.setItem('skior_theme', name);
     document.querySelectorAll('[data-theme]').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.theme === name);
+      setPressed(btn, btn.dataset.theme === name);
     });
   }
 
@@ -2980,7 +3163,7 @@
   dogCount = Math.max(1, Math.min(10, dogCount));
 
   // 9-lives casual mode. 9 lives → grey-out HUD icons; only ends run on the 9th hit.
-  // Best scores and the global leaderboard are namespaced separately per mode.
+  // Best scores and the device-local leaderboard are namespaced separately per mode.
   // Default is ON; only an explicit '0' in storage opts out.
   let livesMode = localStorage.getItem('skior_lives') !== '0';
 
@@ -3018,6 +3201,7 @@
     localStorage.setItem('skior_intensity', String(intensity));
     if (diffSlider) diffSlider.value = String(Math.round(intensity * 100));
     if (diffValue)  diffValue.textContent = intensity.toFixed(2).replace(/\.?0+$/, '') + 'x';
+    syncSettingValueText();
     refreshBestForCombo();
   }
   function applyDogCount(val) {
@@ -3076,6 +3260,8 @@
   function updateLivesHUD(remaining) {
     if (!livesHud) return;
     if (remaining == null) remaining = livesMode ? 9 : 1;
+    livesHud.dataset.remaining = String(remaining);
+    livesHud.setAttribute('aria-label', t('aria.livesRemaining') + ': ' + remaining);
     const icons = livesHud.querySelectorAll('.life-icon');
     icons.forEach((el, i) => {
       // Icon i (0-indexed) is "alive" if i < remaining. The rightmost
@@ -3088,7 +3274,7 @@
     livesMode = !!on;
     localStorage.setItem('skior_lives', livesMode ? '1' : '0');
     document.body.classList.toggle('lives-mode', livesMode);
-    if (btnLives) btnLives.classList.toggle('active', livesMode);
+    if (btnLives) setPressed(btnLives, livesMode);
     // Best scores live under a different key when lives mode is on, so
     // refresh the displayed best for the current intensity/dogs combo.
     best = currentBest();
@@ -3120,39 +3306,28 @@
     hard:   { intensity: 2.5, dogs: 5 },
     insta:  { intensity: 4.0, dogs: 8 },
   };
+  function syncPresetSelection() {
+    const selected = Object.entries(PRESETS).find(([, p]) =>
+      Math.abs(p.intensity - intensity) < 0.01 && p.dogs === dogCount
+    )?.[0];
+    document.querySelectorAll('.preset-btn').forEach(btn =>
+      setPressed(btn, btn.dataset.preset === selected)
+    );
+  }
   function applyPreset(name) {
     const p = PRESETS[name];
     if (!p) return;
     applyIntensity(p.intensity);
     applyDogCount(p.dogs);
-    // Visual feedback: highlight matching preset, clear others. Updates
-    // again when sliders are touched (via the listener below).
-    document.querySelectorAll('.preset-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.preset === name);
-    });
+    syncPresetSelection();
   }
   document.querySelectorAll('.preset-btn').forEach(btn => {
     btn.addEventListener('click', () => applyPreset(btn.dataset.preset));
   });
-  // When the user manually moves a slider, clear the preset highlight
-  // (their custom value no longer matches a preset).
-  function clearPresetHighlight() {
-    document.querySelectorAll('.preset-btn').forEach(btn =>
-      btn.classList.remove('active')
-    );
-  }
-  if (diffSlider) diffSlider.addEventListener('input', clearPresetHighlight);
-  if (dogsSlider) dogsSlider.addEventListener('input', clearPresetHighlight);
-  // On boot, highlight the preset whose values match the saved sliders
-  // (if any). Subtle but nice for repeat visitors.
-  for (const [name, p] of Object.entries(PRESETS)) {
-    if (Math.abs(p.intensity - intensity) < 0.01 && p.dogs === dogCount) {
-      document.querySelectorAll('.preset-btn').forEach(btn =>
-        btn.classList.toggle('active', btn.dataset.preset === name)
-      );
-      break;
-    }
-  }
+  // Recompute from current values, including a manually restored preset.
+  if (diffSlider) diffSlider.addEventListener('input', syncPresetSelection);
+  if (dogsSlider) dogsSlider.addEventListener('input', syncPresetSelection);
+  syncPresetSelection();
 
   // ---------- game state ----------
   // State machine: 'title' -> 'play' <-> 'paused' -> 'over' -> 'play' ...
@@ -3873,17 +4048,19 @@
   const LB_CACHE_KEY = 'skior_leaderboard_v3';
   const DEFAULT_BOARDS = {
     lives9: [
-      { name: 'ACA',   score: 3729 },
-      { name: 'JON',   score: 3545 },
-      { name: 'HELLO', score: 3197 },
+      { name: 'ACA',   score: 3729, starter: true },
+      { name: 'JON',   score: 3545, starter: true },
+      { name: 'HELLO', score: 3197, starter: true },
     ],
     lives1: [
-      { name: 'CLAWS', score: 750 },
-      { name: 'TIGER', score: 500 },
-      { name: 'BOOTS', score: 250 },
+      { name: 'CLAWS', score: 750, starter: true },
+      { name: 'TIGER', score: 500, starter: true },
+      { name: 'BOOTS', score: 250, starter: true },
     ],
   };
 
+  // No provenance inference for pre-existing entries: preserve saved rows.
+  // Newly generated starter metadata survives this unchanged-object sanitizer.
   function sanitizeBoard(arr) {
     if (!Array.isArray(arr)) return [];
     return arr
@@ -3948,6 +4125,8 @@
     '</svg>';
   function renderLeaderboard() {
     if (!leaderboardEl) return;
+    const starterNote = document.getElementById('lb-starter-note');
+    if (starterNote) starterNote.hidden = !leaderboard.some(entry => entry.starter === true);
     // Build with createElement to avoid any HTML injection from saved
     // names. maxlength caps user input, but defense in depth. The
     // trophy SVGs are author-controlled markup so innerHTML there is
@@ -3970,6 +4149,13 @@
       const n = document.createElement('span');
       n.className = 'lb-name';
       n.textContent = e ? e.name : '---';
+      if (e && e.starter === true) {
+        const marker = document.createElement('span');
+        marker.className = 'lb-starter';
+        marker.textContent = '*';
+        marker.title = t('lb.starter');
+        n.appendChild(marker);
+      }
       const s = document.createElement('span');
       s.className = 'lb-score';
       s.textContent = e ? String(e.score) : '-----';
@@ -3993,7 +4179,7 @@
   // high-to-low, trim to 3. Returns the 1-based rank the entry landed at.
   function insertLeaderboardEntry(name, score) {
     const clean = String(name || '').toUpperCase().replace(/[^A-Z0-9 ]/g, '').slice(0, 5).trim() || 'CAT';
-    const entry = { name: clean, score: score };
+    const entry = { name: clean, score: score, starter: false };
     const slot  = modeSlot();
     const board = leaderboardCache[slot] || [];
     board.push(entry);
@@ -4099,6 +4285,8 @@
     overScore.textContent = stats.score;
     overBest.textContent  = best;
     overlayOver.classList.remove('hidden');
+    clearInput();
+    syncPauseButtons();
     trackRunCompleted(cause);
     // Reveal the name-entry block if this run cracked the top-3. Default
     // hidden by HTML, hidden again by hideLbEntry() once submitted.
@@ -4122,9 +4310,9 @@
     // last run, lbEntryActive could still be true; reset it here so
     // SPACE during this run doesn't get swallowed.
     hideLbEntry();
-    btnPause.classList.remove('paused');
-    btnPause.innerHTML = '&#x23F8;';   // pause glyph (play state default)
     state = STATE.PLAY;
+    clearInput();
+    syncPauseButtons();
     ensureAudio();   // unlocks audio on first start
     sfx.start();
     startSwoosh();
@@ -4136,8 +4324,7 @@
     if (state !== STATE.PLAY) return;
     state = STATE.PAUSED;
     overlayPaused.classList.remove('hidden');
-    btnPause.classList.add('paused');
-    btnPause.innerHTML = '&#x25B6;';  // play / resume glyph
+    syncPauseButtons();
     // Force trick buttons to dim during pause regardless of mid-jump state
     document.body.classList.remove('airborne');
     // Roll a fresh pause line so every pause feels different
@@ -4146,14 +4333,13 @@
     silenceSwoosh();
     // Release any held direction keys so the player doesn't keep tucking
     // through the pause (especially since touch users can't release).
-    keys.left = keys.right = keys.up = keys.down = false;
+    clearInput();
   }
   function resumeGame() {
     if (state !== STATE.PAUSED) return;
     state = STATE.PLAY;
     overlayPaused.classList.add('hidden');
-    btnPause.classList.remove('paused');
-    btnPause.innerHTML = '&#x23F8;';  // pause glyph
+    syncPauseButtons();
   }
   function togglePause() {
     if (state === STATE.PLAY)   pauseGame();
@@ -5468,10 +5654,9 @@
      is stored in localStorage under 'skior_cookies' and read on
      subsequent visits to keep the banner from re-appearing. Both
      pages share the same key so a decision on either persists. -->
-<div id="cookie-banner" class="cookie-banner" hidden role="dialog" aria-label="Cookie consent">
+<div id="cookie-banner" class="cookie-banner" hidden role="dialog" data-i18n-aria="aria.cookie" aria-label="Cookie consent">
   <span class="cb-text" data-i18n-html="cookie.text">
-    This site uses anonymous analytics cookies to help improve gameplay.
-    See the <a href="/readme.html#privacy">privacy notes</a> for details.
+    Allow Google Analytics and Mixpanel to help improve Cat Ski? Google may send limited cookieless measurements if you decline. See the <a href="/readme.html#privacy">privacy notes</a> for details.
   </span>
   <button class="cb-btn cb-accept" id="cookie-accept" type="button" data-i18n="cookie.accept">OK</button>
   <button class="cb-btn cb-decline" id="cookie-decline" type="button" data-i18n="cookie.decline">NO THANKS</button>

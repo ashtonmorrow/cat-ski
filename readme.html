@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Cat Ski README: how to play, controls, and gameplay</title>
+<title>How to play Cat Ski: controls and gameplay</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <!-- Crawler hints — explicit index/follow + allow large image previews. -->
@@ -49,7 +49,7 @@
 
 <!-- Open Graph -->
 <meta property="og:type" content="article">
-<meta property="og:title" content="Cat Ski README: how to play">
+<meta property="og:title" content="How to play Cat Ski">
 <meta property="og:description" content="How to play Cat Ski, the free SkiFree-style browser skiing game. Controls, the cats and the mountains, and the dog on your tail.">
 <meta property="og:image" content="https://ski.unwoke.ninja/preview.png?v=19">
 <meta property="og:image:width" content="1200">
@@ -58,10 +58,11 @@
 <meta property="og:site_name" content="cat-ski">
 <meta property="article:author" content="Mike Lee">
 <meta property="article:published_time" content="2026-04-25">
+<meta property="article:modified_time" content="2026-09-07">
 
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Cat Ski README: how to play">
+<meta name="twitter:title" content="How to play Cat Ski">
 <meta name="twitter:description" content="How to play Cat Ski, the free browser skiing game. Controls, cats, mountains, and the dog on your tail.">
 <meta name="twitter:image" content="https://ski.unwoke.ninja/preview.png?v=19">
 
@@ -72,7 +73,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=19">
 <meta name="theme-color" content="#0b1320">
 
-<!-- Structured data: TechArticle -->
+<!-- Structured data: Article -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -82,7 +83,7 @@
   "description": "How to play Cat Ski, the free SkiFree-style browser skiing game: the controls, the cats and the mountains, the dog and the snowman, and answers to common questions.",
   "image": "https://ski.unwoke.ninja/preview.png?v=19",
   "datePublished": "2026-04-25",
-  "dateModified": "2026-07-10",
+  "dateModified": "2026-09-07",
   "inLanguage": "en",
   "isAccessibleForFree": true,
   "about": [
@@ -127,7 +128,7 @@
       "name": "Is there a version of SkiFree you can play online?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Cat Ski is a browser tribute to SkiFree. It runs in any modern browser on desktop or phone, with nothing to download. The core loop matches the 1991 original. You ski downhill, dodge trees, and keep ahead of the chaser that appears when you slow down."
+        "text": "Cat Ski is a browser tribute to SkiFree. Play on desktop or phone with no installation required. Ski downhill, dodge obstacles, land tricks, and escape dog and snowman chasers."
       }
     },
     {
@@ -143,7 +144,7 @@
       "name": "Does the snowman catch you, like the SkiFree yeti?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Yes. If you slow down or ski too far, a snowman starts chasing and will catch you. In 9-lives mode you can afford a few mistakes. In 1-life classic mode, one catch ends the run."
+        "text": "Yes. The snowman appears 20–40 seconds after the final dog wave clears. A catch costs a life. In 9-lives mode you can recover while lives remain; in 1-life classic, one catch ends the run."
       }
     },
     {
@@ -151,7 +152,7 @@
       "name": "Can I install Cat Ski and play offline?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Yes. Cat Ski is a Progressive Web App. Use the INSTALL button in the game, or your browser's Add to Home Screen option, and it runs offline afterward."
+        "text": "Yes. Cat Ski is a Progressive Web App. Use the INSTALL button when available, or your browser's Add to Home Screen option. Once the game assets have been cached during an online visit, you can play offline."
       }
     },
     {
@@ -159,7 +160,7 @@
       "name": "What are the controls?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Steer with the arrow keys or WASD, and press Space to start, pause, or restart. On a phone, use the on-screen joystick and the trick buttons."
+        "text": "Left/right arrows or A/D steer; up/W slows down; down/S tucks for speed. Space starts, retries, or resumes. P or Esc pauses or resumes; R restarts. Press 1, 2, or 3 while airborne for tricks. On a phone, drag the joystick to steer, up to slow down, or down to tuck, and tap the trick buttons while airborne."
       }
     }
   ]
@@ -247,7 +248,7 @@
     text-shadow: 0 0 6px rgba(122,167,199,.6);
   }
   .header h1 .alt   { color: var(--accent); }
-  .header h1 .label { color: var(--snow-dim); margin-left: 8px; }
+  .header h1 .label { display: block; color: var(--snow-dim); margin-top: 8px; font-size: var(--type-sm); line-height: 1.5; }
   .nav-back {
     font-family: var(--font-display);
     font-size: var(--type-sm);
@@ -443,7 +444,7 @@
 <body>
   <div class="container">
     <div class="header">
-      <h1><span class="alt">CAT</span> SKI<span class="label">// README</span></h1>
+      <h1><span class="alt">CAT</span> SKI<span class="label">// HOW TO PLAY</span></h1>
       <a href="/" class="nav-back">&lt; PLAY</a>
     </div>
 
@@ -461,32 +462,34 @@
 
     <h2 id="tldr">How to play (quick start)</h2>
 
-    <p>Ski downhill, dodge trees, land tricks for bonus points, and try to outlast the dog chasers and the snowman that ends every run. By default you have nine lives; toggle the <strong>9</strong> button to play 1-life classic. Pick a cat color and a mountain theme, then press <strong>SPACE</strong> to start.</p>
+    <p>Press <strong>SPACE</strong> or tap the start screen to play. Steer around trees, collect flags, and use ramps to jump. You start with nine lives. Once airborne, press <strong>1, 2, or 3</strong> (or tap a trick button) for bonus points.</p>
+
+    <p>Choose a cat, mountain, and difficulty in the settings, or start with the defaults. The <strong>9</strong> toggle switches between nine lives and 1-life classic.</p>
 
     <table>
       <thead>
         <tr><th>Input</th><th>Action</th></tr>
       </thead>
       <tbody>
-        <tr><td>Arrow keys or WASD</td><td>Steer left and right</td></tr>
+        <tr><td>Left/right arrows or A/D</td><td>Steer left and right</td></tr>
         <tr><td>Down arrow or S</td><td>Tuck for higher speed</td></tr>
         <tr><td>Up arrow or W</td><td>Carve for lower speed</td></tr>
         <tr><td>1, 2, 3 (in mid-air)</td><td>Trick: Meow Roll, Whisker Twist, Cat Nap</td></tr>
         <tr><td>Space</td><td>Start, retry, or resume</td></tr>
-        <tr><td>P or Esc</td><td>Pause</td></tr>
+        <tr><td>P or Esc</td><td>Pause or resume</td></tr>
         <tr><td>R</td><td>Restart the current run</td></tr>
       </tbody>
     </table>
 
-    <p>On phones and tablets, an on-screen joystick replaces the keyboard. The trick buttons sit alongside the joystick and a SWAP button lets you put either control on whichever side fits your thumb.</p>
+    <p>On phones and tablets, drag the joystick left or right to steer, up to slow down, or down to tuck for speed. Tap the trick buttons while airborne. <strong>SWAP</strong> exchanges the joystick and button positions.</p>
 
     <h2 id="about">About cat-ski</h2>
 
     <p>Cat Ski 1989 is a free browser game inspired by <a href="https://en.wikipedia.org/wiki/SkiFree" target="_blank" rel="noopener noreferrer">SkiFree</a>, the 1991 release that shipped in Microsoft Entertainment Pack 3 for Windows 3.0. The original presented an endless downhill ski run with trees, jumps, and an unkillable abominable yeti that eventually appeared and ended every run. Cat Ski 1989 recreates the same loop with a cat as the player character. The game includes three regional mountain themes (Alps, Rockies, Himalayas), four cat color variants, an in-air trick system with chained scoring, gold escape ramps that spawn alongside each dog wave, and a snowman that takes the role of the original yeti. Difficulty is tunable through two sliders, with four named presets for casual players.</p>
 
-    <p>The game ships with a 9-lives casual mode enabled by default. Each crash, dog grab, or snowman chomp consumes a life, with a brief invincibility window before the next hit registers. A toggle on the picker row drops the cat back to 1-life classic for players who want the original SkiFree edge. A top-3 leaderboard sits at the top of the page; it splits into separate boards for 9-lives and 1-life so the two modes stay apples-to-apples. Scores are kept in the browser, so each player builds their own board. Entering a name is optional and only happens after a qualifying run. The UI is bilingual (English and rioplatense Spanish) via a slider on the controls row.</p>
+    <p>The game ships with a 9-lives casual mode enabled by default. Each crash, dog grab, or snowman chomp consumes a life, with a brief invincibility window before the next hit registers. A top-3 leaderboard sits at the top of the page, with separate boards for 9-lives and 1-life. Each browser starts with three preset scores to beat; this is not a live global ranking. Entering a nickname is optional and only happens after a qualifying run. English and rioplatense Spanish are available in the settings.</p>
 
-    <p>The project is open source at <a href="https://github.com/ashtonmorrow/cat-ski" target="_blank" rel="noopener noreferrer">github.com/ashtonmorrow/cat-ski</a>. It was developed by <a href="https://www.linkedin.com/in/mikelee89/" target="_blank" rel="noopener noreferrer">Mike Lee</a> using Claude as a coding collaborator. The full game is one self-contained HTML file with no build step, framework, or backend. The two fonts are self-hosted. It is installable as a Progressive Web App for offline play. Best scores and the leaderboard both persist in the browser, so the game runs with no network at all after the first load.</p>
+    <p>The project is open source at <a href="https://github.com/ashtonmorrow/cat-ski" target="_blank" rel="noopener noreferrer">github.com/ashtonmorrow/cat-ski</a>. It was developed by <a href="https://www.linkedin.com/in/mikelee89/" target="_blank" rel="noopener noreferrer">Mike Lee</a> using Claude as a coding collaborator. The game code is in one HTML file, with separate artwork, icons, and self-hosted fonts. There is no build step, framework, or game backend. A service worker caches the game assets for offline play, and saved scores stay in the browser.</p>
 
     <h2 id="play">Gameplay details</h2>
 
@@ -494,7 +497,7 @@
 
     <p>The score increases with distance traveled, plus bonuses for collected flags, completed jumps, and chained tricks. Each subsequent trick within a single jump compounds the bonus, so chaining several tricks before landing produces a higher reward than performing them across separate jumps.</p>
 
-    <p>After a fixed time, dogs begin to appear at the top of the screen and chase the cat down the slope. Each dog crosses the cat's screen position at a calculable moment determined by its descent rate. The player can dodge horizontally before the crossing, or launch from a gold escape ramp to be airborne while the dog passes. After the configured number of dog waves are cleared, a snowman appears within a randomized window and ends the run on contact. The snowman is the project's tribute to the original SkiFree yeti.</p>
+    <p>Dogs chase the cat down the slope. Dodge sideways, or launch from a gold escape ramp to be airborne while a dog passes. The snowman appears 20–40 seconds after the final dog wave clears. A catch costs one life; losing the last life ends the run. The snowman is the project's tribute to the original SkiFree yeti.</p>
 
     <p>Difficulty is set with two sliders. Intensity (0.8x to 5x) scales speed, obstacle density, spawn cadence, and dog tracking. Dog count (1 to 10) sets how many dog waves appear before the snowman. Four named presets (EASY, MEDIUM, HARD, and INSTA DEATH) snap both sliders to canonical positions for players who do not want to tune individual parameters.</p>
 
@@ -502,21 +505,25 @@
 
     <h2 id="build">How it's built</h2>
 
-    <p>Cat Ski is one <code>index.html</code>: vanilla JavaScript, an HTML canvas at 360x270 scaled up with pixelated rendering, and the Web Audio API for sound. There is no framework, no build step, and no image or audio files. It is versioned on GitHub and hosted free on Vercel, so every change is live in under a minute.</p>
+    <p>Cat Ski uses vanilla JavaScript in <code>index.html</code>, an HTML canvas at 360x270 scaled up with pixelated rendering, and the Web Audio API for sound. Artwork, icons, and fonts are separate files; sound is synthesized without audio files. There is no framework or build step. The source is versioned on GitHub and deployed to Vercel.</p>
 
     <p>The full build story, with the game loop, the maths behind the dog chase, the palettes pulled from photographs, and the free toolchain, lives at <a href="https://unwoke.ninja/cat-ski/built-with-ai" target="_blank" rel="noopener">unwoke.ninja/cat-ski/built-with-ai</a>.</p>
 
     <h2 id="privacy">Privacy notes</h2>
 
-    <p>Cat Ski 1989 is a free, single-page browser game with no accounts, no signups, and no email collection. The data the site does touch is described in full below so a player can decide what to consent to.</p>
+    <p>Cat Ski has no accounts, signups, or email forms. It saves game settings and scores in your browser and uses Google Analytics 4 and Mixpanel as described below.</p>
 
-    <h3>Anonymous analytics</h3>
+    <h3>Analytics and your choice</h3>
 
-    <p>The site loads Google Analytics 4 to count plays and surface basic usage patterns (page views, country-level location, device type). GA is configured with Consent Mode v2 and defaults to denied, which means no GA cookies are written and no data is sent until the visitor accepts the cookie banner. Declining the banner leaves analytics off for that browser; the decision is stored in localStorage and respected on subsequent visits. GA does not collect names, email addresses, IP addresses (Google anonymizes the last octet by default), or any personally identifying information.</p>
+    <p>Google Analytics 4 loads on the game and this guide to measure visits and usage. Analytics cookies are disabled until you accept the banner. With the site's current <a href="https://developers.google.com/tag-platform/security/concepts/consent-mode#basic-versus-advanced-consent-mode" target="_blank" rel="noopener noreferrer">Consent Mode setup</a>, Google can still receive limited cookieless measurements before you choose or after you decline.</p>
+
+    <p>The game also loads Mixpanel, with <a href="https://docs.mixpanel.com/docs/tracking-methods/sdks/javascript#opt-out-of-tracking" target="_blank" rel="noopener noreferrer">tracking opted out by default</a>. After acceptance, it receives events such as starting or completing a run, entering the leaderboard, sharing a run, and installing the app. These include run scores, distance, duration, difficulty, and device/browser information linked to a generated device identifier. Leaderboard nicknames are not included; only the nickname's length is sent with a leaderboard event.</p>
+
+    <p>Your choice is saved in this browser and shared between the game and guide. Declining keeps Mixpanel tracking and Google analytics cookies disabled. Analytics tools may use their own browser storage after acceptance. To choose again, clear this site's browser data; this also removes saved scores and preferences.</p>
 
     <h3>Local game state</h3>
 
-    <p>The game writes the following to the browser's localStorage on the device it runs on. None of it leaves the device:</p>
+    <p>The game saves these items in this browser's localStorage:</p>
 
     <ul>
       <li>Selected cat color and mountain theme</li>
@@ -524,28 +531,24 @@
       <li>Audio on/off, control mode (arrows or WASD), touch mode</li>
       <li>Language preference (English or Spanish)</li>
       <li>Best score per intensity / dog count / lives-mode combination</li>
-      <li>The top-3 leaderboard for each mode (this is the only place scores are stored)</li>
+      <li>The top-3 leaderboard for each lives mode</li>
       <li>The cookie consent decision</li>
       <li>The most recent name entered for the leaderboard</li>
     </ul>
 
-    <p>All localStorage entries are prefixed with <code>skior_</code>. Clearing browser storage for this site removes them entirely.</p>
+    <p>These game entries use the <code>skior_</code> prefix. They are not synced to other devices. Some values, such as difficulty and run score, are also included in consented Mixpanel events described above.</p>
 
     <h3>Leaderboard</h3>
 
-    <p>The leaderboard is local to the browser. When a player enters a name after a qualifying run, that name and score are written to localStorage and go nowhere else. Nothing is uploaded, no database receives the run, and one player's board is never visible to another. Clearing browser storage for this site erases the board, and the strip returns to its starting three scores.</p>
+    <p>The leaderboard has separate local boards for 9-lives and 1-life mode. Each begins with three starter scores to beat. Your optional nickname and saved board stay in this browser; there is no shared leaderboard database. Clearing site data removes your entries and restores the starter scores. If you accept analytics, run scores and leaderboard rank can be sent to Mixpanel without the nickname. Using SHARE sends or saves a run summary through the sharing option you choose.</p>
 
     <h3>Third parties</h3>
 
-    <p>The site is hosted on Vercel, which receives standard HTTP request metadata (URL, user agent, referrer, IP address) for the purposes of serving the page and protecting against abuse. Vercel's privacy policy applies to that traffic. Fonts are self-hosted, so loading the page makes no font request to any third party. There is no game database and no backend. No advertising networks, social trackers, or fingerprinting libraries are loaded.</p>
-
-    <h3>Children's privacy</h3>
-
-    <p>The game is appropriate for all ages and does not knowingly collect personal information from anyone, including children under 13.</p>
+    <p>Vercel hosts the site. Requests to Vercel and the analytics providers expose standard network information, including an IP address and browser headers. Fonts and artwork are self-hosted. The game has no account system, shared score database, or advertising placements.</p>
 
     <h3>Changes</h3>
 
-    <p>If this notice changes in a substantive way, the date next to <strong>Last updated</strong> below will move forward. Last updated: 26 April 2026.</p>
+    <p>Last updated: 7 September 2026.</p>
 
     <h2 id="faq">Common questions</h2>
 
@@ -555,7 +558,7 @@
 
     <h3>Is there a version of SkiFree you can play online?</h3>
 
-    <p>Cat Ski is a browser tribute to <a href="https://en.wikipedia.org/wiki/SkiFree" target="_blank" rel="noopener noreferrer">SkiFree</a>. It runs in any modern browser on desktop or phone, with nothing to download. The core loop matches the 1991 original. You ski downhill, dodge trees, and keep ahead of the chaser that appears when you slow down.</p>
+    <p>Cat Ski is a browser tribute to <a href="https://en.wikipedia.org/wiki/SkiFree" target="_blank" rel="noopener noreferrer">SkiFree</a>. Play on desktop or phone with no installation required. Ski downhill, dodge obstacles, land tricks, and escape dog and snowman chasers.</p>
 
     <h3>What is Cat Ski based on?</h3>
 
@@ -563,15 +566,15 @@
 
     <h3>Does the snowman catch you, like the SkiFree yeti?</h3>
 
-    <p>Yes. If you slow down or ski too far, a snowman starts chasing and will catch you. In 9-lives mode you can afford a few mistakes. In 1-life classic mode, one catch ends the run.</p>
+    <p>Yes. The snowman appears 20–40 seconds after the final dog wave clears. A catch costs a life. In 9-lives mode you can recover while lives remain; in 1-life classic, one catch ends the run.</p>
 
     <h3>Can I install Cat Ski and play offline?</h3>
 
-    <p>Yes. Cat Ski is a Progressive Web App. Use the INSTALL button in the game, or your browser's Add to Home Screen option, and it runs offline afterward.</p>
+    <p>Yes. Cat Ski is a Progressive Web App. Use the INSTALL button when available, or your browser's Add to Home Screen option. Once the game assets have been cached during an online visit, you can play offline.</p>
 
     <h3>What are the controls?</h3>
 
-    <p>Steer with the arrow keys or WASD, and press Space to start, pause, or restart. On a phone, use the on-screen joystick and the trick buttons.</p>
+    <p>Left/right arrows or A/D steer; up/W slows down; down/S tucks for speed. Space starts, retries, or resumes. P or Esc pauses or resumes; R restarts. Press 1, 2, or 3 while airborne for tricks. On a phone, drag the joystick to steer, up to slow down, or down to tuck, and tap the trick buttons while airborne.</p>
 
     <h2 id="resources">Further resources</h2>
 
@@ -591,8 +594,9 @@
        persists to the other. -->
   <div id="cookie-banner" class="cookie-banner" hidden role="dialog" aria-label="Cookie consent">
     <span class="cb-text">
-      This site uses anonymous analytics cookies to help improve the game.
-      See the <a href="#privacy">privacy notes</a> below for details.
+      Allow Google Analytics and Mixpanel to help improve Cat Ski?
+      Google may send limited cookieless measurements if you decline.
+      See the <a href="#privacy">privacy notes</a> for details.
     </span>
     <button class="cb-btn cb-accept" id="cookie-accept" type="button">OK</button>
     <button class="cb-btn cb-decline" id="cookie-decline" type="button">NO THANKS</button>

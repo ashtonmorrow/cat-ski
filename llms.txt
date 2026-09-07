@@ -1,13 +1,20 @@
 # Cat Ski 1989
 
-> A free browser game inspired by SkiFree (1991). Play as a cat skiing down an endless mountain. Three regional themes, mid-air tricks, dog and snowman chasers, tunable difficulty, a 9-lives casual mode that is on by default, and a high-score leaderboard split by mode, kept in the browser. Single self-contained HTML file with no build step or install required. Last updated 30 April 2026.
+> A free browser game inspired by SkiFree (1991). Play as a cat skiing down an endless mountain. Three regional themes, mid-air tricks, dog and snowman chasers, tunable difficulty, a 9-lives casual mode that is on by default, and a local high-score leaderboard split by lives mode. No build step or install required. Last updated 7 September 2026.
 
-Cat Ski 1989 is an open-source browser game that recreates the SkiFree (Windows 3.0, 1991) gameplay loop with a cat as the player character. It includes three regional mountain themes (Alps, Rockies, Himalayas), four cat color variants (black, tabby, calico, orange), an in-air trick system with chained scoring (Meow Roll, Whisker Twist, Cat Nap), gold escape ramps that spawn alongside each dog wave, regional dog breeds, and a snowman that takes the role of the original yeti. Difficulty is tunable through two sliders (intensity 0.8x to 5x, dog count 1 to 10) with four named presets (Easy, Medium, Hard, Insta Death). The game ships with a 9-lives casual mode enabled by default; the player can toggle to 1-life classic at any time, and the leaderboard tracks the two modes on separate boards so they stay apples-to-apples. The game supports keyboard (arrows or WASD) and touch input (virtual joystick plus arcade-style trick buttons), has Web Audio synthesized sound effects, bilingual UI and flavor text (English and rioplatense Spanish), per-difficulty best score tracking, and a top-3 leaderboard held in the browser's localStorage. Player names are five characters, entered after a qualifying run, and never leave the device. The entire game is approximately 200 KB of vanilla HTML, CSS, and JavaScript. Installable as a Progressive Web App for offline play. Hosted on Vercel, source on GitHub.
+Cat Ski 1989 is an open-source browser game inspired by SkiFree, with a cat as the player character. It includes three mountain themes (Alps, Rockies, Himalayas), four cat variants (black, tabby, calico, orange), chained mid-air tricks (Meow Roll, Whisker Twist, Cat Nap), gold escape ramps, regional dog breeds, and a snowman in the role of the original yeti. The snowman appears 20–40 seconds after the final dog wave clears. Each catch costs a life; losing the last life ends the run.
+
+Difficulty uses two sliders (intensity 0.8x to 5x, dog count 1 to 10) and four presets (Easy, Medium, Hard, Insta Death). Nine lives are enabled by default, with a toggle for 1-life classic. Each lives mode has a separate top-3 leaderboard in the browser's localStorage, initially filled with starter scores to beat. These are local targets, not a live global ranking. An optional nickname of up to five characters can be entered after a qualifying run. The game also supports synthesized sound effects, English and rioplatense Spanish, per-difficulty best scores, and installation as a Progressive Web App for offline play.
+
+## Controls
+
+Press Space or tap the start screen to begin. Left/right arrows or A/D steer; up/W slows down; down/S tucks for speed. Keys 1, 2, and 3 perform tricks while airborne. Space starts, retries, or resumes; P or Esc pauses or resumes; R restarts the current run. On touchscreens, drag the joystick left/right to steer, up to slow down, or down to tuck. Tap trick buttons while airborne; SWAP exchanges their position with the joystick.
 
 ## Pages
 
 - [Play Cat Ski](https://ski.unwoke.ninja/): The game itself. Loads in a browser and is playable on desktop or mobile. Press SPACE on desktop or tap on mobile to start.
-- [How to play and how the game is built](https://ski.unwoke.ninja/readme.html): An article covering quick-start gameplay (controls table at the top), the project's stack, per-element design criteria, the photography-derived color palette approach for the three mountain themes, the workflow used to build it with Claude as a design collaborator, a free toolchain readers can use to build a similar project, and privacy notes covering analytics and the leaderboard.
+- [How to play](https://ski.unwoke.ninja/readme.html): Quick start, controls, gameplay details, installation, local scores, and privacy notes.
+- [Build story](https://unwoke.ninja/cat-ski/built-with-ai): The game's design, photography-derived mountain palettes, and development workflow.
 
 ## About the project
 
@@ -16,15 +23,15 @@ Cat Ski 1989 is an open-source browser game that recreates the SkiFree (Windows 
 - Source code: https://github.com/ashtonmorrow/cat-ski
 - License: open source (see repository)
 - Inspiration: SkiFree (1991, Microsoft Entertainment Pack 3 for Windows 3.0)
-- Stack: vanilla HTML, CSS, and JavaScript; HTML5 Canvas (360x270 internal, scaled with image-rendering: pixelated); Web Audio API for procedural sound; no build step; no framework; self-hosted fonts; no backend and no runtime dependencies
+- Stack: vanilla HTML, CSS, and JavaScript in index.html; HTML5 Canvas (360x270 internal, scaled with image-rendering: pixelated); Web Audio API for procedural sound; separate artwork, icons, and self-hosted fonts; no build step or framework
 - Hosting: Vercel, deployed automatically from the GitHub repository
-- Backend: none. The leaderboard is per-browser localStorage; no accounts, no server, no scores leave the device
-- PWA: installable on iOS, Android, and desktop via the in-app INSTALL button
-- Analytics: Google Analytics 4, opt-in via cookie consent banner (GA Consent Mode v2 defaults to denied)
+- Game backend: none. The leaderboard is per-browser localStorage; there are no accounts or shared score database
+- PWA: installable through the INSTALL button when supported, or the browser's Add to Home Screen option; a service worker caches game assets for offline play
+- Analytics: Google Analytics 4 on the game and help pages; Mixpanel game events after acceptance of the analytics banner. GA Consent Mode defaults to denied analytics storage but can still send cookieless measurements
 
 ## Privacy
 
-The game does not collect names, emails, or accounts. All game state (cat color, theme, difficulty, best scores, leaderboard, language preference, cookie consent decision) lives in localStorage on the user's device. Leaderboard names and scores are never uploaded. See the in-page privacy notes for details: https://ski.unwoke.ninja/readme.html#privacy
+No accounts or email addresses are requested. Preferences, best scores, leaderboard entries, optional nicknames, and the consent choice are saved in localStorage. The game does not include nicknames in analytics. After acceptance, Mixpanel receives game events and run statistics such as score, distance, difficulty, and leaderboard rank, associated with a generated device identifier. GA analytics cookies remain disabled until acceptance; cookieless measurements may be sent before a choice or after declining. Sharing a run is a separate player action. Clearing browser site data resets saved scores, preferences, and the consent choice. Details: https://ski.unwoke.ninja/readme.html#privacy
 
 ## Optional
 
