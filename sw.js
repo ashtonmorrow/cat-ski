@@ -15,13 +15,14 @@
  * force all old caches to clear on next visit.
  */
 
-const CACHE_NAME = 'cat-ski-v15';
+const CACHE_NAME = 'cat-ski-v16';
 const APP_SHELL = [
   '/',
   '/index.html',
   '/readme.html',
   '/manifest.json',
   '/preview.png',
+  '/title-scene.png',
   '/favicon.ico',
   '/favicon-16.png',
   '/favicon-32.png',
@@ -29,6 +30,7 @@ const APP_SHELL = [
   '/apple-touch-icon.png',
   '/icon-192.png',
   '/icon-512.png',
+  '/icon-maskable-512.png',
   '/fonts/press-start-2p.woff2',
   '/fonts/vt323.woff2',
 ];
