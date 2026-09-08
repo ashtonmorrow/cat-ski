@@ -6,13 +6,15 @@ const { createHarness } = require('./browser-helpers.cjs');
 const IOS_SAFARI = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1';
 
 for (const engine of ['chromium', 'webkit', 'firefox']) {
-  test(`${engine}: keyboard play, saved scores/settings, guide, and phone controls`, { timeout: 90000 }, async () => {
+  test(`${engine}: keyboard play, saved scores/settings, guide, and phone controls`, { timeout: 90000 }, async t => {
     const harness = await createHarness({ engine });
+    let activePage;
     try {
       // Keep each engine's real animation clock running. Fixed-step behavior
       // is covered separately; this smoke flow checks ordinary browser input.
       const desktop = await harness.openGame();
       const { page } = desktop;
+      activePage = page;
       await page.getByRole('button', { name: 'START', exact: true }).press('Enter');
       assert.equal(await page.evaluate(() => document.activeElement.id), 'game');
       await page.keyboard.down('ArrowRight');
@@ -56,6 +58,7 @@ for (const engine of ['chromium', 'webkit', 'firefox']) {
       const phone = await harness.openGame({ mobile: true,
         viewport: { width: 360, height: 800 },
         ...(engine === 'webkit' ? { userAgent: IOS_SAFARI } : {}) });
+      activePage = phone.page;
       await phone.page.getByRole('button', { name: 'START', exact: true }).tap();
       await phone.page.locator('#controls-toggle').tap();
       assert.equal((await phone.page.evaluate(() => window.__test.snapshot())).state, 'paused');
@@ -80,6 +83,23 @@ for (const engine of ['chromium', 'webkit', 'firefox']) {
       assert.equal(await phone.page.locator('#stick-area').isVisible(), true);
       assert.deepEqual(phone.errors, [], `${engine} phone has no JavaScript errors`);
       await phone.context.close();
+    } catch (error) {
+      if (activePage && !activePage.isClosed()) {
+        try {
+          const diagnostic = await activePage.evaluate(async () => {
+            let animationCallbackDelivered = false;
+            requestAnimationFrame(() => { animationCallbackDelivered = true; });
+            await new Promise(resolve => setTimeout(resolve, 100));
+            const current = window.__test?.snapshot();
+            return { visibility: document.visibilityState, focused: document.hasFocus(),
+              activeElement: document.activeElement?.id, animationCallbackDelivered,
+              state: current?.state, elapsed: current?.stats.elapsed,
+              playerX: current?.player.x, keys: current?.keys };
+          });
+          t.diagnostic(JSON.stringify({ engine, ...diagnostic }));
+        } catch (_) { t.diagnostic(`${engine}: page unavailable for failure diagnostics`); }
+      }
+      throw error;
     } finally { await harness.close(); }
   });
 }

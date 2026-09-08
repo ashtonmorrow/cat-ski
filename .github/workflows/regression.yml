@@ -19,6 +19,7 @@ jobs:
     timeout-minutes: 10
     env:
       CI: true
+      PLAYWRIGHT_WEBKIT_HEADED: '1'
     steps:
       - name: Check out source
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -34,4 +35,6 @@ jobs:
       - name: Install browser engines
         run: npx playwright install --with-deps chromium webkit firefox
       - name: Run regression tests
-        run: npm test
+        # Linux WebKit's headless backend can stall animation frames. Use
+        # its headed backend under a virtual display; keep real input checks.
+        run: xvfb-run -a npm test

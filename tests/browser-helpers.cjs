@@ -46,7 +46,8 @@ const hook = `
 async function createHarness({ engine = 'chromium' } = {}) {
   assert.ok(['chromium', 'webkit', 'firefox'].includes(engine), 'Supported browser engine');
   const executablePath = engine === 'chromium' ? process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE : undefined;
-  const browser = await browserTypes[engine].launch({ headless: true, ...(executablePath ? { executablePath } : {}) });
+  const headless = !(engine === 'webkit' && process.env.PLAYWRIGHT_WEBKIT_HEADED === '1');
+  const browser = await browserTypes[engine].launch({ headless, ...(executablePath ? { executablePath } : {}) });
   const contexts = new Set();
   async function openGame({ viewport = { width: 1280, height: 900 }, mobile = false,
     storage = {}, manualClock = false, storageFailure = null, userAgent, context: existingContext } = {}) {

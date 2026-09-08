@@ -6,6 +6,8 @@ Run `npm ci`, `npx playwright install chromium webkit firefox`, and `npm test`.
 
 The suite includes isolated regressions, natural gameplay progression, an upgrade from a pinned previous release, and smoke flows in Chromium, WebKit and Firefox. The test-only hooks are injected into local responses and do not ship to players.
 
+Linux CI runs WebKit headed under Xvfb (`PLAYWRIGHT_WEBKIT_HEADED=1 xvfb-run -a npm test`). This avoids the headless backend used in reports of stalled animation frames and actionability checks ([upstream report](https://github.com/microsoft/playwright/issues/33057), [Playwright CI guidance](https://playwright.dev/docs/ci#running-headed)). The smoke flow keeps the normal animation clock and native pointer/keyboard checks; it does not force clicks or retry failed assertions.
+
 Push a working branch and wait for its `Regression tests` check to pass on the exact commit. Fast-forward or merge the checked commit to protected `main`; Vercel's Git integration publishes it. After deployment, verify the custom domain serves the expected commit/assets.
 
 When changing cached application files, update the cache version and shared script query versions together, plus the corresponding cache assertions. The upgrade fixture's provenance is recorded in `tests/fixtures`; it represents an actual earlier release.
