@@ -153,7 +153,21 @@ test('stale and simultaneous tabs retain the highest entries in both modes', asy
       first.evaluate(() => window.__test.save('HIGH', 3000, true)),
       second.evaluate(() => window.__test.save('NEXT', 2000, true)),
     ]);
-    await second.evaluate(() => window.__test.save('CLASS', 500, false));
+    const written = await second.evaluate(async () => {
+      const rank = await window.__test.save('CLASS', 500, false);
+      return { rank, saved: JSON.parse(localStorage.getItem('skior_leaderboard_v3')) };
+    });
+    assert.equal(written.rank, 1);
+    assert.deepEqual(written.saved.lives9.map(row => row.score), [3000, 2000, 1000]);
+    assert.deepEqual(written.saved.lives1.map(row => row.score), [500]);
+    // The writing tab's promise does not wait for another renderer to
+    // receive its storage broadcast. Check persistence above, then wait
+    // for the receiving tab's storage and in-memory board to converge.
+    await first.waitForFunction(() => {
+      const saved = JSON.parse(localStorage.getItem('skior_leaderboard_v3'));
+      return saved?.lives1.some(row => row.name === 'CLASS' && row.score === 500) &&
+        window.__test.boards().lives1.some(row => row.name === 'CLASS' && row.score === 500);
+    }, null, { polling: 20 });
     const saved = await first.evaluate(() => JSON.parse(localStorage.getItem('skior_leaderboard_v3')));
     assert.deepEqual(saved.lives9.map(row => row.score), [3000, 2000, 1000]);
     assert.deepEqual(saved.lives1.map(row => row.score), [500]);
