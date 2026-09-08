@@ -36,6 +36,8 @@ Press Space or tap the start screen to play. You begin with nine lives. Steer ar
 
 On a phone, drag the joystick left/right to steer, up to slow down, or down to tuck. Tap the trick buttons while airborne; SWAP exchanges the joystick and button positions.
 
+Cat, mountain, difficulty, dog count, and lives settings apply when the next run starts. Changing them during or after a run keeps that run's score and settings together.
+
 The snowman arrives 20–40 seconds after the final dog wave clears. A catch costs a life; losing the last life ends the run.
 
 ## Scores and privacy
@@ -51,6 +53,16 @@ Cat Ski is a static site, so any static file server works:
     python3 -m http.server 8000
 
 Open http://localhost:8000 and play. There is nothing to compile.
+
+## Regression checks
+
+The test tools are development dependencies; the game still runs without a build or package install. With Node.js 20 or newer:
+
+    npm ci
+    npx playwright install chromium
+    npm test
+
+The suite checks timing across simulated refresh rates, run results, keyboard and touch controls, phone layouts, storage failures, consent across tabs, and offline cache failures. Browser tests use local files and block external analytics requests. To use an existing Chrome installation, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to its executable path.
 
 ## Stack
 

@@ -23,6 +23,7 @@
 
 <!-- Search Console verification -->
 <meta name="google-site-verification" content="Blnw1PeynoNtYxKYh57M27xYxnoz3UKCrqQ4a3mvxt8">
+<script src="/storage.js?v=22"></script>
 
 <!-- Google Analytics 4 with Consent Mode v2.
      All storage defaults to denied so GA fires no cookies until the
@@ -41,15 +42,10 @@
     'analytics_storage':  'denied',
     'wait_for_update':    500
   });
-  // Restore previously-granted consent on subsequent visits.
-  try {
-    if (localStorage.getItem('skior_cookies') === 'accepted') {
-      gtag('consent', 'update', { 'analytics_storage': 'granted' });
-    }
-  } catch (_) {}
   gtag('js', new Date());
   gtag('config', 'G-MSN465FL9R');
 </script>
+<script src="/consent.js?v=22"></script>
 
 <!-- Mixpanel product analytics, gated behind the same cookie banner as
      GA above. The SDK loads opted-out; a run only reaches Mixpanel once
@@ -66,12 +62,9 @@
     persistence: 'localStorage',
     track_pageview: false,
     ignore_dnt: false,
+    loaded: function () { window.CatSkiConsent.sync(true); },
   });
-  // Returning visitor who already accepted: opt in now. First-time accept
-  // is handled by the cookie banner's OK button (see body).
-  try {
-    if (localStorage.getItem('skior_cookies') === 'accepted') mixpanel.opt_in_tracking();
-  } catch (_) {}
+  window.CatSkiConsent.sync(true);
 </script>
 <meta name="description" content="A free browser game inspired by SkiFree (1991). Play as a cat skiing down an endless mountain. Three regional themes (Alps, Rockies, Himalayas), four cat color variants, mid-air tricks, dog and snowman chasers, tunable difficulty. Installable as a Progressive Web App.">
 
@@ -783,6 +776,7 @@
     color: var(--text-dim);
   }
 
+  .settings-note { color: var(--snow-dim); font-family: var(--font-body); font-size: 16px; text-align: center; margin: 6px 0; }
   .cat-picker {
     display: flex;
     align-items: center;
@@ -1080,7 +1074,7 @@
      and inset bottom shadow for the pressed-from-above 3D look. Outer
      glow ring tightens visual identity. Dark text label inside. */
   .trick-btn {
-    pointer-events: none;     /* disabled until airborne */
+    pointer-events: auto;
     width: 62px;
     height: 62px;
     padding: 0;
@@ -1107,8 +1101,7 @@
     align-items: center;
     justify-content: center;
   }
-  body.airborne .trick-btn {
-    pointer-events: auto;
+  .trick-btn:not(:disabled) {
     opacity: 1;
     filter: saturate(1);
     box-shadow:
@@ -1119,7 +1112,7 @@
       0 0 14px rgba(255, 204, 0, 0.55);    /* live glow when usable */
   }
   /* Pressed: button "sinks" by losing the bottom rim and shifting down */
-  .trick-btn:active {
+  .trick-btn:not(:disabled):active {
     transform: translateY(3px);
     box-shadow:
       inset 0 -1px 0 rgba(0, 0, 0, 0.28),
@@ -1301,6 +1294,37 @@
   }
   body.mobile-layout.controls-expanded .cat-picker { display: flex; }
   body.mobile-layout.controls-expanded .footer     { display: block; }
+
+  /* Reserve the measured chrome height and put controls beside the game. */
+  @media (orientation: landscape) and (max-height: 600px) {
+    body.mobile-layout { --landscape-rail: 0px; }
+    body.touch-active { --landscape-rail: 128px; }
+    body.mobile-layout .screen-wrap {
+      width: min(calc(100vw - 2 * var(--landscape-rail)), calc((100vh - var(--mobile-chrome-height, 76px)) * 4 / 3));
+      width: min(calc(100vw - 2 * var(--landscape-rail)), calc((100dvh - var(--mobile-chrome-height, 76px)) * 4 / 3));
+    }
+    body.mobile-layout .mobile-actions { min-height: 44px; }
+    body.touch-active .stick { width: 112px; height: 112px; }
+    body.touch-active .stick-area { left: max(8px, env(safe-area-inset-left, 8px)); }
+    body.touch-active.controls-swapped .stick-area {
+      left: auto;
+      right: max(8px, env(safe-area-inset-right, 8px));
+    }
+    body.touch-active .trick-btn { width: 56px; height: 56px; }
+    body.touch-active .touch-pause {
+      top: max(42px, env(safe-area-inset-top, 42px));
+      right: max(18px, env(safe-area-inset-right, 18px));
+      bottom: auto;
+      left: auto;
+      transform: none;
+    }
+    body.touch-active .swap-btn {
+      top: max(42px, env(safe-area-inset-top, 42px));
+      left: max(18px, env(safe-area-inset-left, 18px));
+      bottom: auto;
+      transform: none;
+    }
+  }
 </style>
 </head>
 <body>
@@ -1433,6 +1457,8 @@
     </button>
     <button class="touch-pause" id="btn-touch-pause" type="button" aria-label="Pause" title="Pause" disabled>&#x23F8;</button>
   </div>
+
+  <p class="settings-note" id="settings-next-run" role="status" data-i18n="settings.nextRun" hidden>Applies next run</p>
 
   <!-- Cat + Theme pickers on one row. Each swatch renders a tiny preview
        (cats use the actual cat sprite; themes use a mini scene). -->
@@ -1575,10 +1601,10 @@
 <!-- Trick pad (mobile): 3 buttons fixed bottom-right (or bottom-left if
      swapped). Always visible during touch mode but disabled+dimmed while
      the cat is grounded; brighten and become tappable in mid-air. -->
-<div class="trick-pad" id="trick-pad" aria-hidden="true">
-  <button class="trick-btn" data-trick="roll"  type="button" data-i18n="btn.roll">ROLL</button>
-  <button class="trick-btn" data-trick="twist" type="button" data-i18n="btn.twist">TWIST</button>
-  <button class="trick-btn" data-trick="nap"   type="button" data-i18n="btn.nap">NAP</button>
+<div class="trick-pad" id="trick-pad" role="group" data-i18n-aria="aria.trickGroup" aria-label="Air tricks">
+  <button class="trick-btn" data-trick="roll"  type="button" data-i18n="btn.roll" disabled>ROLL</button>
+  <button class="trick-btn" data-trick="twist" type="button" data-i18n="btn.twist" disabled>TWIST</button>
+  <button class="trick-btn" data-trick="nap"   type="button" data-i18n="btn.nap" disabled>NAP</button>
 </div>
 
 <!-- Swap button (mobile): toggles which side has the joystick vs the
@@ -1662,17 +1688,35 @@
   const overScore    = document.getElementById('over-score');
   const overBest     = document.getElementById('over-best');
 
+  // Picker values describe the next run. A run and its result retain their
+  // own configuration, including while the game-over controls are open.
+  let activeRunConfig = null;
+  let completedRun = null;
+  let completedFrame = null;
+  function selectedRunConfig() {
+    return { catColor, mtnTheme, intensity, dogCount, livesMode };
+  }
+  function gameplayConfig() {
+    return activeRunConfig || selectedRunConfig();
+  }
+  function syncPendingSettings() {
+    const hint = document.getElementById('settings-next-run');
+    if (!hint) return;
+    hint.hidden = !activeRunConfig || !Object.entries(selectedRunConfig())
+      .some(([key, value]) => value !== activeRunConfig[key]);
+  }
+
   // ---------- analytics (Mixpanel, consent-gated) ----------
   // The tracking plan lives here, not in gameplay code. Game logic calls
   // the intent-named track* functions below and never builds a Mixpanel
   // property bag itself, so the event schema has one home.
   //
-  // Every send routes through analytics(), which is a no-op while opted
-  // out — the consent gate lives entirely in the head + cookie banner —
-  // and is guarded so an ad blocker that removes mixpanel can't throw.
+  // Check the site choice at send-time as well as the SDK opt-out state,
+  // including the interval before another tab's storage event arrives.
   function analytics(event, props) {
     try {
-      if (window.mixpanel && mixpanel.track) mixpanel.track(event, props || {});
+      if (window.CatSkiConsent && window.CatSkiConsent.allowsAnalytics() &&
+          window.mixpanel && mixpanel.track) mixpanel.track(event, props || {});
     } catch (_) {}
   }
   function registerSuperProps() {
@@ -1692,13 +1736,13 @@
 
   // The current run's setup, shared by every event that reports it, so the
   // two payloads below can't drift apart.
-  function runContext() {
+  function runContext(config = gameplayConfig()) {
     return {
-      cat_color:      catColor,
-      mountain_theme: mtnTheme,
-      intensity:      intensity,
-      dog_count:      dogCount,
-      lives_mode:     livesMode,
+      cat_color:      config.catColor,
+      mountain_theme: config.mtnTheme,
+      intensity:      config.intensity,
+      dog_count:      config.dogCount,
+      lives_mode:     config.livesMode,
     };
   }
   function trackGameStarted() {
@@ -1707,28 +1751,28 @@
       is_touch:     isTouchActive(),
     }));
   }
-  function trackRunCompleted(cause) {
-    analytics('run_completed', Object.assign(runContext(), {
-      score:                     stats.score,
-      distance_m:                stats.distance,
-      duration_seconds:          Math.round(stats.elapsed),
-      cause:                     cause || 'unknown',
-      tricks_landed:             stats.tricks,
-      flags_collected:           stats.flags,
-      jumps:                     stats.jumps,
-      qualified_for_leaderboard: qualifiesForLeaderboard(stats.score),
+  function trackRunCompleted(result) {
+    analytics('run_completed', Object.assign(runContext(result.config), {
+      score:                     result.score,
+      distance_m:                result.distance,
+      duration_seconds:          Math.round(result.elapsed),
+      cause:                     result.cause,
+      tricks_landed:             result.tricks,
+      flags_collected:           result.flags,
+      jumps:                     result.jumps,
+      qualified_for_leaderboard: result.qualifiedForLeaderboard,
     }));
   }
-  function trackLeaderboardSubmitted(score, rank, name) {
+  function trackLeaderboardSubmitted(score, rank, name, lives) {
     analytics('leaderboard_submitted', {
       score:       score,
       rank:        rank,
-      lives_mode:  livesMode,
+      lives_mode:  lives,
       name_length: (name || 'CAT').length,
     });
   }
-  function trackRunShared(method) {
-    analytics('run_shared', { method: method, score: stats.score });
+  function trackRunShared(method, result) {
+    analytics('run_shared', { method: method, score: result.score });
   }
   function trackPwaInstalled() {
     analytics('pwa_installed', {});
@@ -1769,9 +1813,18 @@
       !!target.closest('button, a, input, textarea, select, [role="button"], [contenteditable]:not([contenteditable="false"])');
   }
 
+  function uiOwnsKey(e) {
+    if (e.defaultPrevented || e.isComposing) return true;
+    const target = e.target;
+    if (!(target instanceof Element)) return false;
+    if (target.isContentEditable || target.closest('input, textarea, select')) return true;
+    // Preserve native activation while allowing steering and pause after a
+    // mouse click leaves focus on Resume, Restart, or a setting button.
+    return (e.key === ' ' || e.key === 'Enter') && isUiTarget(target);
+  }
+
   window.addEventListener('keydown', e => {
-    // Let focused controls handle Space, arrows, and typing normally.
-    if (isUiTarget(e.target)) return;
+    if (uiOwnsKey(e)) return;
 
     const dir = normalizeKey(e);
     if (dir) e.preventDefault();
@@ -1810,7 +1863,7 @@
   });
 
   // ---------- control mode toggle ----------
-  let controlMode = localStorage.getItem('skior_controls') || 'arrows';
+  let controlMode = CatSkiStorage.getItem('skior_controls') || 'arrows';
   if (controlMode !== 'arrows' && controlMode !== 'wasd') controlMode = 'arrows';
 
   function updateKeysLegend() {
@@ -1832,7 +1885,7 @@
   function setControlMode(name) {
     if (name !== 'arrows' && name !== 'wasd') return;
     controlMode = name;
-    localStorage.setItem('skior_controls', name);
+    CatSkiStorage.setItem('skior_controls', name);
     document.querySelectorAll('.ctrl-swatch').forEach(btn => {
       setPressed(btn, btn.dataset.ctrl === name);
     });
@@ -2063,6 +2116,8 @@
         'install.close':       'TAP TO CLOSE',
         // Mobile collapse toggle (arrow added by JS)
         'mobile.show':    'SETTINGS',
+        'settings.nextRun': 'Applies next run',
+        'lb.saveFailed':  'Could not save. Try again.',
         'mobile.hide':    'CLOSE SETTINGS',
         'footer':       'NO QUARTER REQUIRED, NO QUARTER GIVEN',
         'credit.by':    'created by',
@@ -2082,6 +2137,7 @@
         "aria.livesRemaining": "Lives remaining",
         "aria.initials": "Enter your initials, up to 5 characters",
         "aria.gameControls": "Game controls",
+        "aria.trickGroup": "Air tricks",
         "aria.sound": "Sound",
         "aria.language": "Language",
         "aria.swap": "Swap control sides",
@@ -2247,6 +2303,8 @@
         'install.step3':    '3. Tocá <strong>Agregar a Inicio</strong>',
         'install.close':    'TOCÁ PARA CERRAR',
         'mobile.show':    'AJUSTES',
+        'settings.nextRun': 'Se aplica en la próxima bajada',
+        'lb.saveFailed':  'No se pudo guardar. Probá de nuevo.',
         'mobile.hide':    'CERRAR AJUSTES',
         'footer':       'GRATIS',
         'credit.by':    'creado por',
@@ -2266,6 +2324,7 @@
         "aria.livesRemaining": "Vidas restantes",
         "aria.initials": "Ingresá tus iniciales, hasta 5 caracteres",
         "aria.gameControls": "Controles del juego",
+        "aria.trickGroup": "Trucos en el aire",
         "aria.sound": "Sonido",
         "aria.language": "Idioma",
         "aria.swap": "Cambiar de lado los controles",
@@ -2294,7 +2353,7 @@
     },
   };
 
-  let lang = localStorage.getItem('skior_lang') || 'en';
+  let lang = CatSkiStorage.getItem('skior_lang') || 'en';
   if (!MESSAGES[lang]) lang = 'en';
   registerSuperProps();
 
@@ -2321,7 +2380,7 @@
     // declared later in the IIFE; at boot pickList runs while it's in TDZ,
     // hence the try/catch with a default of 9-lives (the product default).
     let live = true;
-    try { live = livesMode; } catch (_) {}
+    try { live = gameplayConfig().livesMode; } catch (_) {}
     const general = MESSAGES[lang][key] || MESSAGES.en[key] || [];
     const modeKey = key + (live ? '_9lives' : '_1life');
     const modeSpecific = MESSAGES[lang][modeKey] || MESSAGES.en[modeKey] || [];
@@ -2384,7 +2443,7 @@
 
   // ---------- touch / mobile mode ----------
   // AUTO uses (pointer: coarse). ON / OFF override.
-  let touchMode = localStorage.getItem('skior_touch') || 'auto';
+  let touchMode = CatSkiStorage.getItem('skior_touch') || 'auto';
   if (!['auto','on','off'].includes(touchMode)) touchMode = 'auto';
 
   function isTouchActive() {
@@ -2415,7 +2474,7 @@
   function setTouchMode(name) {
     if (!['auto','on','off'].includes(name)) return;
     touchMode = name;
-    localStorage.setItem('skior_touch', name);
+    CatSkiStorage.setItem('skior_touch', name);
     document.querySelectorAll('.touch-swatch').forEach(btn => {
       setPressed(btn, btn.dataset.touch === name);
     });
@@ -2428,6 +2487,24 @@
 
   // Re-evaluate on resize/rotate so AUTO stays correct.
   window.addEventListener('resize', applyTouchState);
+
+  const mobileChrome = ['.bezel-title', '#leaderboard', '.mobile-actions']
+    .map(selector => document.querySelector(selector));
+  function measureMobileChrome() {
+    const height = mobileChrome.reduce((total, el) => {
+      if (!el || !el.getClientRects().length) return total;
+      const style = getComputedStyle(el);
+      return total + el.getBoundingClientRect().height +
+        parseFloat(style.marginTop || 0) + parseFloat(style.marginBottom || 0);
+    }, 0);
+    document.body.style.setProperty('--mobile-chrome-height', Math.ceil(height) + 'px');
+  }
+  if ('ResizeObserver' in window) {
+    const chromeObserver = new ResizeObserver(measureMobileChrome);
+    mobileChrome.forEach(el => { if (el) chromeObserver.observe(el); });
+  }
+  window.addEventListener('resize', measureMobileChrome);
+  measureMobileChrome();
 
   // ---------- virtual thumbstick ----------
   // Maps finger position inside the stick area to keys.left/right/up/down.
@@ -2525,7 +2602,9 @@
   // Build a 720 x 720 PNG: top half is the canvas at 2x, bottom is a
   // banner with score, distance, time, cat color, theme, and the URL.
   // Returns a Blob ready for sharing or downloading.
-  async function composeShareImage() {
+  async function composeShareImage(result = completedRun, frame = completedFrame) {
+    if (!result || !frame) return null;
+    const config = result.config;
     const W2 = 720, H2 = 540, BANNER_H = 200;
     const out = document.createElement('canvas');
     out.width = W2;
@@ -2534,7 +2613,7 @@
     c.imageSmoothingEnabled = false;     // crisp 2x pixel upscale
     c.fillStyle = UI.sunken;
     c.fillRect(0, 0, out.width, out.height);
-    c.drawImage(canvas, 0, 0, W2, H2);
+    c.drawImage(frame, 0, 0, W2, H2);
     // Divider band between game and banner
     c.fillStyle = UI.panelBorder;
     c.fillRect(0, H2, W2, 3);
@@ -2543,7 +2622,7 @@
     // Big score
     c.fillStyle = UI.gold;
     c.font = 'bold 48px "Press Start 2P", monospace';
-    c.fillText(String(stats.score), W2 / 2, H2 + 70);
+    c.fillText(String(result.score), W2 / 2, H2 + 70);
     // SCORE label
     c.fillStyle = UI.snowDim;
     c.font = 'bold 16px "Press Start 2P", monospace';
@@ -2551,11 +2630,11 @@
     // Distance + time
     c.fillStyle = UI.snow;
     c.font = 'bold 16px "Press Start 2P", monospace';
-    c.fillText(`${stats.distance}M    ${formatTime(stats.elapsed)}`, W2 / 2, H2 + 130);
+    c.fillText(`${result.distance}M    ${formatTime(result.elapsed)}`, W2 / 2, H2 + 130);
     // Difficulty / cat / theme line
     c.fillStyle = UI.textDim;
     c.font = '20px "VT323", monospace';
-    const meta = `${t('cat.' + catColor)} · ${t('theme.' + mtnTheme)} · ${intensity.toFixed(1)}x · ${t('pick.dogs')} ${dogCount}`;
+    const meta = `${t('cat.' + config.catColor)} · ${t('theme.' + config.mtnTheme)} · ${config.intensity.toFixed(1)}x · ${t('pick.dogs')} ${config.dogCount}`;
     c.fillText(meta, W2 / 2, H2 + 158);
     // URL
     c.fillStyle = UI.gold;
@@ -2575,17 +2654,20 @@
   }
 
   async function shareRun() {
-    const text = t('share.text').replace('{score}', stats.score).replace('{distance}', stats.distance);
+    const result = completedRun;
+    const frame = completedFrame;
+    if (!result) return;
+    const text = t('share.text').replace('{score}', result.score).replace('{distance}', result.distance);
     const url = 'https://ski.unwoke.ninja/';
     let blob = null;
-    try { blob = await composeShareImage(); } catch (_) {}
+    try { blob = await composeShareImage(result, frame); } catch (_) {}
     // Path 1: Web Share Level 2 with file — best UX on mobile
     if (blob && navigator.canShare) {
       const file = new File([blob], 'cat-ski-run.png', { type: 'image/png' });
       if (navigator.canShare({ files: [file] })) {
         try {
           await navigator.share({ title: 'Cat Ski', text, url, files: [file] });
-          trackRunShared('web_share_file');
+          trackRunShared('web_share_file', result);
           return;
         } catch (_) { /* user cancelled, fall through */ }
       }
@@ -2594,7 +2676,7 @@
     if (navigator.share) {
       try {
         await navigator.share({ title: 'Cat Ski', text, url });
-        trackRunShared('web_share_text');
+        trackRunShared('web_share_text', result);
         return;
       } catch (_) {}
     }
@@ -2602,19 +2684,19 @@
     if (blob) {
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.download = `cat-ski-${stats.score}.png`;
+      link.download = `cat-ski-${result.score}.png`;
       link.click();
       URL.revokeObjectURL(link.href);
       try { await navigator.clipboard.writeText(`${text} ${url}`); } catch (_) {}
       flashShareLabel(t('share.saved'));
-      trackRunShared('download');
+      trackRunShared('download', result);
       return;
     }
     // Path 4: last resort — clipboard text only
     try {
       await navigator.clipboard.writeText(`${text} ${url}`);
       flashShareLabel(t('share.copied'));
-      trackRunShared('clipboard');
+      trackRunShared('clipboard', result);
     } catch (_) {
       window.prompt(t('share.copyPrompt'), url);
     }
@@ -2628,8 +2710,9 @@
     resetBestLink.addEventListener('click', (e) => {
       e.preventDefault();
       if (!confirm(t('over.resetConfirm'))) return;
-      delete bests[bestKey()];
-      saveBests(bests);
+      const key = bestKey(completedRun ? completedRun.config : gameplayConfig());
+      delete bests[key];
+      saveBests(bests, key);
       best = 0;
       if (overBest) overBest.textContent = '0';
     });
@@ -2675,7 +2758,7 @@
   let masterGain  = null;
   let swooshGain  = null;
   let swooshNode  = null;
-  let audioEnabled = localStorage.getItem('skior_audio') !== 'off';
+  let audioEnabled = CatSkiStorage.getItem('skior_audio') !== 'off';
 
   function ensureAudio() {
     if (audioCtx) return audioCtx;
@@ -2818,7 +2901,7 @@
   const soundValueEl = document.getElementById('sound-value');
   function setAudioEnabled(on) {
     audioEnabled = !!on;
-    localStorage.setItem('skior_audio', on ? 'on' : 'off');
+    CatSkiStorage.setItem('skior_audio', on ? 'on' : 'off');
     if (masterGain && audioCtx) {
       masterGain.gain.setTargetAtTime(on ? 0.35 : 0, audioCtx.currentTime, 0.05);
     }
@@ -2849,7 +2932,7 @@
     if (!MESSAGES[name]) return;
     lang = name;
     document.documentElement.lang = lang;
-    localStorage.setItem('skior_lang', name);
+    CatSkiStorage.setItem('skior_lang', name);
     registerSuperProps();
     if (langToggle)  langToggle.value = lang === 'es' ? '1' : '0';
     if (langValueEl) langValueEl.textContent = lang === 'es' ? 'ES' : 'EN';
@@ -2873,20 +2956,38 @@
   document.addEventListener('DOMContentLoaded', applyUILabels, { once: true });
 
   // ---------- mobile trick buttons ----------
-  // One handler per button; delegates to startTrick(name). Using
-  // pointerdown (not click) so the response feels immediate and the
-  // trick fires the instant the finger lands, not on release.
-  document.querySelectorAll('.trick-btn').forEach(btn => {
+  const trickButtons = [...document.querySelectorAll('.trick-btn')];
+  function syncTrickControls() {
+    const airborne = state === STATE.PLAY && player && player.air > 0 &&
+      !player.crashed && !player.grabbed;
+    if (document.body.classList.contains('airborne') !== !!airborne) {
+      document.body.classList.toggle('airborne', !!airborne);
+    }
+    const available = airborne && !player.trick;
+    trickButtons.forEach(btn => {
+      if (btn.disabled === !!available) btn.disabled = !available;
+    });
+  }
+  trickButtons.forEach(btn => {
     btn.addEventListener('pointerdown', e => {
+      if (e.button !== 0 || btn.disabled) return;
       e.preventDefault();
       startTrick(btn.dataset.trick);
+      syncTrickControls();
+    });
+    btn.addEventListener('click', e => {
+      // Pointer input fired on contact. Keyboard and assistive clicks have
+      // detail=0 and activate here without firing a pointer trick twice.
+      if (e.detail !== 0 || btn.disabled) return;
+      startTrick(btn.dataset.trick);
+      syncTrickControls();
     });
   });
 
   // ---------- control layout swap ----------
   // Persistent toggle: which side has the joystick, which side has the
   // trick buttons. Stored in localStorage so it sticks across sessions.
-  let controlsSwapped = localStorage.getItem('skior_swap') === '1';
+  let controlsSwapped = CatSkiStorage.getItem('skior_swap') === '1';
   function applyControlsSwap() {
     document.body.classList.toggle('controls-swapped', controlsSwapped);
   }
@@ -2895,7 +2996,7 @@
   if (btnSwap) {
     btnSwap.addEventListener('click', () => {
       controlsSwapped = !controlsSwapped;
-      localStorage.setItem('skior_swap', controlsSwapped ? '1' : '0');
+      CatSkiStorage.setItem('skior_swap', controlsSwapped ? '1' : '0');
       applyControlsSwap();
     });
   }
@@ -2911,17 +3012,18 @@
     orange: { base:'#e67a2e', accent:'#b85616', belly:'#f5c28a', eye:'#6ed26b', patch:null,      nose:'#c06a50', stripes:true  },
   };
 
-  let catColor = localStorage.getItem('skior_cat') || 'tabby';
+  let catColor = CatSkiStorage.getItem('skior_cat') || 'tabby';
   if (!CAT_PALETTES[catColor]) catColor = 'tabby';
-  function cat() { return CAT_PALETTES[catColor] || CAT_PALETTES.tabby; }
+  function cat() { return CAT_PALETTES[gameplayConfig().catColor] || CAT_PALETTES.tabby; }
 
   function setCatColor(name) {
     if (!CAT_PALETTES[name]) return;
     catColor = name;
-    localStorage.setItem('skior_cat', name);
+    CatSkiStorage.setItem('skior_cat', name);
     document.querySelectorAll('button[data-cat]').forEach(btn => {
       setPressed(btn, btn.dataset.cat === name);
     });
+    syncPendingSettings();
   }
 
   document.querySelectorAll('button[data-cat]').forEach(btn => {
@@ -3033,17 +3135,18 @@
     },
   };
 
-  let mtnTheme = localStorage.getItem('skior_theme') || 'alps';
+  let mtnTheme = CatSkiStorage.getItem('skior_theme') || 'alps';
   if (!THEMES[mtnTheme]) mtnTheme = 'alps';
-  function curTheme() { return THEMES[mtnTheme]; }
+  function curTheme() { return THEMES[gameplayConfig().mtnTheme]; }
 
   function setTheme(name) {
     if (!THEMES[name]) return;
     mtnTheme = name;
-    localStorage.setItem('skior_theme', name);
+    CatSkiStorage.setItem('skior_theme', name);
     document.querySelectorAll('[data-theme]').forEach(btn => {
       setPressed(btn, btn.dataset.theme === name);
     });
+    syncPendingSettings();
   }
 
   // Render the actual cat sprite into each picker preview using the
@@ -3130,23 +3233,23 @@
   //   intensity: 0.8 - 5.0 (speed, density, spawn cadence, dog tracking)
   //   dogCount:  1 - 10   (dog waves before snowman appears)
   // diff() (below) derives speedMul/densityMul/rampSeconds/yetiSeconds/etc from intensity.
-  let intensity = parseFloat(localStorage.getItem('skior_intensity'));
+  let intensity = parseFloat(CatSkiStorage.getItem('skior_intensity'));
   if (!isFinite(intensity)) intensity = 1.0;
   intensity = Math.max(0.8, Math.min(5.0, intensity));
 
-  let dogCount = parseInt(localStorage.getItem('skior_dogs'), 10);
+  let dogCount = parseInt(CatSkiStorage.getItem('skior_dogs'), 10);
   if (!isFinite(dogCount)) dogCount = 2;
   dogCount = Math.max(1, Math.min(10, dogCount));
 
   // 9-lives casual mode. 9 lives → grey-out HUD icons; only ends run on the 9th hit.
   // Best scores and the device-local leaderboard are namespaced separately per mode.
   // Default is ON; only an explicit '0' in storage opts out.
-  let livesMode = localStorage.getItem('skior_lives') !== '0';
+  let livesMode = CatSkiStorage.getItem('skior_lives') !== '0';
 
   // Each param scales independently. speedMul uses sqrt so 5x isn't 5x unplayable;
   // density linear, spawn timings inverse, dog tracking tightens, dog descent slows.
   function diff() {
-    const M = intensity;
+    const M = gameplayConfig().intensity;
     return {
       name:          'CUSTOM',
       speedMul:      Math.max(0.7,  Math.min(1.85, Math.pow(M, 0.5))),
@@ -3174,18 +3277,20 @@
 
   function applyIntensity(val) {
     intensity = Math.max(0.8, Math.min(5.0, val));
-    localStorage.setItem('skior_intensity', String(intensity));
+    CatSkiStorage.setItem('skior_intensity', String(intensity));
     if (diffSlider) diffSlider.value = String(Math.round(intensity * 100));
     if (diffValue)  diffValue.textContent = intensity.toFixed(2).replace(/\.?0+$/, '') + 'x';
     syncSettingValueText();
     refreshBestForCombo();
+    syncPendingSettings();
   }
   function applyDogCount(val) {
     dogCount = Math.max(1, Math.min(10, Math.round(val)));
-    localStorage.setItem('skior_dogs', String(dogCount));
+    CatSkiStorage.setItem('skior_dogs', String(dogCount));
     if (dogsSlider) dogsSlider.value = String(dogCount);
     if (dogsValue)  dogsValue.textContent = String(dogCount);
     refreshBestForCombo();
+    syncPendingSettings();
   }
   function refreshBestForCombo() {
     best = currentBest();
@@ -3204,25 +3309,48 @@
   // `bests` must be declared before the applyIntensity init calls below:
   // they reach refreshBestForCombo, which reads it. A let read ahead of
   // its declaration throws.
-  function bestKey() {
+  function bestKey(config = gameplayConfig()) {
     // 9-lives runs score on their own slot per combo: "9 hits to die" is a
     // different leaderboard than the 1-hit run.
-    return intensity.toFixed(1) + '_' + dogCount + (livesMode ? '_9' : '');
+    return config.intensity.toFixed(1) + '_' + config.dogCount + (config.livesMode ? '_9' : '');
+  }
+  function sanitizeBests(value) {
+    const valid = Object.create(null);
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return valid;
+    for (const [key, score] of Object.entries(value)) {
+      if (typeof score === 'number' && Number.isFinite(score) && score >= 0) valid[key] = score;
+    }
+    return valid;
+  }
+  function readStoredBests() {
+    try { return sanitizeBests(JSON.parse(CatSkiStorage.getStoredItem('skior_bests'))); }
+    catch (_) { return Object.create(null); }
   }
   function loadBests() {
-    try {
-      const raw = localStorage.getItem('skior_bests');
-      if (raw) return JSON.parse(raw);
-    } catch (_) {}
-    // Migrate legacy single-best
-    const legacy = Number(localStorage.getItem('skior_best') || 0);
-    return legacy > 0 ? { [bestKey()]: legacy } : {};
+    const raw = CatSkiStorage.getItem('skior_bests');
+    if (raw !== null) {
+      try { return sanitizeBests(JSON.parse(raw)); }
+      catch (_) { return Object.create(null); }
+    }
+    // Migrate the old single-best only when no newer map exists.
+    const legacy = Number(CatSkiStorage.getItem('skior_best'));
+    return sanitizeBests(Number.isFinite(legacy) && legacy > 0 ? { [bestKey()]: legacy } : {});
   }
-  function saveBests(obj) {
-    try { localStorage.setItem('skior_bests', JSON.stringify(obj)); } catch (_) {}
+  function saveBests(obj, clearedKey = null) {
+    const snapshot = sanitizeBests(obj);
+    return CatSkiStorage.withLock('cat-ski-scores', () => {
+      const merged = readStoredBests();
+      for (const source of [sanitizeBests(bests), snapshot]) {
+        for (const [key, score] of Object.entries(source)) merged[key] = Math.max(merged[key] || 0, score);
+      }
+      if (clearedKey !== null) delete merged[clearedKey];
+      bests = merged;
+      CatSkiStorage.setItem('skior_bests', JSON.stringify(merged));
+      refreshBestForCombo();
+    });
   }
   let bests = loadBests();
-  function currentBest() { return bests[bestKey()] || 0; }
+  function currentBest(config = gameplayConfig()) { return bests[bestKey(config)] || 0; }
   let best = currentBest();
 
   applyIntensity(intensity);
@@ -3248,13 +3376,14 @@
   }
   function setLivesMode(on) {
     livesMode = !!on;
-    localStorage.setItem('skior_lives', livesMode ? '1' : '0');
-    document.body.classList.toggle('lives-mode', livesMode);
+    CatSkiStorage.setItem('skior_lives', livesMode ? '1' : '0');
+    document.body.classList.toggle('lives-mode', gameplayConfig().livesMode);
     if (btnLives) setPressed(btnLives, livesMode);
     // Best scores live under a different key when lives mode is on, so
     // refresh the displayed best for the current intensity/dogs combo.
     best = currentBest();
-    updateLivesHUD();
+    if (!activeRunConfig) updateLivesHUD();
+    syncPendingSettings();
     // Re-roll the start-screen flavor pool so lines like "Eight lives
     // to spare" don't appear in 1-life mode (and vice versa).
     if (typeof refreshFlavorText === 'function') {
@@ -3313,9 +3442,6 @@
   // The skier sits at a fixed screen Y; the world scrolls past.
   // worldY = how far down the mountain we've traveled (in px).
   let worldY = 0;
-  // Last-known airborne state, used to skip redundant body classList
-  // toggles. See the per-frame guard inside update().
-  let _wasAirborne = false;
   let player, objects, particles, tracks, yeti, stats;
 
   function resetGame() {
@@ -3344,7 +3470,7 @@
       // existing endRun-on-hit logic still applies in classic mode).
       // invincT counts down post-hit immunity in lives-mode so a single
       // collision can't burn through multiple lives in consecutive frames.
-      lives: livesMode ? 9 : 1,
+      lives: gameplayConfig().livesMode ? 9 : 1,
       invincT: 0,
     };
 
@@ -3588,7 +3714,7 @@
     if (yDist < 8 && xDist < 12 && !player.grabbed && player.air <= 0 && player.invincT <= 0) {
       // Lives mode: dog takes a life and despawns. Set dogClearedAt so the next
       // wave scheduler still fires correctly.
-      if (livesMode && player.lives > 1) {
+      if (gameplayConfig().livesMode && player.lives > 1) {
         player.lives--;
         player.invincT = 60;
         updateLivesHUD(player.lives);
@@ -3662,7 +3788,7 @@
     if (!player.grabbed && Math.abs(snowman.x - player.x) < 10 && player.invincT <= 0) {
       // Lives mode: snowman takes a life and bounces off-screen to recharge
       // (otherwise it chomps every frame post-invincT — it can't be outrun).
-      if (livesMode && player.lives > 1) {
+      if (gameplayConfig().livesMode && player.lives > 1) {
         player.lives--;
         player.invincT = 60;
         updateLivesHUD(player.lives);
@@ -3714,14 +3840,10 @@
     player.x += player.vx;
     player.x = Math.max(8, Math.min(W - 8, player.x));
 
-    // Advance world and timers (assume ~60fps -> 1/60s per frame)
+    // One fixed 1/60-second simulation step, independent of render rate.
     worldY += player.speed;
     stats.elapsed += 1 / 60;
     stats.distance = Math.floor(worldY / 10); // 10px = 1m
-    // Score formula: distance + flag bonus + jump bonus + trick bonus.
-    // Trick chain points accumulate in stats.trickScore when a jump ends.
-    stats.score    = stats.distance + stats.flags * 100 + stats.jumps * 25 + stats.trickScore;
-
     // Airborne countdown
     if (player.air > 0) {
       player.air -= 1;
@@ -3831,13 +3953,16 @@
       if (player.air <= 0 && aabb(pb, ob)) {
         o.hit = true;
         crash(o.type);
+        if (state !== STATE.PLAY) return;
         break;
       }
     }
 
     // Dog wake-up. dogCount waves; first at yetiSeconds, rest dogGap apart. Per-wave difficulty in spawnYeti().
+    stats.score = calculateScore();
     const D = diff();
-    if (stats.dogsSpawned < dogCount) {
+    const runDogs = gameplayConfig().dogCount;
+    if (stats.dogsSpawned < runDogs) {
       if (stats.dogsSpawned === 0) {
         if (!stats.dogsWarned[1] && stats.elapsed >= D.yetiSeconds - 4) {
           stats.dogsWarned[1] = true;
@@ -3861,13 +3986,14 @@
       }
     }
     updateYeti();
+    if (state !== STATE.PLAY) return;
 
     // Snowman: spawns 20-40 seconds after the LAST dog wave clears.
     // This way dog count and snowman timing compose naturally — more
     // dogs pushes the snowman later. The exact delay is rolled once
     // when all dogs are done and stored on stats.snowmanScheduledAt.
     if (!stats.snowmanSpawned
-        && stats.dogsSpawned >= dogCount
+        && stats.dogsSpawned >= runDogs
         && !yeti
         && stats.dogClearedAt != null) {
       if (stats.snowmanScheduledAt == null) {
@@ -3878,6 +4004,7 @@
       }
     }
     updateSnowman();
+    if (state !== STATE.PLAY) return;
 
     // Particles
     for (const p of particles) {
@@ -3895,15 +4022,7 @@
     // doesn't immediately consume another life.
     if (player.invincT > 0) player.invincT--;
 
-    // Toggle body.airborne only when it actually changes, not every
-    // frame. classList.toggle is a no-op when the state matches, but
-    // the call itself still triggers a style invalidation each time at
-    // 60Hz. Tracking last-known state avoids that work.
-    const shouldBeAirborne = player.air > 0 && !player.crashed && !player.grabbed;
-    if (shouldBeAirborne !== _wasAirborne) {
-      document.body.classList.toggle('airborne', shouldBeAirborne);
-      _wasAirborne = shouldBeAirborne;
-    }
+    syncTrickControls();
 
     // Swoosh wind sound tracks player speed, quieter when airborne
     // (nothing to scrape) and silent when paused/crashed.
@@ -4002,7 +4121,7 @@
     // Lives mode: spend a life, keep skiing. Player doesn't lock into a
     // crash pose, gets a 1-second invincibility window, and the swoosh
     // wind keeps playing. Only the last life crashes the run for real.
-    if (livesMode && player.lives > 1) {
+    if (gameplayConfig().livesMode && player.lives > 1) {
       player.lives--;
       player.invincT = 60;
       updateLivesHUD(player.lives);
@@ -4024,14 +4143,26 @@
   // Older unmarked rows are preserved because their origin is unknown.
   function sanitizeBoard(arr) {
     if (!Array.isArray(arr)) return [];
-    return arr
-      .filter(e => e && e.starter !== true && typeof e.score === 'number' && typeof e.name === 'string')
-      .slice(0, LB_LIMIT);
+    const rows = new Map();
+    const legacyCounts = new Map();
+    for (const entry of arr) {
+      if (!entry || entry.starter === true || typeof entry.name !== 'string' ||
+          !Number.isFinite(entry.score) || entry.score < 0) continue;
+      // Deterministic IDs migrate old rows without duplicating them when
+      // another already-open tab saves its pre-migration snapshot.
+      const signature = JSON.stringify([entry.name, entry.score]);
+      const ordinal = legacyCounts.get(signature) || 0;
+      legacyCounts.set(signature, ordinal + 1);
+      const id = typeof entry.id === 'string' && entry.id ? entry.id : 'legacy:' + signature + ':' + ordinal;
+      const existing = rows.get(id);
+      if (!existing || entry.score > existing.score) rows.set(id, { id, name: entry.name, score: entry.score });
+    }
+    return [...rows.values()].sort((a, b) => b.score - a.score || a.id.localeCompare(b.id)).slice(0, LB_LIMIT);
   }
   function loadLeaderboardCache() {
     // Shape: { lives9: [...], lives1: [...] }.
     try {
-      const raw = localStorage.getItem(LB_CACHE_KEY);
+      const raw = CatSkiStorage.getStoredItem(LB_CACHE_KEY);
       if (raw) {
         const obj = JSON.parse(raw);
         if (obj && typeof obj === 'object') {
@@ -4045,20 +4176,25 @@
     return { lives9: [], lives1: [] };
   }
   function saveLeaderboardCache() {
-    try { localStorage.setItem(LB_CACHE_KEY, JSON.stringify(leaderboardCache)); }
-    catch (_) {}
+    CatSkiStorage.setItem(LB_CACHE_KEY, JSON.stringify(leaderboardCache));
+  }
+  function mergeLeaderboardCaches(...snapshots) {
+    return {
+      lives9: sanitizeBoard(snapshots.flatMap(cache => sanitizeBoard(cache.lives9))),
+      lives1: sanitizeBoard(snapshots.flatMap(cache => sanitizeBoard(cache.lives1))),
+    };
   }
   let leaderboardCache = loadLeaderboardCache();
 
   // The slot key for the player's current mode.
-  function modeSlot() { return livesMode ? 'lives9' : 'lives1'; }
+  function modeSlot(lives = gameplayConfig().livesMode) { return lives ? 'lives9' : 'lives1'; }
 
-  // The visible board is whichever slot matches the current livesMode.
+  // The visible board follows the active run (or the picker before starting).
   // setLivesMode (defined elsewhere) calls applyLeaderboardForMode after
   // toggling, which re-points this reference and re-renders.
   let leaderboard = leaderboardCache[modeSlot()];
 
-  // Swap the visible board to match the current livesMode. Called from
+  // Swap the visible board to match the run configuration. Called from
   // setLivesMode AFTER it flips the bool.
   function applyLeaderboardForMode() {
     leaderboard = leaderboardCache[modeSlot()];
@@ -4092,7 +4228,7 @@
     // looking at — the strip changes when the LIVES toggle does.
     const mode = document.createElement('span');
     mode.className = 'lb-mode';
-    mode.textContent = livesMode ? t('lb.modeNine') : t('lb.modeOne');
+    mode.textContent = gameplayConfig().livesMode ? t('lb.modeNine') : t('lb.modeOne');
     leaderboardEl.appendChild(mode);
     for (let i = 0; i < 3; i++) {
       const e = leaderboard[i];
@@ -4118,31 +4254,45 @@
 
   // True if `score` would land in the top-3 (either there are open
   // slots, or it beats the current 3rd-place score).
-  function qualifiesForLeaderboard(score) {
+  function qualifiesForLeaderboard(score, lives = gameplayConfig().livesMode) {
     if (!isFinite(score) || score <= 0) return false;
-    if (leaderboard.length < 3) return true;
-    return score > leaderboard[leaderboard.length - 1].score;
+    const board = leaderboardCache[modeSlot(lives)];
+    if (board.length < 3) return true;
+    return score > board[board.length - 1].score;
   }
 
-  // Insert a new entry into the cache slot for the CURRENT mode, sort
-  // high-to-low, trim to 3. Returns the 1-based rank the entry landed at.
-  function insertLeaderboardEntry(name, score) {
+  // Merge both modes immediately before saving. Web Locks serialize
+  // simultaneous tab submissions where supported; older browsers use
+  // the same synchronous read/merge/write with no intervening await.
+  async function insertLeaderboardEntry(name, score, lives = gameplayConfig().livesMode) {
+    if (!Number.isFinite(score) || score <= 0) return 0;
     const clean = String(name || '').toUpperCase().replace(/[^A-Z0-9 ]/g, '').slice(0, 5).trim() || 'CAT';
-    const entry = { name: clean, score: score };
-    const slot  = modeSlot();
-    const board = leaderboardCache[slot] || [];
-    board.push(entry);
-    board.sort((a, b) => b.score - a.score);
-    leaderboardCache[slot] = board.slice(0, LB_LIMIT);
-    saveLeaderboardCache();
-    // Re-point the visible board reference to the now-mutated cache
-    // slot, then re-render. (If the user has somehow toggled mode
-    // between crash and submit, applyLeaderboardForMode handles that
-    // separately.)
-    leaderboard = leaderboardCache[slot];
-    renderLeaderboard();
-    return leaderboard.indexOf(entry) + 1;
+    const id = window.crypto && typeof window.crypto.randomUUID === 'function'
+      ? window.crypto.randomUUID() : Date.now().toString(36) + '-' + Math.random().toString(36).slice(2);
+    const entry = { id, name: clean, score };
+    const slot = modeSlot(lives);
+    return CatSkiStorage.withLock('cat-ski-scores', () => {
+      leaderboardCache = mergeLeaderboardCaches(loadLeaderboardCache(), leaderboardCache);
+      leaderboardCache[slot] = sanitizeBoard([...leaderboardCache[slot], entry]);
+      saveLeaderboardCache();
+      leaderboard = leaderboardCache[modeSlot()];
+      renderLeaderboard();
+      return leaderboardCache[slot].findIndex(row => row.id === id) + 1;
+    });
   }
+
+  window.addEventListener('storage', event => {
+    if (event.key === 'skior_bests' || event.key === null) {
+      bests = readStoredBests();
+      refreshBestForCombo();
+    }
+    if (event.key === LB_CACHE_KEY || event.key === null) {
+      leaderboardCache = event.newValue === null ? loadLeaderboardCache()
+        : mergeLeaderboardCaches(loadLeaderboardCache(), leaderboardCache);
+      leaderboard = leaderboardCache[modeSlot()];
+      renderLeaderboard();
+    }
+  });
 
   // Name-entry overlay wiring (lives inside the game-over panel).
   const lbEntry      = document.getElementById('lb-entry');
@@ -4152,30 +4302,40 @@
   // While the entry block is showing, swallow the SPACE-to-restart
   // shortcut so typing a space into the input doesn't restart the game.
   let lbEntryActive = false;
+  let lbSubmission = null;
   function showLbEntry(score) {
     if (!lbEntry || !lbNameInput) return;
     lbEntryActive = true;
     lbEntry.classList.remove('hidden');
+    if (lbEntryTitle) lbEntryTitle.textContent = t('lb.newHigh');
     lbNameInput.value = '';
     // The remembered last-used name (if any) makes repeat sessions one
     // tap shorter on mobile.
-    const lastName = localStorage.getItem('skior_lb_last_name') || '';
+    const lastName = CatSkiStorage.getItem('skior_lb_last_name') || '';
     if (lastName) lbNameInput.value = lastName;
     // Defer focus a tick so it survives the overlay reveal animation.
     setTimeout(() => { try { lbNameInput.focus(); lbNameInput.select(); } catch (_) {} }, 50);
   }
-  function submitLbEntry() {
-    if (!lbEntryActive) return;
+  async function submitLbEntry() {
+    const result = completedRun;
+    if (!lbEntryActive || !result || lbSubmission === result) return;
     const name = (lbNameInput && lbNameInput.value || '').toUpperCase().slice(0, 5).trim();
-    const score = stats ? stats.score : 0;
+    const score = result.score;
     if (!isFinite(score) || score <= 0) {
       hideLbEntry();
       return;
     }
-    const rank = insertLeaderboardEntry(name, score);
-    if (name) localStorage.setItem('skior_lb_last_name', name);
-    trackLeaderboardSubmitted(score, rank, name);
-    hideLbEntry();
+    lbSubmission = result;
+    try {
+      const rank = await insertLeaderboardEntry(name, score, result.config.livesMode);
+      if (name) CatSkiStorage.setItem('skior_lb_last_name', name);
+      trackLeaderboardSubmitted(score, rank, name, result.config.livesMode);
+      if (completedRun === result) hideLbEntry();
+    } catch (_) {
+      if (completedRun === result && lbEntryTitle) lbEntryTitle.textContent = t('lb.saveFailed');
+    } finally {
+      if (lbSubmission === result) lbSubmission = null;
+    }
   }
   function hideLbEntry() {
     lbEntryActive = false;
@@ -4220,34 +4380,71 @@
     lbEntry.addEventListener('click', e => e.stopPropagation());
   }
 
+  function calculateScore() {
+    return stats.distance + stats.flags * 100 + stats.jumps * 25 + stats.trickScore;
+  }
+
   function endRun(title, sub, cause) {
-    state = STATE.OVER;
+    if (state !== STATE.PLAY || completedRun) return;
+    const config = gameplayConfig();
+    stats.score = calculateScore();
+    best = currentBest(config);
     if (stats.score > best) {
       best = stats.score;
-      bests[bestKey()] = best;
+      bests[bestKey(config)] = best;
       saveBests(bests);
     }
+    completedRun = Object.freeze({
+      config, score: stats.score, distance: stats.distance, elapsed: stats.elapsed,
+      flags: stats.flags, jumps: stats.jumps, tricks: stats.tricks, trickScore: stats.trickScore,
+      cause: cause || 'unknown', best,
+      qualifiedForLeaderboard: qualifiesForLeaderboard(stats.score, config.livesMode),
+    });
+    state = STATE.OVER;
     overTitle.textContent = title;
     overSub.textContent   = sub;
-    overTime.textContent  = formatTime(stats.elapsed);
-    overDist.textContent  = stats.distance + ' M';
-    overScore.textContent = stats.score;
-    overBest.textContent  = best;
+    overTime.textContent  = formatTime(completedRun.elapsed);
+    overDist.textContent  = completedRun.distance + ' M';
+    overScore.textContent = completedRun.score;
+    overBest.textContent  = completedRun.best;
+    hudScore.textContent = completedRun.score;
+    hudDist.textContent = completedRun.distance;
+    hudTime.textContent = formatTime(completedRun.elapsed);
+    hudSpeed.textContent = player.speed.toFixed(1);
+    hudFlags.textContent = completedRun.flags;
+    hudTricks.textContent = completedRun.tricks;
     overlayOver.classList.remove('hidden');
     clearInput();
     syncPauseButtons();
-    trackRunCompleted(cause);
+    syncTrickControls();
+    trackRunCompleted(completedRun);
+    // Copy the final frame once so later settings changes or a new run cannot
+    // alter an in-flight share operation.
+    try {
+      render();
+      completedFrame = document.createElement('canvas');
+      completedFrame.width = canvas.width;
+      completedFrame.height = canvas.height;
+      completedFrame.getContext('2d').drawImage(canvas, 0, 0);
+    } catch (_) { completedFrame = null; }
     // Reveal the name-entry block if this run cracked the top-3. Default
     // hidden by HTML, hidden again by hideLbEntry() once submitted.
-    if (qualifiesForLeaderboard(stats.score)) {
-      showLbEntry(stats.score);
+    if (completedRun.qualifiedForLeaderboard) {
+      showLbEntry(completedRun.score);
     } else {
       hideLbEntry();
     }
   }
 
   function startRun() {
+    activeRunConfig = Object.freeze(selectedRunConfig());
+    completedRun = null;
+    completedFrame = null;
+    best = currentBest(activeRunConfig);
     resetGame();
+    document.body.classList.toggle('lives-mode', activeRunConfig.livesMode);
+    applyLeaderboardForMode();
+    syncPendingSettings();
     spawnCursor = 0;
     maintainWorld();
     hudWarning.textContent = t('warn.dog');
@@ -4260,8 +4457,10 @@
     // SPACE during this run doesn't get swallowed.
     hideLbEntry();
     state = STATE.PLAY;
+    resetFrameClock();
     clearInput();
     syncPauseButtons();
+    syncTrickControls();
     ensureAudio();   // unlocks audio on first start
     sfx.start();
     startSwoosh();
@@ -4272,10 +4471,10 @@
   function pauseGame() {
     if (state !== STATE.PLAY) return;
     state = STATE.PAUSED;
+    resetFrameClock();
     overlayPaused.classList.remove('hidden');
     syncPauseButtons();
-    // Force trick buttons to dim during pause regardless of mid-jump state
-    document.body.classList.remove('airborne');
+    syncTrickControls();
     // Roll a fresh pause line so every pause feels different
     const pLine = document.getElementById('paused-line');
     if (pLine) pLine.textContent = pickList('paused');
@@ -4287,8 +4486,10 @@
   function resumeGame() {
     if (state !== STATE.PAUSED) return;
     state = STATE.PLAY;
+    resetFrameClock();
     overlayPaused.classList.add('hidden');
     syncPauseButtons();
+    syncTrickControls();
   }
   function togglePause() {
     if (state === STATE.PLAY)   pauseGame();
@@ -4340,8 +4541,8 @@
   // Per-theme tree silhouette: Alps spruce (conical), Rockies pine (taller/sparser),
   // Himalayas juniper (short/gnarled). All use the theme's needle palette.
   function drawTree(x, y) {
-    if (mtnTheme === 'rockies')   return drawLodgepolePine(x, y);
-    if (mtnTheme === 'himalayas') return drawJuniper(x, y);
+    if (gameplayConfig().mtnTheme === 'rockies')   return drawLodgepolePine(x, y);
+    if (gameplayConfig().mtnTheme === 'himalayas') return drawJuniper(x, y);
     return drawSpruce(x, y);
   }
 
@@ -4561,8 +4762,8 @@
   //   Rockies:   aspen log — white bark with iconic black scars.
   //   Himalayas: granite boulder — bare rock, no logs at altitude.
   function drawRock(x, y) {
-    if (mtnTheme === 'rockies')   return drawAspenLog(x, y);
-    if (mtnTheme === 'himalayas') return drawBoulder(x, y);
+    if (gameplayConfig().mtnTheme === 'rockies')   return drawAspenLog(x, y);
+    if (gameplayConfig().mtnTheme === 'himalayas') return drawBoulder(x, y);
     return drawPineLog(x, y);
   }
 
@@ -4763,7 +4964,7 @@
     }
     // Normal snow ramp — palette comes from the theme so its tone
     // matches the rest of the slope.
-    const P = RAMP_PALETTES[mtnTheme] || RAMP_PALETTES.alps;
+    const P = RAMP_PALETTES[gameplayConfig().mtnTheme] || RAMP_PALETTES.alps;
     ctx.fillStyle = P.shadow;
     ctx.fillRect(x - 14, y + 2, 28, 3);
     ctx.fillStyle = P.face;
@@ -4775,7 +4976,7 @@
   }
 
   function drawMogul(x, y) {
-    const P = MOGUL_PALETTES[mtnTheme] || MOGUL_PALETTES.alps;
+    const P = MOGUL_PALETTES[gameplayConfig().mtnTheme] || MOGUL_PALETTES.alps;
     ctx.fillStyle = P.shadow;
     ctx.fillRect(x - 8, y + 2, 16, 2);
     ctx.fillStyle = P.face;
@@ -5568,7 +5769,17 @@
   }
 
   // ---------- main loop ----------
-  function loop() {
+  const SIMULATION_STEP_MS = 1000 / 60;
+  const MAX_FRAME_GAP_MS = 100;
+  let lastFrameTime = null;
+  let frameAccumulator = 0;
+
+  function resetFrameClock() {
+    lastFrameTime = null;
+    frameAccumulator = 0;
+  }
+
+  function loop(timestamp) {
     // Edge-triggered space: start/retry on title/over, resume on paused.
     // SPACE while name-entry is active means "skip naming + retry"
     // (real keystrokes inside the input are captured there with stopPropagation).
@@ -5585,7 +5796,19 @@
       }
     }
 
-    update();
+    if (state === STATE.PLAY) {
+      if (lastFrameTime === null) lastFrameTime = timestamp;
+      frameAccumulator += Math.min(MAX_FRAME_GAP_MS, Math.max(0, timestamp - lastFrameTime));
+      lastFrameTime = timestamp;
+      // A small epsilon prevents floating-point rounding from dropping a
+      // step at exact 30/60/120 Hz boundaries. Stalls catch up at most 100ms.
+      while (frameAccumulator + 1e-7 >= SIMULATION_STEP_MS && state === STATE.PLAY) {
+        frameAccumulator -= SIMULATION_STEP_MS;
+        update();
+      }
+    } else {
+      resetFrameClock();
+    }
     render();
     requestAnimationFrame(loop);
   }
@@ -5611,38 +5834,7 @@
   <button class="cb-btn cb-decline" id="cookie-decline" type="button" data-i18n="cookie.decline">NO THANKS</button>
 </div>
 <script>
-  (function() {
-    // Read existing decision; if 'accepted' or 'declined' the banner
-    // stays hidden. Banner only shows for first-time visitors and
-    // anyone who's cleared their localStorage.
-    var KEY = 'skior_cookies';
-    var saved = null;
-    try { saved = localStorage.getItem(KEY); } catch (_) {}
-    var banner = document.getElementById('cookie-banner');
-    if (!banner) return;
-    if (saved !== 'accepted' && saved !== 'declined') {
-      banner.hidden = false;
-      // Body class hides the joystick + trick pad while the banner is
-      // up so they don't compete for the same bottom-of-viewport real
-      // estate on mobile. CSS in the head handles the actual hiding.
-      document.body.classList.add('cookie-banner-active');
-    }
-    function close(decision) {
-      try { localStorage.setItem(KEY, decision); } catch (_) {}
-      banner.hidden = true;
-      document.body.classList.remove('cookie-banner-active');
-      if (decision === 'accepted') {
-        if (typeof gtag === 'function') {
-          gtag('consent', 'update', { 'analytics_storage': 'granted' });
-        }
-        try { if (window.mixpanel && mixpanel.opt_in_tracking) mixpanel.opt_in_tracking(); } catch (_) {}
-      }
-    }
-    var ok = document.getElementById('cookie-accept');
-    var no = document.getElementById('cookie-decline');
-    if (ok) ok.addEventListener('click', function() { close('accepted'); });
-    if (no) no.addEventListener('click', function() { close('declined'); });
-  })();
+  window.CatSkiConsent.mount();
 </script>
 </body>
 </html>

@@ -18,6 +18,7 @@
 
 <!-- Search Console verification -->
 <meta name="google-site-verification" content="Blnw1PeynoNtYxKYh57M27xYxnoz3UKCrqQ4a3mvxt8">
+<script src="/storage.js?v=22"></script>
 
 <!-- Google Analytics 4 with Consent Mode v2.
      Mirrors the default-denied posture from index.html — GA fires no
@@ -35,14 +36,10 @@
     'analytics_storage':  'denied',
     'wait_for_update':    500
   });
-  try {
-    if (localStorage.getItem('skior_cookies') === 'accepted') {
-      gtag('consent', 'update', { 'analytics_storage': 'granted' });
-    }
-  } catch (_) {}
   gtag('js', new Date());
   gtag('config', 'G-MSN465FL9R');
 </script>
+<script src="/consent.js?v=22"></script>
 <meta name="description" content="How to play Cat Ski, the free SkiFree-style browser skiing game. Controls, the cats and the mountains, the dog and the snowman, plus privacy notes and answers to common questions.">
 <meta name="keywords" content="cat ski, how to play cat ski, cat ski controls, cat ski game, skifree online, browser skiing game, free skiing game, retro skiing game">
 <link rel="canonical" href="https://ski.unwoke.ninja/readme.html">
@@ -493,7 +490,7 @@
 
     <h2 id="play">Gameplay details</h2>
 
-    <p>Before starting, the player chooses a cat color (black, tabby, calico, or orange) and a mountain theme (Alps, Rockies, or Himalayas). Both selections persist across sessions through localStorage.</p>
+    <p>Before starting, the player chooses a cat color (black, tabby, calico, or orange) and a mountain theme (Alps, Rockies, or Himalayas). Both selections persist across sessions through localStorage. Changes to the cat, mountain, difficulty, dog count, or lives apply to the next run; the current run keeps its original settings and score.</p>
 
     <p>The score increases with distance traveled, plus bonuses for collected flags, completed jumps, and chained tricks. Each subsequent trick within a single jump compounds the bonus, so chaining several tricks before landing produces a higher reward than performing them across separate jumps.</p>
 
@@ -602,25 +599,7 @@
     <button class="cb-btn cb-decline" id="cookie-decline" type="button">NO THANKS</button>
   </div>
   <script>
-    (function() {
-      var KEY = 'skior_cookies';
-      var saved = null;
-      try { saved = localStorage.getItem(KEY); } catch (_) {}
-      var banner = document.getElementById('cookie-banner');
-      if (!banner) return;
-      if (saved !== 'accepted' && saved !== 'declined') banner.hidden = false;
-      function close(decision) {
-        try { localStorage.setItem(KEY, decision); } catch (_) {}
-        banner.hidden = true;
-        if (decision === 'accepted' && typeof gtag === 'function') {
-          gtag('consent', 'update', { 'analytics_storage': 'granted' });
-        }
-      }
-      var ok = document.getElementById('cookie-accept');
-      var no = document.getElementById('cookie-decline');
-      if (ok) ok.addEventListener('click', function() { close('accepted'); });
-      if (no) no.addEventListener('click', function() { close('declined'); });
-    })();
+    window.CatSkiConsent.mount();
   </script>
 </body>
 </html>

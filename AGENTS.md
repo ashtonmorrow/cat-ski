@@ -21,13 +21,13 @@ This project uses **Mixpanel** for product analytics, running alongside Google A
 
 | Detail | Value |
 |---|---|
-| **Platform** | Single-file static site — vanilla HTML/CSS/JS, HTML5 Canvas, no build step, no framework |
+| **Platform** | Static site — vanilla HTML/CSS/JS, HTML5 Canvas, no build step, no framework; gameplay in `index.html`, shared persistence/consent in `storage.js` and `consent.js` |
 | **Mixpanel SDK** | `mixpanel-browser` (2.x), loaded from `cdn.mxpnl.com` via the standard snippet |
 | **Tracking method** | Client-side only |
 | **CDP** | none |
 | **Consent required** | **yes** — reuses the existing cookie banner (localStorage key `skior_cookies`) |
 | **Project token** | Hardcoded in `index.html` head. This is intentional: it is a browser (publishable) token, the site has no build/env system, and GA's ID is hardcoded the same way. Do not treat it as a secret. |
-| **Environments** | One project. Every event carries an `environment` super-property: `production` on `ski.mike-lee.me`, `development` everywhere else (localhost, previews). Filter `environment == "development"` out of real analysis. |
+| **Environments** | One project. Every event carries an `environment` super-property: `production` on `ski.unwoke.ninja`, `development` everywhere else (localhost, previews). Filter `environment == "development"` out of real analysis. |
 
 ---
 
@@ -41,12 +41,14 @@ mixpanel.init('<token>', {
   persistence: 'localStorage',
   track_pageview: false,
   ignore_dnt: false,
+  loaded: function () { window.CatSkiConsent.sync(true); },
 });
-// returning visitor who already accepted:
-if (localStorage.getItem('skior_cookies') === 'accepted') mixpanel.opt_in_tracking();
+window.CatSkiConsent.sync(true);
 ```
 
-Consent opt-in for a first-time accept is wired into the cookie banner's OK handler (bottom of `index.html`): `mixpanel.opt_in_tracking()` fires there, next to the existing `gtag('consent', ...)` grant. Decline leaves the SDK opted-out; no events send.
+Both pages load `storage.js` and `consent.js`. The shared consent helper explicitly updates GA analytics consent and Mixpanel opt-in/opt-out on boot, acceptance, decline, SDK load, and cross-tab storage changes. It also reconciles restored/focused pages. Decline or a missing decision overrides any previously persisted Mixpanel opt-in. Restoring consent suppresses Mixpanel's automatic opt-in event. The `analytics()` wrapper checks the current site choice at send-time as well, before another tab's storage event arrives. Blocked browser storage falls back to this page's in-memory decision.
+
+GA loads with Consent Mode v2 denied by default and can send limited cookieless measurements while denied, as explained by the banner and privacy notes. Mixpanel product events require acceptance.
 
 **Do not** initialize Mixpanel anywhere else or create additional instances.
 

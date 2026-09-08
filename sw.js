@@ -6,20 +6,22 @@
  *     - Navigation requests / HTML -> network-first, fall back to cache
  *       (so code changes propagate on the next online load without the
  *       user getting stuck on a stale index.html).
- *     - Static assets (images, manifest) -> cache-first, update in
+ *     - Static assets (scripts, images, manifest) -> cache-first, update in
  *       background after response is served.
  *     - Cross-origin requests (analytics) pass through directly.
- * - On activate: delete old caches with different names.
+ * - On activate: delete this app's older caches.
  *
  * When shipping a breaking change, bump CACHE_NAME (e.g. v2 -> v3) to
  * force all old caches to clear on next visit.
  */
 
-const CACHE_NAME = 'cat-ski-v21';
+const CACHE_NAME = 'cat-ski-v22';
 const APP_SHELL = [
   '/',
   '/index.html',
   '/readme.html',
+  '/storage.js?v=22',
+  '/consent.js?v=22',
   '/manifest.json',
   '/preview.png?v=19',
   '/favicon.ico?v=19',
@@ -46,11 +48,27 @@ self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
       .then(keys => Promise.all(
-        keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
+        keys.filter(k => k.startsWith('cat-ski-') && k !== CACHE_NAME).map(k => caches.delete(k))
       ))
       .then(() => self.clients.claim())
   );
 });
+
+async function healthyCached(request) {
+  try {
+    const cache = await caches.open(CACHE_NAME);
+    const response = await cache.match(request);
+    return response && response.ok ? response : null;
+  } catch (_) { return null; }
+}
+
+async function cacheHealthy(request, response) {
+  if (!response || !response.ok) return;
+  try {
+    const cache = await caches.open(CACHE_NAME);
+    await cache.put(request, response.clone());
+  } catch (_) { /* A full/blocked cache must not discard a healthy response. */ }
+}
 
 self.addEventListener('fetch', event => {
   const req = event.request;
@@ -68,31 +86,34 @@ self.addEventListener('fetch', event => {
                        (req.headers.get('accept') || '').includes('text/html');
 
   if (isNavigation) {
-    event.respondWith(
-      fetch(req)
-        .then(response => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(req, copy));
-          return response;
-        })
-        .catch(() => caches.match(req).then(r => r || caches.match('/')))
-    );
+    const navigation = (async () => {
+      let response;
+      try { response = await fetch(req); } catch (_) {}
+      if (response && response.ok) {
+        await cacheHealthy(req, response);
+        return response;
+      }
+      // HTTP failures are recoverable too, and never replace a working shell.
+      return await healthyCached(req) || await healthyCached('/') || response || Response.error();
+    })();
+    event.respondWith(navigation);
+    event.waitUntil(navigation.then(() => {}, () => {}));
     return;
   }
 
   // Everything else (images, manifest, fonts that slip through): cache-
   // first with background refresh. Serving from cache makes the app feel
   // instant; the background fetch keeps the cache warm.
-  event.respondWith(
-    caches.match(req).then(cached => {
-      const networkFetch = fetch(req).then(response => {
-        if (response && response.ok) {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(req, copy));
-        }
-        return response;
-      }).catch(() => cached);  // offline + nothing cached = reject
-      return cached || networkFetch;
-    })
-  );
+  const cached = healthyCached(req);
+  const refresh = (async () => {
+    try {
+      const response = await fetch(req);
+      await cacheHealthy(req, response);
+      return response;
+    } catch (_) { return null; }
+  })();
+  // Register the lifetime promise while handling the event, even when a
+  // cached response is sent before the refresh and cache write finish.
+  event.waitUntil(refresh.then(() => {}, () => {}));
+  event.respondWith(cached.then(response => response || refresh.then(fresh => fresh || Response.error())));
 });
