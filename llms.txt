@@ -4,7 +4,7 @@
 
 Cat Ski 1989 is an open-source browser game inspired by SkiFree, with a cat as the player character. It includes three mountain themes (Alps, Rockies, Himalayas), four cat variants (black, tabby, calico, orange), chained mid-air tricks (Meow Roll, Whisker Twist, Cat Nap), gold escape ramps, regional dog breeds, and a snowman in the role of the original yeti. The snowman appears 20–40 seconds after the final dog wave clears. Each catch costs a life; losing the last life ends the run.
 
-Difficulty uses two sliders (intensity 0.8x to 5x, dog count 1 to 10) and four presets (Easy, Medium, Hard, Insta Death). Nine lives are enabled by default, with a toggle for 1-life classic. Each lives mode has a separate top-3 leaderboard in the browser's localStorage, initially filled with starter scores to beat. These are local targets, not a live global ranking. An optional nickname of up to five characters can be entered after a qualifying run. The game also supports synthesized sound effects, English and rioplatense Spanish, per-difficulty best scores, and installation as a Progressive Web App for offline play.
+Difficulty uses two sliders (intensity 0.8x to 5x, dog count 1 to 10) and four presets (Easy, Medium, Hard, Insta Death). Nine lives are enabled by default, with a toggle for 1-life classic. Each lives mode has a separate top-3 leaderboard in the browser's localStorage, filled by saved runs. An optional nickname of up to five characters can be entered after a qualifying run. The game also supports synthesized sound effects, English and rioplatense Spanish, per-difficulty best scores, and installation as a Progressive Web App for offline play.
 
 ## Controls
 

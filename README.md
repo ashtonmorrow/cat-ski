@@ -16,7 +16,7 @@ The game code is in one HTML file, with separate artwork, icons, and self-hosted
 - A snowman chaser in the role of the SkiFree yeti, plus dog breeds that match each region.
 - Two difficulty sliders, intensity and dog count, with four presets from Easy to Insta Death.
 - A 9-lives casual mode on by default, or 1-life classic if you want the original pressure.
-- A top-3 leaderboard kept in the browser, with separate boards for each lives mode and starter scores to beat.
+- A top-3 leaderboard kept in the browser, with separate boards for each lives mode.
 - Keyboard and touch controls, and English or rioplatense Spanish text.
 - Installable as a Progressive Web App for offline play.
 
@@ -40,7 +40,7 @@ The snowman arrives 20–40 seconds after the final dog wave clears. A catch cos
 
 ## Scores and privacy
 
-Each browser has its own leaderboard, starting with three preset scores for each lives mode. It is not a live global ranking. Saved nicknames and the board stay in localStorage; clearing site storage resets them.
+Each browser has its own leaderboard, filled by your saved runs. Saved nicknames and the board stay in localStorage; clearing site storage resets them.
 
 The site uses Google Analytics 4 and Mixpanel. Mixpanel game events, including run scores and difficulty, require acceptance of the analytics banner; nicknames are not included. Google Analytics cookies remain disabled until acceptance, but the current Consent Mode setup can send cookieless measurements before a choice or after declining. See the [privacy notes](https://ski.unwoke.ninja/readme.html#privacy).
 

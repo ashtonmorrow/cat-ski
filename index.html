@@ -336,18 +336,6 @@
      animation, minimum vertical real-estate. Each entry is fixed-width
      so rank/name/score columns line up vertically across the three
      entries — reads as a tiny arcade leaderboard, not a run-on string. */
-  .lb-context {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 6px 16px;
-    margin-bottom: 4px;
-    font-family: var(--font-body);
-    font-size: 16px;
-    line-height: 1.15;
-    color: var(--snow-dim);
-  }
-  .lb-starter { color: var(--accent-2); margin-left: 2px; }
   .leaderboard {
     display: flex;
     justify-content: center;
@@ -1327,13 +1315,7 @@
     <span class="bezel-right"></span>
   </div>
 
-  <!-- Top-3 high-score strip. Populated from localStorage by JS. Always
-       visible: empty slots render as "1. ---  -----" so the strip's
-       footprint stays consistent before any scores are recorded. -->
-  <div class="lb-context">
-    <span data-i18n="lb.local">ON THIS DEVICE</span>
-    <span id="lb-starter-note" hidden data-i18n="lb.starterNote">* STARTER SCORE</span>
-  </div>
+  <!-- Saved high scores appear after the first qualifying run. -->
   <div class="leaderboard" id="leaderboard" data-i18n-aria="lb.label" aria-label="Top three scores on this device"></div>
 
   <div class="screen-wrap" id="screen">
@@ -2084,9 +2066,6 @@
         'mobile.hide':    'CLOSE SETTINGS',
         'footer':       'NO QUARTER REQUIRED, NO QUARTER GIVEN',
         'credit.by':    'created by',
-        "lb.local": "ON THIS DEVICE",
-        "lb.starter": "Starter score",
-        "lb.starterNote": "* STARTER SCORE",
         "lb.label": "Top three scores on this device",
         "aria.catGroup": "Cat color",
         "aria.themeGroup": "Mountain theme",
@@ -2271,9 +2250,6 @@
         'mobile.hide':    'CERRAR AJUSTES',
         'footer':       'GRATIS',
         'credit.by':    'creado por',
-        "lb.local": "EN ESTE DISPOSITIVO",
-        "lb.starter": "Puntaje inicial",
-        "lb.starterNote": "* PUNTAJE INICIAL",
         "lb.label": "Los tres mejores puntajes de este dispositivo",
         "aria.catGroup": "Color del gato",
         "aria.themeGroup": "Montaña",
@@ -4041,36 +4017,19 @@
 
   // ---------- top-3 leaderboard (device-local) ----------
   // Two boards (9-lives / 1-life) since the modes are different games.
-  // Scores live in localStorage only; nothing leaves the browser. The
-  // starting three are the best runs from the old global board, so a
-  // first-time player has something to chase instead of an empty strip.
+  // Saved boards stay in this browser. New boards begin empty.
   const LB_LIMIT     = 3;
   const LB_CACHE_KEY = 'skior_leaderboard_v3';
-  const DEFAULT_BOARDS = {
-    lives9: [
-      { name: 'ACA',   score: 3729, starter: true },
-      { name: 'JON',   score: 3545, starter: true },
-      { name: 'HELLO', score: 3197, starter: true },
-    ],
-    lives1: [
-      { name: 'CLAWS', score: 750, starter: true },
-      { name: 'TIGER', score: 500, starter: true },
-      { name: 'BOOTS', score: 250, starter: true },
-    ],
-  };
-
-  // No provenance inference for pre-existing entries: preserve saved rows.
-  // Newly generated starter metadata survives this unchanged-object sanitizer.
+  // Remove explicitly marked seed entries from the previous release.
+  // Older unmarked rows are preserved because their origin is unknown.
   function sanitizeBoard(arr) {
     if (!Array.isArray(arr)) return [];
     return arr
-      .filter(e => e && typeof e.score === 'number' && typeof e.name === 'string')
+      .filter(e => e && e.starter !== true && typeof e.score === 'number' && typeof e.name === 'string')
       .slice(0, LB_LIMIT);
   }
   function loadLeaderboardCache() {
-    // Shape: { lives9: [...], lives1: [...] }. Absent storage means a new
-    // player, who gets the starting boards rather than an empty strip. A
-    // board the player has since emptied stays empty.
+    // Shape: { lives9: [...], lives1: [...] }.
     try {
       const raw = localStorage.getItem(LB_CACHE_KEY);
       if (raw) {
@@ -4083,10 +4042,7 @@
         }
       }
     } catch (_) {}
-    return {
-      lives9: DEFAULT_BOARDS.lives9.slice(),
-      lives1: DEFAULT_BOARDS.lives1.slice(),
-    };
+    return { lives9: [], lives1: [] };
   }
   function saveLeaderboardCache() {
     try { localStorage.setItem(LB_CACHE_KEY, JSON.stringify(leaderboardCache)); }
@@ -4125,8 +4081,8 @@
     '</svg>';
   function renderLeaderboard() {
     if (!leaderboardEl) return;
-    const starterNote = document.getElementById('lb-starter-note');
-    if (starterNote) starterNote.hidden = !leaderboard.some(entry => entry.starter === true);
+    leaderboardEl.hidden = leaderboard.length === 0;
+    if (leaderboardEl.hidden) return;
     // Build with createElement to avoid any HTML injection from saved
     // names. maxlength caps user input, but defense in depth. The
     // trophy SVGs are author-controlled markup so innerHTML there is
@@ -4149,13 +4105,6 @@
       const n = document.createElement('span');
       n.className = 'lb-name';
       n.textContent = e ? e.name : '---';
-      if (e && e.starter === true) {
-        const marker = document.createElement('span');
-        marker.className = 'lb-starter';
-        marker.textContent = '*';
-        marker.title = t('lb.starter');
-        n.appendChild(marker);
-      }
       const s = document.createElement('span');
       s.className = 'lb-score';
       s.textContent = e ? String(e.score) : '-----';
@@ -4179,7 +4128,7 @@
   // high-to-low, trim to 3. Returns the 1-based rank the entry landed at.
   function insertLeaderboardEntry(name, score) {
     const clean = String(name || '').toUpperCase().replace(/[^A-Z0-9 ]/g, '').slice(0, 5).trim() || 'CAT';
-    const entry = { name: clean, score: score, starter: false };
+    const entry = { name: clean, score: score };
     const slot  = modeSlot();
     const board = leaderboardCache[slot] || [];
     board.push(entry);
