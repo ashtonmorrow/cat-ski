@@ -2,7 +2,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs/promises');
 const path = require('node:path');
-const { chromium } = require('playwright');
+const browserTypes = require('playwright');
 const ROOT = path.resolve(__dirname, '..');
 const ORIGIN = 'https://catski.test';
 
@@ -10,7 +10,8 @@ const ORIGIN = 'https://catski.test';
 const hook = `
   window.__test = {
     snapshot: () => ({ state, keys: { ...keys }, player: { ...player },
-      stats: { ...stats }, objects: objects.map(object => ({ ...object })), worldY, activeRunConfig, completedRun }),
+      stats: { ...stats }, objects: objects.map(object => ({ ...object })),
+      yeti: yeti && { ...yeti }, snowman: snowman && { ...snowman }, worldY, activeRunConfig, completedRun }),
     start: () => startRun(),
     frame: timestamp => loop(timestamp),
     pause: () => pauseGame(),
@@ -42,14 +43,15 @@ const hook = `
   };
 `;
 
-async function createHarness() {
-  const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE;
-  const browser = await chromium.launch({ headless: true, ...(executablePath ? { executablePath } : {}) });
+async function createHarness({ engine = 'chromium' } = {}) {
+  assert.ok(['chromium', 'webkit', 'firefox'].includes(engine), 'Supported browser engine');
+  const executablePath = engine === 'chromium' ? process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE : undefined;
+  const browser = await browserTypes[engine].launch({ headless: true, ...(executablePath ? { executablePath } : {}) });
   const contexts = new Set();
   async function openGame({ viewport = { width: 1280, height: 900 }, mobile = false,
     storage = {}, manualClock = false, storageFailure = null, userAgent, context: existingContext } = {}) {
     const context = existingContext || await browser.newContext({ viewport,
-      isMobile: mobile, hasTouch: mobile, serviceWorkers: 'block', acceptDownloads: true,
+      ...(engine === 'firefox' ? {} : { isMobile: mobile }), hasTouch: mobile, serviceWorkers: 'block', acceptDownloads: true,
       ...(userAgent ? { userAgent } : {}) });
     if (!existingContext) {
       contexts.add(context);

@@ -22,7 +22,7 @@ The game code is in one HTML file, with separate artwork, icons, and self-hosted
 
 ## Controls
 
-Press Space or tap the start screen to play. You begin with nine lives. Steer around obstacles, collect flags, and use ramps to jump.
+Choose START, press Space, or tap the start screen to play. You begin with nine lives. Steer around obstacles, collect flags, and use ramps to jump.
 
 | Input | Action |
 | --- | --- |
@@ -44,7 +44,7 @@ The snowman arrives 20–40 seconds after the final dog wave clears. A catch cos
 
 ## Scores and privacy
 
-Each browser has its own leaderboard, filled by your saved runs. Saved nicknames and the board stay in localStorage; clearing site storage resets them.
+Each browser has its own leaderboard, filled by your saved runs. Each lives-mode board combines all difficulty settings; the BEST shown after a run is specific to its intensity, dog count, and lives mode. Saved nicknames and the board stay in localStorage; clearing site storage resets them.
 
 The site uses Google Analytics 4 and Mixpanel. Mixpanel game events, including run scores and difficulty, require acceptance of the analytics banner; nicknames are not included. Google Analytics cookies remain disabled until acceptance, but the current Consent Mode setup can send cookieless measurements before a choice or after declining. See the [privacy notes](https://ski.unwoke.ninja/readme.html#privacy).
 
@@ -61,12 +61,14 @@ Open http://localhost:8000 and play. There is nothing to compile.
 The test tools are development dependencies; the game still runs without a build or package install. With Node.js 20 or newer:
 
     npm ci
-    npx playwright install chromium
+    npx playwright install chromium webkit firefox
     npm test
 
-The suite checks timing across simulated refresh rates, safe starts, run results, keyboard and touch controls, phone settings, sharing and installation, storage failures and score resets across tabs, consent, and offline cache failures. Browser tests use local files and block external analytics requests. To use an existing Chrome installation, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to its executable path.
+The suite checks timing across simulated refresh rates, safe starts, run results, keyboard and touch controls, phone settings, sharing and installation, storage failures and score resets across tabs, consent, and offline cache failures. It also covers restored startup settings, accessible game actions and reduced motion, natural dog/snowman progression, and an upgrade from the previous release. Chromium, WebKit, and Firefox each run the keyboard, score-saving, preferences, guide, and phone-layout smoke flow. Browser tests use local files and block external analytics requests. To use an existing Chrome installation for the Chromium checks, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to its executable path.
 
 GitHub Actions runs the suite on pushes and pull requests. The `Regression tests` check is required for `main`, including admin pushes. To release, push a working branch, wait for its checks to pass, then merge or fast-forward the checked commit into `main`. Vercel publishes from `main` after that gate.
+
+See [release checks](RELEASING.md) for native-device checks that browser automation does not cover.
 
 ## Stack
 

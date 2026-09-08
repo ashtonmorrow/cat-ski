@@ -15,13 +15,13 @@
  * force all old caches to clear on next visit.
  */
 
-const CACHE_NAME = 'cat-ski-v23';
+const CACHE_NAME = 'cat-ski-v24';
 const APP_SHELL = [
   '/',
   '/index.html',
   '/readme.html',
-  '/storage.js?v=23',
-  '/consent.js?v=23',
+  '/storage.js?v=24',
+  '/consent.js?v=24',
   '/manifest.json',
   '/preview.png?v=19',
   '/favicon.ico?v=19',

@@ -23,7 +23,7 @@
 
 <!-- Search Console verification -->
 <meta name="google-site-verification" content="Blnw1PeynoNtYxKYh57M27xYxnoz3UKCrqQ4a3mvxt8">
-<script src="/storage.js?v=23"></script>
+<script src="/storage.js?v=24"></script>
 
 <!-- Google Analytics 4 with Consent Mode v2.
      All storage defaults to denied so GA fires no cookies until the
@@ -45,7 +45,7 @@
   gtag('js', new Date());
   gtag('config', 'G-MSN465FL9R');
 </script>
-<script src="/consent.js?v=23"></script>
+<script src="/consent.js?v=24"></script>
 
 <!-- Mixpanel product analytics, gated behind the same cookie banner as
      GA above. The SDK loads opted-out; a run only reaches Mixpanel once
@@ -234,9 +234,18 @@
   button:focus-visible,
   a:focus-visible,
   input:focus-visible,
+  #game:focus-visible,
   [role="button"]:focus-visible {
     outline: 2px solid var(--accent-2);
     outline-offset: 2px;
+  }
+  #game:focus-visible { outline-offset: -3px; }
+  .sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden; clip-path: inset(50%);
+    white-space: nowrap; border: 0;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -650,18 +659,30 @@
     letter-spacing: 1px;
   }
   .panel .hint .blink { color: var(--accent-2); animation: blink 1s steps(2,end) infinite; }
+  .game-action {
+    display: block;
+    min-width: 128px;
+    min-height: 44px;
+    margin: 12px auto 0;
+    padding: 10px 14px;
+    border: 2px solid var(--accent-2);
+    background: var(--accent-2);
+    color: var(--ink);
+    font-family: var(--font-display);
+    font-size: var(--type-sm);
+    letter-spacing: 1px;
+    cursor: pointer;
+    box-shadow: 3px 3px 0 #000;
+  }
+  .game-action:hover { background: var(--snow); border-color: var(--snow); }
+  .game-action:active { transform: translate(1px, 1px); }
   #overlay-start .panel { max-width: 350px; padding: 16px 20px; }
   #overlay-start h1 { font-size: 24px; }
   #overlay-start h2 { font-size: 12px; margin-bottom: 10px; }
   #overlay-start p { font-size: 18px; margin: 4px 0; }
   #overlay-start .keys { margin: 8px 0 4px; gap: 3px 12px; }
   #overlay-start .keys kbd { padding: 2px 5px; }
-  #overlay-start .hint { margin-top: 10px; }
-  /* Secondary link below the start prompt — points players at the
-     readme for a deeper TLDR + controls reference. Subtle on purpose:
-     SPACE-to-start is the primary CTA, this is the tertiary "help me"
-     escape hatch. Sized smaller than the hint, ghosted color, dotted
-     underline so it reads as a link without competing for attention. */
+  /* Secondary help link stays quieter than the Start button. */
   .readme-link {
     display: inline-block;
     margin-top: 10px;
@@ -1237,7 +1258,7 @@
   body.mobile-layout #overlay-start p { font-size: 15px; line-height: 1.15; margin: 4px 0; }
   body.mobile-layout #overlay-start .keys { gap: 2px 10px; margin: 6px 0; font-size: 8px; }
   body.mobile-layout #overlay-start .keys kbd { padding: 2px 5px; font-size: 8px; }
-  body.mobile-layout #overlay-start .hint { font-size: 8px; margin-top: 8px; }
+  body.mobile-layout #overlay-start .game-action { margin-top: 8px; }
   body.mobile-layout #overlay-start .readme-link { font-size: 8px; margin-top: 6px; }
   body.touch-active #overlay-start .keys { display: none; }
   .touch-help { display: none; }
@@ -1369,7 +1390,12 @@
   <div class="leaderboard" id="leaderboard" data-i18n-aria="lb.label" aria-label="Top three scores on this device"></div>
 
   <div class="screen-wrap" id="screen">
-    <canvas id="game" width="360" height="270"></canvas>
+    <canvas id="game" width="360" height="270" role="img" tabindex="0"
+            data-i18n-aria="aria.playingField" aria-label="Cat Ski playing field" aria-describedby="game-instructions">
+      <span data-i18n="game.fallback">Cat Ski is a visual downhill skiing game. A browser with Canvas support is needed to play.</span>
+    </canvas>
+    <p class="sr-only" id="game-instructions" data-i18n="game.instructions">Steer with the arrow keys or WASD, depending on your chosen controls. Up slows; down speeds up. Space starts or retries, P pauses or resumes, and 1, 2, 3 perform air tricks. On touch screens, use the joystick and trick buttons.</p>
+    <p class="sr-only" id="game-status" role="status" aria-live="polite" aria-atomic="true"></p>
 
     <!-- HUD: distance, time, score, speed, yeti warning -->
     <div class="hud">
@@ -1414,7 +1440,7 @@
           <kbd>1 2 3</kbd><span data-i18n="keys.tricks">TRICKS (AIR)</span>
           <kbd>SPACE</kbd><span data-i18n="keys.start">START / RETRY</span>
         </div>
-        <div class="hint"><span class="blink">&gt;</span> PRESS SPACE TO START</div>
+        <button class="game-action" id="btn-start" type="button" data-i18n="btn.start" aria-keyshortcuts="Space">START</button>
         <p class="touch-help" data-i18n="touch.help">Drag the joystick to steer. Up slows; down speeds up.</p>
         <a href="/readme.html" class="readme-link" target="_blank" rel="noopener" data-i18n="link.readme">HOW TO PLAY &rsaquo;</a>
       </div>
@@ -1455,7 +1481,7 @@
             <button class="lb-submit" id="lb-submit" type="button" data-i18n="btn.ok">OK</button>
           </div>
         </div>
-        <div class="hint"><span class="blink">&gt;</span> SPACE TO TRY AGAIN</div>
+        <button class="game-action" id="btn-retry" type="button" data-i18n="btn.retry" aria-keyshortcuts="Space">RETRY</button>
       </div>
     </div>
 
@@ -1672,7 +1698,8 @@
   // ---------- setup ----------
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
-  ctx.imageSmoothingEnabled = false;
+  // Read .matches when drawing so changes to the OS preference apply live.
+  const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
 
   const W = canvas.width;   // 360
   const H = canvas.height;  // 270
@@ -1709,6 +1736,20 @@
   const overlayStart  = document.getElementById('overlay-start');
   const overlayPaused = document.getElementById('overlay-paused');
   const overlayOver   = document.getElementById('overlay-over');
+  const btnStart = document.getElementById('btn-start');
+  const btnRetry = document.getElementById('btn-retry');
+  const gameStatus = document.getElementById('game-status');
+  let gameStatusKey = '';
+  function announceGameState(key = gameStatusKey) {
+    if (!key) return;
+    gameStatusKey = key;
+    let message = t(key);
+    if (key === 'status.finished' && completedRun) {
+      message = message.replace('{score}', completedRun.score).replace('{distance}', completedRun.distance);
+    }
+    if (gameStatus.textContent !== message) gameStatus.textContent = message;
+  }
+  function focusGame() { canvas.focus({ preventScroll: true }); }
   const overTitle    = document.getElementById('over-title');
   const overSub      = document.getElementById('over-sub');
   const overTime     = document.getElementById('over-time');
@@ -1924,7 +1965,6 @@
   document.querySelectorAll('.ctrl-swatch').forEach(btn => {
     btn.addEventListener('click', () => setControlMode(btn.dataset.ctrl));
   });
-  setControlMode(controlMode);
 
   // ---------- install prompt (PWA) ----------
   // Chrome path: capture beforeinstallprompt, reveal button, call .prompt() on click.
@@ -1967,10 +2007,6 @@
     trackPwaInstalled();
   });
 
-  // iOS Safari: no beforeinstallprompt event, so reveal the button by
-  // heuristic. Other iOS browsers can't install, so it stays hidden.
-  if (isIOSSafari && !isStandalone) revealInstall();
-
   if (btnInstall) {
     btnInstall.addEventListener('click', async () => {
       if (installPromptPending) return;
@@ -2005,9 +2041,8 @@
   }
 
   // ---------- localized flavor text ----------
-  // Pools picked from at random, no-repeat. MUST be declared before touch
-  // mode setup: applyTouchState() calls hintText() which reads MESSAGES,
-  // and a const in TDZ would throw. Spanish is rioplatense; displayed life counts match gameplay.
+  // Pools picked from at random, no-repeat. Spanish is rioplatense;
+  // displayed life counts match gameplay.
   const MESSAGES = {
     en: {
       tree: {
@@ -2091,12 +2126,8 @@
         'Catch your breath. Carefully.',
       ],
       hints: {
-        startKeys:  'PRESS SPACE TO START',
-        startTap:   'TAP TO START',
         resumeKeys: 'SPACE TO RESUME',
         resumeTap:  'TAP TO RESUME',
-        retryKeys:  'SPACE TO TRY AGAIN',
-        retryTap:   'TAP TO TRY AGAIN',
       },
       ui: {
         'hud.dist':    'DIST',
@@ -2138,6 +2169,15 @@
         'switch.on':    'ON',
         'switch.off':   'OFF',
         'btn.share':    'SHARE',
+        'btn.start':    'START',
+        'btn.retry':    'RETRY',
+        'aria.playingField': 'Cat Ski playing field',
+        'game.fallback': 'Cat Ski is a visual downhill skiing game. A browser with Canvas support is needed to play.',
+        'game.instructions': 'Steer with the arrow keys or WASD, depending on your chosen controls. Up slows; down speeds up. Space starts or retries, P pauses or resumes, and 1, 2, 3 perform air tricks. On touch screens, use the joystick and trick buttons.',
+        'status.started': 'Run started.',
+        'status.paused': 'Run paused.',
+        'status.resumed': 'Run resumed.',
+        'status.finished': 'Run finished. Score: {score}. Distance: {distance} meters.',
         'btn.install':  'INSTALL',
         'btn.ok':       'OK',
         'over.time':      'TIME',
@@ -2279,12 +2319,8 @@
         'Tomate aire. Con cuidado.',
       ],
       hints: {
-        startKeys:  'PRESIONÁ SPACE',
-        startTap:   'TOCÁ PARA EMPEZAR',
         resumeKeys: 'SPACE PARA SEGUIR',
         resumeTap:  'TOCÁ PARA SEGUIR',
-        retryKeys:  'SPACE PARA REINTENTAR',
-        retryTap:   'TOCÁ PARA REINTENTAR',
       },
       ui: {
         'hud.dist':    'DIST',
@@ -2326,6 +2362,15 @@
         'switch.on':    'SÍ',
         'switch.off':   'NO',
         'btn.share':    'COMPARTIR',
+        'btn.start':    'EMPEZAR',
+        'btn.retry':    'REINTENTAR',
+        'aria.playingField': 'Pista de Cat Ski',
+        'game.fallback': 'Cat Ski es un juego visual de esquí. Necesitás un navegador compatible con Canvas para jugar.',
+        'game.instructions': 'Dirigí con las flechas o WASD, según los controles elegidos. Arriba frena; abajo acelera. Space empieza o reintenta, P pausa o sigue, y 1, 2, 3 hacen trucos en el aire. En pantallas táctiles, usá el joystick y los botones de trucos.',
+        'status.started': 'Empezó la bajada.',
+        'status.paused': 'Bajada pausada.',
+        'status.resumed': 'Seguís la bajada.',
+        'status.finished': 'Terminó la bajada. Puntaje: {score}. Distancia: {distance} metros.',
         'btn.install':  'INSTALAR',
         'btn.ok':       'OK',
         'over.time':       'TIEMPO',
@@ -2399,7 +2444,6 @@
 
   let lang = CatSkiStorage.getItem('skior_lang') || 'en';
   if (!MESSAGES[lang]) lang = 'en';
-  registerSuperProps();
 
   // Remember last selection per array so we never fire the same line
   // twice in a row. Keyed by 'lang.category.field'.
@@ -2420,11 +2464,8 @@
     return pickFrom(pool, lang + '.' + category + '.' + field);
   }
   function pickList(key) {
-    // Merge generic pool with the lives-mode-specific pool. livesMode is
-    // declared later in the IIFE; at boot pickList runs while it's in TDZ,
-    // hence the try/catch with a default of 9-lives (the product default).
-    let live = true;
-    try { live = gameplayConfig().livesMode; } catch (_) {}
+    // Merge the generic pool with the current run's lives-mode pool.
+    const live = gameplayConfig().livesMode;
     const general = MESSAGES[lang][key] || MESSAGES.en[key] || [];
     const modeKey = key + (live ? '_9lives' : '_1life');
     const modeSpecific = MESSAGES[lang][modeKey] || MESSAGES.en[modeKey] || [];
@@ -2467,6 +2508,7 @@
     }
     syncSettingValueText();
     syncPauseButtons();
+    announceGameState();
     const ct = document.getElementById('controls-toggle');
     if (ct) {
       const expanded = ct.getAttribute('aria-expanded') === 'true';
@@ -2480,9 +2522,7 @@
     if (soundValEl && soundTog) {
       soundValEl.textContent = soundTog.value === '1' ? t('switch.on') : t('switch.off');
     }
-    if (typeof renderLeaderboard === 'function') {
-      try { renderLeaderboard(); } catch (_) {}
-    }
+    renderLeaderboard();
   }
 
   // ---------- touch / mobile mode ----------
@@ -2504,13 +2544,7 @@
     const on = isTouchActive();
     document.body.classList.toggle('touch-active', on);
     document.body.classList.toggle('mobile-layout', on || window.matchMedia('(max-width: 600px)').matches);
-    const startHint  = document.querySelector('#overlay-start .hint');
-    const overHint   = document.querySelector('#overlay-over  .hint');
     const pausedHint = document.getElementById('paused-hint');
-    if (startHint) startHint.innerHTML =
-      '<span class="blink">&gt;</span> ' + hintText(on ? 'startTap' : 'startKeys');
-    if (overHint)  overHint.innerHTML =
-      '<span class="blink">&gt;</span> ' + hintText(on ? 'retryTap' : 'retryKeys');
     if (pausedHint) pausedHint.innerHTML =
       '<span class="blink">&gt;</span> ' + hintText(on ? 'resumeTap' : 'resumeKeys');
   }
@@ -2527,7 +2561,6 @@
   document.querySelectorAll('.touch-swatch').forEach(btn => {
     btn.addEventListener('click', () => setTouchMode(btn.dataset.touch));
   });
-  setTouchMode(touchMode);
 
   // Re-evaluate on resize/rotate so AUTO stays correct.
   window.addEventListener('resize', applyTouchState);
@@ -2543,12 +2576,7 @@
     }, 0);
     document.body.style.setProperty('--mobile-chrome-height', Math.ceil(height) + 'px');
   }
-  if ('ResizeObserver' in window) {
-    const chromeObserver = new ResizeObserver(measureMobileChrome);
-    mobileChrome.forEach(el => { if (el) chromeObserver.observe(el); });
-  }
   window.addEventListener('resize', measureMobileChrome);
-  measureMobileChrome();
 
   // ---------- virtual thumbstick ----------
   // Maps finger position inside the stick area to keys.left/right/up/down.
@@ -2632,6 +2660,12 @@
   document.getElementById('overlay-start').addEventListener('click', overlayTap);
   document.getElementById('overlay-over').addEventListener('click', overlayTap);
   document.getElementById('overlay-paused').addEventListener('click', overlayTap);
+  btnStart.addEventListener('click', () => {
+    if (state === STATE.TITLE) startRun();
+  });
+  btnRetry.addEventListener('click', () => {
+    if (state === STATE.OVER) startRun();
+  });
   // README link sits inside overlayTap's click target — stopPropagation
   // prevents it from also firing spacePressed (which would start a run on tap).
   document.querySelectorAll('.readme-link').forEach(el => {
@@ -2976,7 +3010,6 @@
       setAudioEnabled(soundToggle.value === '1');
     });
   }
-  setAudioEnabled(audioEnabled);
 
   // ---------- language picker ----------
   function refreshFlavorText() {
@@ -2985,7 +3018,7 @@
     if (l1) l1.textContent = pickList('start1');
     if (l2) l2.textContent = pickList('start2');
     // Update hint text on all overlays (start/over/paused)
-    if (typeof applyTouchState === 'function') applyTouchState();
+    applyTouchState();
   }
   const langToggle  = document.getElementById('lang-toggle');
   const langValueEl = document.getElementById('lang-value');
@@ -2999,22 +3032,12 @@
     if (langValueEl) langValueEl.textContent = lang === 'es' ? 'ES' : 'EN';
     refreshFlavorText();
     applyUILabels();
-    // The hint texts under the start/over/paused panels are flavor and
-    // get their own pool-based refresh elsewhere; for the static hint
-    // text (SPACE TO START, etc) re-run the touch-state apply so the
-    // current keys/touch hint reflects the new language.
-    if (typeof applyTouchState === 'function') {
-      try { applyTouchState(); } catch (_) {}
-    }
   }
   if (langToggle) {
     langToggle.addEventListener('input', () => {
       setLang(langToggle.value === '1' ? 'es' : 'en');
     });
   }
-  setLang(lang);
-  // The cookie banner follows this script in the document.
-  document.addEventListener('DOMContentLoaded', applyUILabels, { once: true });
 
   // ---------- mobile trick buttons ----------
   const trickButtons = [...document.querySelectorAll('.trick-btn')];
@@ -3052,7 +3075,6 @@
   function applyControlsSwap() {
     document.body.classList.toggle('controls-swapped', controlsSwapped);
   }
-  applyControlsSwap();
   const btnSwap = document.getElementById('btn-swap');
   if (btnSwap) {
     btnSwap.addEventListener('click', () => {
@@ -3090,11 +3112,9 @@
   document.querySelectorAll('button[data-cat]').forEach(btn => {
     btn.addEventListener('click', () => setCatColor(btn.dataset.cat));
   });
-  setCatColor(catColor);
 
   // ---------- mountain themes ----------
   // Sky/slope/tree palette + dog breed + named-peak silhouettes per theme.
-  // Must declare BEFORE renderPickerPreviews / setTheme call (TDZ).
 
   // Mountain silhouettes as normalized polygons (0,0 = bottom-left, 1,1 = top-right).
   // Aspect ratio per shape so renderer matches real proportions (Annapurna wide, Matterhorn tall).
@@ -3211,8 +3231,7 @@
   }
 
   // Render the actual cat sprite into each picker preview using the
-  // same drawCat function the game uses. Done after a microtask so
-  // drawCat is hoisted and accessible.
+  // same drawCat function the game uses.
   function renderPickerPreviews() {
     document.querySelectorAll('.cat-swatch').forEach(btn => {
       const c = btn.querySelector('canvas');
@@ -3281,13 +3300,10 @@
     g.fillRect(tx - 1, ty + 2, 2, 2);
   }
 
-  renderPickerPreviews();
-
   // Wire theme swatches
   document.querySelectorAll('[data-theme]').forEach(btn => {
     btn.addEventListener('click', () => setTheme(btn.dataset.theme));
   });
-  setTheme(mtnTheme);
 
   // ---------- difficulty ----------
   // Driven by two sliders, both persisted to localStorage:
@@ -3367,9 +3383,7 @@
     );
   }
 
-  // `bests` must be declared before the applyIntensity init calls below:
-  // they reach refreshBestForCombo, which reads it. A let read ahead of
-  // its declaration throws.
+  // Best scores are loaded before boot applies the stored settings.
   function bestKey(config = gameplayConfig()) {
     // 9-lives runs score on their own slot per combo: "9 hits to die" is a
     // different leaderboard than the 1-hit run.
@@ -3450,14 +3464,11 @@
   function currentBest(config = gameplayConfig()) { return bests[bestKey(config)] || 0; }
   let best = currentBest();
 
-  applyIntensity(intensity);
-  applyDogCount(dogCount);
-
   // 9-lives toggle wiring. body.lives-mode reveals the HUD icons; .active
   // styles the button. State persisted to localStorage.
   const btnLives  = document.getElementById('btn-lives');
   const livesHud  = document.getElementById('lives-hud');
-  // Defaults to all-9-alive so this can run at boot, before `player` exists.
+  // When omitted, show the selected mode's starting life count.
   function updateLivesHUD(remaining) {
     if (!livesHud) return;
     if (remaining == null) remaining = livesMode ? 9 : 1;
@@ -3483,22 +3494,15 @@
     syncPendingSettings();
     // Re-roll the start-screen flavor pool so lines like "Eight lives
     // to spare" don't appear in 1-life mode (and vice versa).
-    if (typeof refreshFlavorText === 'function') {
-      try { refreshFlavorText(); } catch (_) {}
-    }
+    refreshFlavorText();
   }
   if (btnLives) {
-    // Mode toggle also swaps the visible leaderboard board. applyLeaderboardForMode
-    // is declared later, so it's only safe to call from a user click (post-init), not
-    // from setLivesMode itself which runs at boot — TDZ trap.
+    // Mode toggle also swaps the visible leaderboard board.
     btnLives.addEventListener('click', () => {
       setLivesMode(!livesMode);
-      if (typeof applyLeaderboardForMode === 'function') {
-        applyLeaderboardForMode();
-      }
+      applyLeaderboardForMode();
     });
   }
-  setLivesMode(livesMode);   // apply persisted state on boot
 
   // Preset buttons — each snaps both sliders to a canonical (intensity,
   // dogCount) pair. Players can still fine-tune with the sliders after.
@@ -3529,7 +3533,6 @@
   // Recompute from current values, including a manually restored preset.
   if (diffSlider) diffSlider.addEventListener('input', syncPresetSelection);
   if (dogsSlider) dogsSlider.addEventListener('input', syncPresetSelection);
-  syncPresetSelection();
 
   // ---------- game state ----------
   // State machine: 'title' -> 'play' <-> 'paused' -> 'over' -> 'play' ...
@@ -4359,7 +4362,6 @@
     // Closing trophy bookend.
     leaderboardEl.insertAdjacentHTML('beforeend', TROPHY_SVG);
   }
-  renderLeaderboard();
 
   // True if `score` would land in the top-3 (either there are open
   // slots, or it beats the current 3rd-place score).
@@ -4449,14 +4451,14 @@
     }
   }
   function hideLbEntry() {
+    const active = document.activeElement;
     lbEntryActive = false;
     if (lbEntry) lbEntry.classList.add('hidden');
-    // Release focus so SPACE restarts cleanly. Otherwise it either gets
-    // swallowed by the hidden input (window keydown early-returns on INPUT)
-    // or re-fires the OK button (SPACE on a focused button = synthetic click).
-    const active = document.activeElement;
+    // Keep keyboard users at the result after submitting, or release the
+    // hidden form when a new run is taking over.
     if (active && lbEntry && lbEntry.contains(active)) {
-      try { active.blur(); } catch (_) {}
+      if (state === STATE.OVER && !overlayOver.classList.contains('hidden')) btnRetry.focus();
+      else active.blur();
     }
   }
   // Stop name-entry interactions from bubbling up to the overlay-tap
@@ -4513,6 +4515,7 @@
       qualifiedForLeaderboard: qualifiesForLeaderboard(stats.score, config.livesMode),
     });
     state = STATE.OVER;
+    stats.shakeT = 0;
     overTitle.textContent = title;
     overSub.textContent   = sub;
     overTime.textContent  = formatTime(completedRun.elapsed);
@@ -4530,6 +4533,7 @@
     syncPauseButtons();
     syncTrickControls();
     trackRunCompleted(completedRun);
+    announceGameState('status.finished');
     // Copy the final frame once so later settings changes or a new run cannot
     // alter an in-flight share operation.
     try {
@@ -4545,6 +4549,7 @@
       showLbEntry(completedRun.score);
     } else {
       hideLbEntry();
+      btnRetry.focus({ preventScroll: true });
     }
   }
 
@@ -4574,6 +4579,8 @@
     clearInput();
     syncPauseButtons();
     syncTrickControls();
+    focusGame();
+    announceGameState('status.started');
     ensureAudio();   // unlocks audio on first start
     sfx.start();
     startSwoosh();
@@ -4584,11 +4591,13 @@
   function pauseGame() {
     if (state !== STATE.PLAY) return;
     state = STATE.PAUSED;
+    stats.shakeT = 0;
     resetFrameClock();
     overlayPaused.classList.remove('hidden');
     syncPauseButtons();
     syncTrickControls();
     // Roll a fresh pause line so every pause feels different
+    announceGameState('status.paused');
     const pLine = document.getElementById('paused-line');
     if (pLine) pLine.textContent = pickList('paused');
     silenceSwoosh();
@@ -4604,14 +4613,14 @@
     overlayPaused.classList.add('hidden');
     syncPauseButtons();
     syncTrickControls();
+    announceGameState('status.resumed');
   }
   function togglePause() {
     if (state === STATE.PLAY)   pauseGame();
     else if (state === STATE.PAUSED) resumeGame();
   }
   function restartRun() {
-    // Only allowed from play/paused/over — on title the user should press
-    // SPACE to start rather than RESTART.
+    // The title has its own Start action; Restart applies to an existing run.
     if (state === STATE.TITLE) return;
     startRun();
   }
@@ -5480,7 +5489,8 @@
 
     // Strobe skier on every other 5-frame interval during invincT.
     // Shadow stays visible so the silhouette doesn't fully disappear.
-    const blinkSkip = player.invincT > 0 && Math.floor(player.invincT / 5) % 2 === 0;
+    const blinkSkip = !motionPreference.matches && state === STATE.PLAY &&
+      player.invincT > 0 && Math.floor(player.invincT / 5) % 2 === 0;
 
     // Shadow (bigger when higher in the air)
     const shadowW = 16 + player.airHeight * 0.35;
@@ -5859,8 +5869,9 @@
 
   function render() {
     // camera shake
-    const sx = stats.shakeT ? (Math.random() - 0.5) * 3 : 0;
-    const sy = stats.shakeT ? (Math.random() - 0.5) * 3 : 0;
+    const shake = state === STATE.PLAY && !motionPreference.matches && stats.shakeT > 0;
+    const sx = shake ? (Math.random() - 0.5) * 3 : 0;
+    const sy = shake ? (Math.random() - 0.5) * 3 : 0;
     ctx.save();
     ctx.translate(sx, sy);
 
@@ -5927,11 +5938,42 @@
     requestAnimationFrame(loop);
   }
 
+  // All configuration, state, palettes and DOM references above are ready
+  // before this phase applies settings or draws the first frame.
+  function boot() {
+    ctx.imageSmoothingEnabled = false;
+    resetGame();
+    setControlMode(controlMode);
+    setTouchMode(touchMode);
+    setAudioEnabled(audioEnabled);
+    applyControlsSwap();
+    setCatColor(catColor);
+    setTheme(mtnTheme);
+    applyIntensity(intensity);
+    applyDogCount(dogCount);
+    setLivesMode(livesMode);
+    syncPresetSelection();
+    setLang(lang);
+    renderPickerPreviews();
+    syncTrickControls();
+    if (isIOSSafari && !isStandalone) revealInstall();
+    if ('ResizeObserver' in window) {
+      const chromeObserver = new ResizeObserver(measureMobileChrome);
+      mobileChrome.forEach(el => { if (el) chromeObserver.observe(el); });
+    }
+    measureMobileChrome();
+    render();
+    requestAnimationFrame(loop);
+  }
+
   // Kick things off
-  resetGame();
-  // Pre-render title scene
-  render();
-  requestAnimationFrame(loop);
+  // Wait for the cookie banner below this script so its first labels are
+  // localized in the same boot phase as the rest of the interface.
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot, { once: true });
+  } else {
+    boot();
+  }
 })();
 </script>
 

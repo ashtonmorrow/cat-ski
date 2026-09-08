@@ -374,7 +374,7 @@ function serviceWorker() {
     URL, Response,
     self: { location: { origin }, addEventListener: (name, fn) => { handlers[name] = fn; },
       skipWaiting: async () => {}, clients: { claim: async () => {} } },
-    caches: { open: async () => cache, keys: async () => ['cat-ski-v22', 'cat-ski-v23', 'unrelated'],
+    caches: { open: async () => cache, keys: async () => ['cat-ski-v23', 'cat-ski-v24', 'unrelated'],
       delete: async name => { deleted.push(name); } },
     fetch: request => network(request),
   });
@@ -434,10 +434,10 @@ test('navigation refresh caches success and waitUntil covers the write', async (
 test('cached scripts return promptly while waitUntil protects background refresh and cache writes', async () => {
   const sw = serviceWorker();
   const network = deferred(), write = deferred();
-  sw.seed('/storage.js?v=23', 'old script');
+  sw.seed('/storage.js?v=24', 'old script');
   sw.network(() => network.promise);
   sw.delayWrites(write.promise);
-  const request = sw.dispatch('/storage.js?v=23', false);
+  const request = sw.dispatch('/storage.js?v=24', false);
   assert.equal(await (await request.response).text(), 'old script');
   assert.equal(request.waits.length, 1);
   let finished = false;
@@ -447,7 +447,7 @@ test('cached scripts return promptly while waitUntil protects background refresh
   assert.equal(finished, false, 'lifetime includes delayed cache.put');
   write.resolve();
   await request.lifetime;
-  assert.deepEqual(await sw.cached('/storage.js?v=23'), { status: 200, text: 'new script' });
+  assert.deepEqual(await sw.cached('/storage.js?v=24'), { status: 200, text: 'new script' });
 });
 
 test('static failures never poison cache; no-cache offline returns a Response and unrelated caches survive', async () => {
@@ -465,9 +465,9 @@ test('static failures never poison cache; no-cache offline returns a Response an
   let activation;
   sw.handlers.activate({ waitUntil: promise => { activation = promise; } });
   await activation;
-  assert.deepEqual(sw.deleted, ['cat-ski-v22']);
+  assert.deepEqual(sw.deleted, ['cat-ski-v23']);
   const shell = plain(vm.runInContext('APP_SHELL', sw.context));
-  assert.ok(shell.includes('/storage.js?v=23'));
-  assert.ok(shell.includes('/consent.js?v=23'));
-  assert.equal(vm.runInContext('CACHE_NAME', sw.context), 'cat-ski-v23');
+  assert.ok(shell.includes('/storage.js?v=24'));
+  assert.ok(shell.includes('/consent.js?v=24'));
+  assert.equal(vm.runInContext('CACHE_NAME', sw.context), 'cat-ski-v24');
 });

@@ -49,15 +49,15 @@ test('real service worker survives HTTP 503 and boots game and guide offline wit
       const cache = await caches.open(name);
       return { name, entries: (await cache.keys()).map(request => new URL(request.url).pathname + new URL(request.url).search) };
     });
-    assert.equal(cached.name, 'cat-ski-v23');
-    for (const entry of ['/storage.js?v=23', '/consent.js?v=23', '/', '/readme.html', '/fonts/press-start-2p.woff2']) {
+    assert.equal(cached.name, 'cat-ski-v24');
+    for (const entry of ['/storage.js?v=24', '/consent.js?v=24', '/', '/readme.html', '/fonts/press-start-2p.woff2']) {
       assert.ok(cached.entries.includes(entry), `${entry} is available offline`);
     }
     failHtml = true;
     const outageResponse = await page.reload();
     assert.equal(outageResponse.status(), 200, '503 falls back to the healthy cached document');
     assert.equal(await page.locator('#overlay-start h1').textContent(), 'CAT SKI');
-    assert.equal(await page.evaluate(async () => (await (await caches.open('cat-ski-v23')).match('/')).status), 200);
+    assert.equal(await page.evaluate(async () => (await (await caches.open('cat-ski-v24')).match('/')).status), 200);
     await context.setOffline(true);
     await page.reload();
     await page.locator('#overlay-start h1').click();
