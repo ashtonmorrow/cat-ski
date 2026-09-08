@@ -9,14 +9,16 @@ for (const engine of ['chromium', 'webkit', 'firefox']) {
   test(`${engine}: keyboard play, saved scores/settings, guide, and phone controls`, { timeout: 90000 }, async () => {
     const harness = await createHarness({ engine });
     try {
-      const desktop = await harness.openGame({ manualClock: true });
+      // Keep each engine's real animation clock running. Fixed-step behavior
+      // is covered separately; this smoke flow checks ordinary browser input.
+      const desktop = await harness.openGame();
       const { page } = desktop;
       await page.getByRole('button', { name: 'START', exact: true }).press('Enter');
       assert.equal(await page.evaluate(() => document.activeElement.id), 'game');
-      await page.evaluate(() => window.__test.frame(0));
       await page.keyboard.down('ArrowRight');
-      await page.evaluate(() => {
-        for (let frame = 1; frame <= 30; frame++) window.__test.frame(frame * 1000 / 60);
+      await page.waitForFunction(() => {
+        const current = window.__test.snapshot();
+        return current.player.x > 195 && current.stats.elapsed > 0;
       });
       await page.keyboard.up('ArrowRight');
       const playing = await page.evaluate(() => window.__test.snapshot());
@@ -51,7 +53,7 @@ for (const engine of ['chromium', 'webkit', 'firefox']) {
       assert.deepEqual(desktop.errors, [], `${engine} desktop has no JavaScript errors`);
       await desktop.context.close();
 
-      const phone = await harness.openGame({ manualClock: true, mobile: true,
+      const phone = await harness.openGame({ mobile: true,
         viewport: { width: 360, height: 800 },
         ...(engine === 'webkit' ? { userAgent: IOS_SAFARI } : {}) });
       await phone.page.getByRole('button', { name: 'START', exact: true }).tap();
