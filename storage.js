@@ -16,9 +16,12 @@
   }
 
   // Score merges need the latest durable snapshot as well as unsaved memory.
+  function getStoredState(key) {
+    try { return { value: window.localStorage.getItem(key), available: true }; }
+    catch (_) { return { value: memory.get(key) ?? null, available: false }; }
+  }
   function getStoredItem(key) {
-    try { return window.localStorage.getItem(key); }
-    catch (_) { return memory.get(key) ?? null; }
+    return getStoredState(key).value;
   }
 
   function setItem(key, value) {
@@ -71,5 +74,5 @@
       pending.delete(event.key);
     }
   });
-  window.CatSkiStorage = Object.freeze({ getItem, getStoredItem, setItem, removeItem, withLock });
+  window.CatSkiStorage = Object.freeze({ getItem, getStoredItem, getStoredState, setItem, removeItem, withLock });
 })();

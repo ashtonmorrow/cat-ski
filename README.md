@@ -36,6 +36,8 @@ Press Space or tap the start screen to play. You begin with nine lives. Steer ar
 
 On a phone, drag the joystick left/right to steer, up to slow down, or down to tuck. Tap the trick buttons while airborne; SWAP exchanges the joystick and button positions.
 
+Opening Settings pauses the run and moves the touch controls out of the way. Resume or Restart closes Settings and returns to the game. Installation instructions also pause play; close them, then resume when ready.
+
 Cat, mountain, difficulty, dog count, and lives settings apply when the next run starts. Changing them during or after a run keeps that run's score and settings together.
 
 The snowman arrives 20–40 seconds after the final dog wave clears. A catch costs a life; losing the last life ends the run.
@@ -62,7 +64,9 @@ The test tools are development dependencies; the game still runs without a build
     npx playwright install chromium
     npm test
 
-The suite checks timing across simulated refresh rates, run results, keyboard and touch controls, phone layouts, storage failures, consent across tabs, and offline cache failures. Browser tests use local files and block external analytics requests. To use an existing Chrome installation, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to its executable path.
+The suite checks timing across simulated refresh rates, safe starts, run results, keyboard and touch controls, phone settings, sharing and installation, storage failures and score resets across tabs, consent, and offline cache failures. Browser tests use local files and block external analytics requests. To use an existing Chrome installation, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to its executable path.
+
+GitHub Actions runs the suite on pushes and pull requests. The `Regression tests` check is required for `main`, including admin pushes. To release, push a working branch, wait for its checks to pass, then merge or fast-forward the checked commit into `main`. Vercel publishes from `main` after that gate.
 
 ## Stack
 

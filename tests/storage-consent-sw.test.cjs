@@ -87,7 +87,7 @@ function functionSource(name) {
   return found[0];
 }
 function installScores(tab) {
-  const names = ['sanitizeBests', 'readStoredBests', 'loadBests', 'saveBests', 'sanitizeBoard',
+  const names = ['sanitizeBests', 'readBestState', 'loadBests', 'mergePendingBests', 'flushBestChanges', 'saveBest', 'sanitizeBoard',
     'loadLeaderboardCache', 'saveLeaderboardCache', 'mergeLeaderboardCaches', 'insertLeaderboardEntry'];
   tab.run(`
     let livesMode = true;
@@ -101,10 +101,31 @@ function installScores(tab) {
     const LB_CACHE_KEY = 'skior_leaderboard_v3';
     ${names.map(functionSource).join('\n')}
     let bests = loadBests();
+    const pendingBestChanges = new Map();
+    const initialBestState = readBestState();
+    for (const [key, score] of Object.entries(bests)) {
+      if (score > (initialBestState.scores[key] || 0)) {
+        pendingBestChanges.set(key, { score, base: undefined, hadMap: initialBestState.available && initialBestState.hasMap });
+      }
+    }
     let best = currentBest();
     let leaderboardCache = loadLeaderboardCache();
     let leaderboard = leaderboardCache[modeSlot()];
   `);
+  const events = html.match(/  window\.addEventListener\('storage', event => \{[\s\S]*?\n  \}\);/);
+  assert.ok(events, 'Score storage listener exists');
+  tab.run(events[0]);
+}
+
+function queuedLocks() {
+  const queue = [];
+  return { queue, locks: { request(_name, callback) {
+    return new Promise((resolve, reject) => queue.push(async () => {
+      try { resolve(await callback()); } catch (error) { reject(error); }
+    }));
+  } }, async drain(hub) {
+    while (queue.length) { await queue.shift()(); hub.flush(); }
+  } };
 }
 
 test('blocked reads, storage getter, and full quota retain usable session preferences', async () => {
@@ -119,7 +140,7 @@ test('blocked reads, storage getter, and full quota retain usable session prefer
     installScores(tab);
     await tab.run('insertLeaderboardEntry("CAT", 200, true)');
     assert.equal(tab.run('leaderboardCache.lives9[0].score'), 200);
-    await tab.run('bests[bestKey()] = 400; saveBests(bests)');
+    await tab.run('saveBest(bestKey(), 400)');
     assert.equal(tab.run('currentBest()'), 400);
   }
   assert.doesNotMatch(html, /\blocalStorage\.(?:getItem|setItem|removeItem)\(/, 'all game accesses use safe storage');
@@ -154,11 +175,97 @@ test('best saves merge latest valid maxima and explicit reset removes only its k
   const hub = storageHub({ skior_bests: '{"first":100,"second":200}' });
   const a = hub.tab(), b = hub.tab();
   installScores(a); installScores(b);
-  await a.run('bests.first = 700; saveBests(bests)');
-  await b.run('bests.second = 800; saveBests(bests)');
+  await a.run('saveBest("first", 700)');
+  await b.run('saveBest("second", 800)');
   assert.deepEqual(JSON.parse(hub.values.get('skior_bests')), { first: 700, second: 800 });
-  await b.run('delete bests.first; saveBests(bests, "first")');
+  await b.run('saveBest("first", null)');
   assert.deepEqual(JSON.parse(hub.values.get('skior_bests')), { second: 800 });
+});
+
+test('a queued different-combo save cannot restore a reset best', async () => {
+  const pending = queuedLocks();
+  const hub = storageHub({ skior_bests: '{"first":900,"second":800}' });
+  const a = hub.tab({ locks: pending.locks }), b = hub.tab({ locks: pending.locks });
+  installScores(a); installScores(b);
+  const reset = a.run('saveBest("first", null)');
+  const save = b.run('saveBest("second", 1000)');
+  await pending.drain(hub);
+  await Promise.all([reset, save]);
+  assert.deepEqual(JSON.parse(hub.values.get('skior_bests')), { second: 1000 });
+});
+
+test('a delayed reset event preserves a genuinely newer same-key save', async () => {
+  const pending = queuedLocks();
+  const hub = storageHub({ skior_bests: '{"first":900}' });
+  const a = hub.tab(), b = hub.tab({ locks: pending.locks });
+  installScores(a); installScores(b);
+  await a.run('saveBest("first", null)');
+  const newer = b.run('saveBest("first", 1000)');
+  hub.flush(); // The reset event arrives after the newer save was created.
+  assert.equal(b.run('bests.first'), 1000);
+  await pending.drain(hub); await newer;
+  assert.deepEqual(JSON.parse(hub.values.get('skior_bests')), { first: 1000 });
+});
+
+test('a reset or storage removal cancels an older queued improvement', async () => {
+  for (const action of ['saveBest("first", null)', 'CatSkiStorage.removeItem("skior_bests")']) {
+    const pending = queuedLocks();
+    const hub = storageHub({ skior_bests: '{"first":900}' });
+    const a = hub.tab(), b = hub.tab({ locks: pending.locks });
+    installScores(a); installScores(b);
+    const older = b.run('saveBest("first", 1000)');
+    await a.run(action);
+    hub.flush();
+    await pending.drain(hub); await older;
+    assert.equal(b.run('bests.first'), undefined);
+    assert.deepEqual(JSON.parse(hub.values.get('skior_bests') || '{}'), {});
+  }
+});
+
+test('a new run queued after this tab resets starts a fresh best', async () => {
+  const pending = queuedLocks();
+  const hub = storageHub({ skior_bests: '{"first":900}' });
+  const tab = hub.tab({ locks: pending.locks });
+  installScores(tab);
+  const reset = tab.run('saveBest("first", null)');
+  const newer = tab.run('saveBest("first", 100)');
+  await pending.drain(hub); await Promise.all([reset, newer]);
+  assert.deepEqual(JSON.parse(hub.values.get('skior_bests')), { first: 100 });
+});
+
+test('quota-fallback improvements survive another tab update and persist after recovery', async () => {
+  const hub = storageHub({ skior_bests: '{"first":900}' });
+  const options = { writeThrows: true };
+  const a = hub.tab(options), b = hub.tab();
+  installScores(a); installScores(b);
+  await a.run('saveBest("first", 1000)');
+  await b.run('saveBest("second", 1200)');
+  hub.flush();
+  assert.equal(a.run('bests.first'), 1000);
+  assert.equal(a.run('bests.second'), 1200);
+  options.writeThrows = false;
+  await a.run('flushBestChanges()');
+  assert.deepEqual(JSON.parse(hub.values.get('skior_bests')), { first: 1000, second: 1200 });
+  assert.equal(a.run('pendingBestChanges.size'), 0);
+});
+
+test('unavailable reads are not treated as durable reset baselines', async () => {
+  const options = { getterThrows: true };
+  const hub = storageHub({ skior_bests: '{"first":900}' });
+  const tab = hub.tab(options);
+  installScores(tab);
+  await tab.run('saveBest("first", 1000)');
+  options.getterThrows = false;
+  await tab.run('flushBestChanges()');
+  assert.deepEqual(JSON.parse(hub.values.get('skior_bests')), { first: 1000 });
+});
+
+test('legacy single best survives the first save of a different combination', async () => {
+  const hub = storageHub({ skior_best: '900' });
+  const tab = hub.tab();
+  installScores(tab);
+  await tab.run('saveBest("second", 1200)');
+  assert.deepEqual(JSON.parse(hub.values.get('skior_bests')), { '1.0_3_9': 900, second: 1200 });
 });
 
 test('stale leaderboard tabs preserve both boards and migrate old rows without duplicates', async () => {
@@ -267,7 +374,7 @@ function serviceWorker() {
     URL, Response,
     self: { location: { origin }, addEventListener: (name, fn) => { handlers[name] = fn; },
       skipWaiting: async () => {}, clients: { claim: async () => {} } },
-    caches: { open: async () => cache, keys: async () => ['cat-ski-v21', 'cat-ski-v22', 'unrelated'],
+    caches: { open: async () => cache, keys: async () => ['cat-ski-v22', 'cat-ski-v23', 'unrelated'],
       delete: async name => { deleted.push(name); } },
     fetch: request => network(request),
   });
@@ -327,10 +434,10 @@ test('navigation refresh caches success and waitUntil covers the write', async (
 test('cached scripts return promptly while waitUntil protects background refresh and cache writes', async () => {
   const sw = serviceWorker();
   const network = deferred(), write = deferred();
-  sw.seed('/storage.js?v=22', 'old script');
+  sw.seed('/storage.js?v=23', 'old script');
   sw.network(() => network.promise);
   sw.delayWrites(write.promise);
-  const request = sw.dispatch('/storage.js?v=22', false);
+  const request = sw.dispatch('/storage.js?v=23', false);
   assert.equal(await (await request.response).text(), 'old script');
   assert.equal(request.waits.length, 1);
   let finished = false;
@@ -340,7 +447,7 @@ test('cached scripts return promptly while waitUntil protects background refresh
   assert.equal(finished, false, 'lifetime includes delayed cache.put');
   write.resolve();
   await request.lifetime;
-  assert.deepEqual(await sw.cached('/storage.js?v=22'), { status: 200, text: 'new script' });
+  assert.deepEqual(await sw.cached('/storage.js?v=23'), { status: 200, text: 'new script' });
 });
 
 test('static failures never poison cache; no-cache offline returns a Response and unrelated caches survive', async () => {
@@ -358,9 +465,9 @@ test('static failures never poison cache; no-cache offline returns a Response an
   let activation;
   sw.handlers.activate({ waitUntil: promise => { activation = promise; } });
   await activation;
-  assert.deepEqual(sw.deleted, ['cat-ski-v21']);
+  assert.deepEqual(sw.deleted, ['cat-ski-v22']);
   const shell = plain(vm.runInContext('APP_SHELL', sw.context));
-  assert.ok(shell.includes('/storage.js?v=22'));
-  assert.ok(shell.includes('/consent.js?v=22'));
-  assert.equal(vm.runInContext('CACHE_NAME', sw.context), 'cat-ski-v22');
+  assert.ok(shell.includes('/storage.js?v=23'));
+  assert.ok(shell.includes('/consent.js?v=23'));
+  assert.equal(vm.runInContext('CACHE_NAME', sw.context), 'cat-ski-v23');
 });

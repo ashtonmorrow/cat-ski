@@ -23,7 +23,7 @@
 
 <!-- Search Console verification -->
 <meta name="google-site-verification" content="Blnw1PeynoNtYxKYh57M27xYxnoz3UKCrqQ4a3mvxt8">
-<script src="/storage.js?v=22"></script>
+<script src="/storage.js?v=23"></script>
 
 <!-- Google Analytics 4 with Consent Mode v2.
      All storage defaults to denied so GA fires no cookies until the
@@ -45,7 +45,7 @@
   gtag('js', new Date());
   gtag('config', 'G-MSN465FL9R');
 </script>
-<script src="/consent.js?v=22"></script>
+<script src="/consent.js?v=23"></script>
 
 <!-- Mixpanel product analytics, gated behind the same cookie banner as
      GA above. The SDK loads opted-out; a run only reaches Mixpanel once
@@ -1294,6 +1294,11 @@
   }
   body.mobile-layout.controls-expanded .cat-picker { display: flex; }
   body.mobile-layout.controls-expanded .footer     { display: block; }
+  body.mobile-layout .sub-picker { min-width: 0; max-width: 100%; flex-wrap: wrap; justify-content: center; }
+  @media (max-width: 600px) {
+    body.mobile-layout .visual-picker { width: 100%; }
+    body.mobile-layout .visual-picker .cat-picker-label { flex-basis: 100%; text-align: center; }
+  }
 
   /* Reserve the measured chrome height and put controls beside the game. */
   @media (orientation: landscape) and (max-height: 600px) {
@@ -1325,6 +1330,27 @@
       transform: none;
     }
   }
+  /* Settings replace the thumb controls. Pause stays in the Settings row. */
+  body.mobile-layout.controls-expanded .stick-area,
+  body.mobile-layout.controls-expanded .trick-pad,
+  body.mobile-layout.controls-expanded .swap-btn { display: none; }
+  body.mobile-layout.controls-expanded .touch-pause { position: static; transform: none; }
+
+  .install-dialog {
+    margin: auto;
+    padding: 6px;
+    border: 0;
+    background: transparent;
+    color: var(--snow);
+    text-align: center;
+    max-width: min(540px, calc(100vw - 24px));
+    max-height: calc(100vh - 24px);
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+  }
+  .install-dialog::backdrop { background: rgba(5, 10, 20, 0.86); }
+  #overlay-install-ios .panel { max-width: none; max-height: none; overflow: visible; }
+  #btn-close-install { min-width: 100px; min-height: 44px; margin-top: 12px; }
 </style>
 </head>
 <body>
@@ -1394,18 +1420,6 @@
       </div>
     </div>
 
-    <!-- iOS install instructions (no programmatic prompt on Safari) -->
-    <div class="overlay hidden" id="overlay-install-ios">
-      <div class="panel">
-        <h1 data-i18n="install.title">INSTALL</h1>
-        <h2 data-i18n="install.subtitle">ADD TO HOME SCREEN</h2>
-        <p data-i18n-html="install.step1">1. Tap the <strong>Share</strong> icon in Safari</p>
-        <p data-i18n="install.step2">2. Scroll down</p>
-        <p data-i18n-html="install.step3">3. Tap <strong>Add to Home Screen</strong></p>
-        <div class="hint"><span class="blink">&gt;</span> <span data-i18n="install.close">TAP TO CLOSE</span></div>
-      </div>
-    </div>
-
     <!-- Pause screen -->
     <div class="overlay hidden" id="overlay-paused">
       <div class="panel">
@@ -1463,7 +1477,7 @@
   <!-- Cat + Theme pickers on one row. Each swatch renders a tiny preview
        (cats use the actual cat sprite; themes use a mini scene). -->
   <div class="cat-picker combo-picker">
-    <div class="sub-picker" role="group" data-i18n-aria="aria.catGroup" aria-label="Cat color">
+    <div class="sub-picker visual-picker" role="group" data-i18n-aria="aria.catGroup" aria-label="Cat color">
       <span class="cat-picker-label" data-i18n="pick.cat">CAT</span>
       <button class="cat-swatch" data-cat="black" type="button" aria-pressed="false">
         <canvas width="48" height="48" aria-hidden="true"></canvas>
@@ -1482,7 +1496,7 @@
         <span class="cat-name" data-i18n="cat.orange">ORANGE</span>
       </button>
     </div>
-    <div class="sub-picker" role="group" data-i18n-aria="aria.themeGroup" aria-label="Mountain theme">
+    <div class="sub-picker visual-picker" role="group" data-i18n-aria="aria.themeGroup" aria-label="Mountain theme">
       <span class="cat-picker-label" data-i18n="pick.peak">PEAK</span>
       <button class="cat-swatch" data-theme="alps" type="button" aria-pressed="false">
         <canvas width="48" height="48" aria-hidden="true"></canvas>
@@ -1587,6 +1601,20 @@
     <a href="https://www.linkedin.com/in/mikelee89/" target="_blank" rel="noopener noreferrer">Whisker Leaks</a>
   </div>
 </div>
+
+<!-- Native modal stays in the viewport and makes the game behind it inert. -->
+<dialog class="install-dialog" id="overlay-install-ios" aria-labelledby="install-title" aria-describedby="install-description">
+  <div class="panel">
+    <h1 id="install-title" data-i18n="install.title">INSTALL</h1>
+    <h2 data-i18n="install.subtitle">ADD TO HOME SCREEN</h2>
+    <div id="install-description">
+      <p data-i18n-html="install.step1">1. Tap the <strong>Share</strong> icon in Safari</p>
+      <p data-i18n="install.step2">2. Scroll down</p>
+      <p data-i18n-html="install.step3">3. Tap <strong>Add to Home Screen</strong></p>
+    </div>
+    <button class="diff-swatch" id="btn-close-install" type="button" data-i18n="install.close">CLOSE</button>
+  </div>
+</dialog>
 
 <!-- Virtual thumbstick: lives at viewport-level so it never overlaps the
      game area. Position:fixed at bottom-center. Hidden unless touch-active.
@@ -1814,6 +1842,7 @@
   }
 
   function uiOwnsKey(e) {
+    if (document.getElementById('overlay-install-ios').open) return true;
     if (e.defaultPrevented || e.isComposing) return true;
     const target = e.target;
     if (!(target instanceof Element)) return false;
@@ -1902,6 +1931,7 @@
   // iOS path: no native event, so show a manual "Add to Home Screen" overlay instead.
   // Already standalone: button stays hidden.
   let deferredInstall = null;
+  let installPromptPending = false;
   const installGroup  = document.getElementById('install-group');
   const btnInstall    = document.getElementById('btn-install');
   const overlayIosInstall = document.getElementById('overlay-install-ios');
@@ -1916,7 +1946,7 @@
                       !/CriOS|FxiOS|EdgiOS|OPiOS|GSA/i.test(navigator.userAgent);
 
   function revealInstall() {
-    if (!installGroup || isStandalone) return;
+    if (!installGroup || isStandalone || installPromptPending) return;
     installGroup.hidden = false;
   }
   function hideInstall() {
@@ -1943,21 +1973,35 @@
 
   if (btnInstall) {
     btnInstall.addEventListener('click', async () => {
+      if (installPromptPending) return;
       if (deferredInstall) {
-        deferredInstall.prompt();
-        const { outcome } = await deferredInstall.userChoice;
+        const prompt = deferredInstall;
         deferredInstall = null;
-        if (outcome === 'accepted') hideInstall();
+        installPromptPending = true;
+        hideInstall();
+        pauseGame();
+        clearInput();
+        try {
+          await prompt.prompt();
+          await prompt.userChoice;
+        } catch (_) {
+          // A consumed or failed browser prompt cannot be used again.
+        } finally {
+          installPromptPending = false;
+          if (deferredInstall) revealInstall();
+        }
       } else if (isIOSSafari) {
-        // iOS Safari fallback: show the Add to Home Screen instructions
-        overlayIosInstall.classList.remove('hidden');
+        pauseGame();
+        clearInput();
+        overlayIosInstall.showModal();
       }
     });
   }
   if (overlayIosInstall) {
-    overlayIosInstall.addEventListener('click', () => {
-      overlayIosInstall.classList.add('hidden');
-    });
+    document.getElementById('btn-close-install').addEventListener('click', () => overlayIosInstall.close());
+    // Native Escape/Close restores focus; gameplay stays paused until the
+    // player deliberately resumes through its existing controls.
+    overlayIosInstall.addEventListener('close', clearInput);
   }
 
   // ---------- localized flavor text ----------
@@ -2113,7 +2157,7 @@
         'install.step1':       '1. Tap the <strong>Share</strong> icon in Safari',
         'install.step2':       '2. Scroll down',
         'install.step3':       '3. Tap <strong>Add to Home Screen</strong>',
-        'install.close':       'TAP TO CLOSE',
+        'install.close':       'CLOSE',
         // Mobile collapse toggle (arrow added by JS)
         'mobile.show':    'SETTINGS',
         'settings.nextRun': 'Applies next run',
@@ -2301,7 +2345,7 @@
         'install.step1':    '1. Tocá el ícono <strong>Compartir</strong> en Safari',
         'install.step2':    '2. Bajá la lista',
         'install.step3':    '3. Tocá <strong>Agregar a Inicio</strong>',
-        'install.close':    'TOCÁ PARA CERRAR',
+        'install.close':    'CERRAR',
         'mobile.show':    'AJUSTES',
         'settings.nextRun': 'Se aplica en la próxima bajada',
         'lb.saveFailed':  'No se pudo guardar. Probá de nuevo.',
@@ -2669,7 +2713,9 @@
           await navigator.share({ title: 'Cat Ski', text, url, files: [file] });
           trackRunShared('web_share_file', result);
           return;
-        } catch (_) { /* user cancelled, fall through */ }
+        } catch (error) {
+          if (error && error.name === 'AbortError') return;
+        }
       }
     }
     // Path 2: Web Share Level 1 — text + URL only
@@ -2678,7 +2724,9 @@
         await navigator.share({ title: 'Cat Ski', text, url });
         trackRunShared('web_share_text', result);
         return;
-      } catch (_) {}
+      } catch (error) {
+        if (error && error.name === 'AbortError') return;
+      }
     }
     // Path 3: download the PNG + copy text+URL
     if (blob) {
@@ -2711,8 +2759,7 @@
       e.preventDefault();
       if (!confirm(t('over.resetConfirm'))) return;
       const key = bestKey(completedRun ? completedRun.config : gameplayConfig());
-      delete bests[key];
-      saveBests(bests, key);
+      saveBest(key, null);
       best = 0;
       if (overBest) overBest.textContent = '0';
     });
@@ -2722,12 +2769,26 @@
   // On mobile-layout, pickers are hidden by default so the game fills
   // the phone screen. This button expands/collapses them on demand.
   const ctrlToggle = document.getElementById('controls-toggle');
-  ctrlToggle.addEventListener('click', () => {
-    const expanded = document.body.classList.toggle('controls-expanded');
+  function setSettingsExpanded(expanded) {
+    document.body.classList.toggle('controls-expanded', expanded);
+    if (expanded) {
+      pauseGame();
+      clearInput();
+    }
     ctrlToggle.innerHTML = (expanded ? '&#9650; ' : '&#9660; ') +
                            '<span data-i18n="' + (expanded ? 'mobile.hide' : 'mobile.show') + '">' +
                            t(expanded ? 'mobile.hide' : 'mobile.show') + '</span>';
     ctrlToggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+  }
+  function closeSettings() {
+    if (!document.body.classList.contains('controls-expanded')) return;
+    setSettingsExpanded(false);
+    // Resume/Restart can be activated after scrolling to the last settings row.
+    // Restore the game before play resumes instead of relying on scroll anchoring.
+    if (document.body.classList.contains('mobile-layout')) window.scrollTo(0, 0);
+  }
+  ctrlToggle.addEventListener('click', () => {
+    setSettingsExpanded(!document.body.classList.contains('controls-expanded'));
   });
 
   // ---------- pause / restart buttons ----------
@@ -3322,9 +3383,12 @@
     }
     return valid;
   }
-  function readStoredBests() {
-    try { return sanitizeBests(JSON.parse(CatSkiStorage.getStoredItem('skior_bests'))); }
-    catch (_) { return Object.create(null); }
+  function readBestState() {
+    const stored = CatSkiStorage.getStoredState('skior_bests');
+    let scores;
+    try { scores = sanitizeBests(JSON.parse(stored.value)); }
+    catch (_) { scores = Object.create(null); }
+    return { scores, available: stored.available, hasMap: stored.value !== null };
   }
   function loadBests() {
     const raw = CatSkiStorage.getItem('skior_bests');
@@ -3336,20 +3400,53 @@
     const legacy = Number(CatSkiStorage.getItem('skior_best'));
     return sanitizeBests(Number.isFinite(legacy) && legacy > 0 ? { [bestKey()]: legacy } : {});
   }
-  function saveBests(obj, clearedKey = null) {
-    const snapshot = sanitizeBests(obj);
-    return CatSkiStorage.withLock('cat-ski-scores', () => {
-      const merged = readStoredBests();
-      for (const source of [sanitizeBests(bests), snapshot]) {
-        for (const [key, score] of Object.entries(source)) merged[key] = Math.max(merged[key] || 0, score);
+  function mergePendingBests(stored) {
+    const merged = sanitizeBests(stored.scores);
+    for (const [key, change] of pendingBestChanges) {
+      // A reset/removal after this change began cancels that older change.
+      // A save begun after the reset has the new baseline, so a delayed
+      // storage event cannot cancel it. Failed reads are not deletions.
+      if (stored.available && ((change.hadMap && !stored.hasMap) ||
+          (change.base !== undefined && (merged[key] === undefined || merged[key] < change.base)))) {
+        pendingBestChanges.delete(key);
+        continue;
       }
-      if (clearedKey !== null) delete merged[clearedKey];
-      bests = merged;
-      CatSkiStorage.setItem('skior_bests', JSON.stringify(merged));
+      if (change.score === null) delete merged[key];
+      else merged[key] = change.replace ? change.score : Math.max(merged[key] || 0, change.score);
+    }
+    return merged;
+  }
+  function flushBestChanges() {
+    return CatSkiStorage.withLock('cat-ski-scores', () => {
+      if (!pendingBestChanges.size) return;
+      bests = mergePendingBests(readBestState());
+      if (pendingBestChanges.size && CatSkiStorage.setItem('skior_bests', JSON.stringify(bests))) pendingBestChanges.clear();
       refreshBestForCombo();
     });
   }
+  function saveBest(key, score = null) {
+    if (typeof key !== 'string' || (score !== null && (!Number.isFinite(score) || score < 0))) return Promise.resolve();
+    const stored = readBestState();
+    const previous = pendingBestChanges.get(key);
+    pendingBestChanges.set(key, {
+      score, base: stored.available ? stored.scores[key] : undefined,
+      hadMap: stored.available && stored.hasMap,
+      // A new run queued behind this tab's reset starts a fresh best.
+      replace: score === null || !!(previous && previous.replace),
+    });
+    bests = mergePendingBests(stored);
+    return flushBestChanges();
+  }
   let bests = loadBests();
+  // Keep only local changes outside the durable map. In particular, a
+  // quota failure must not turn every remembered score into a later write.
+  const pendingBestChanges = new Map();
+  const initialBestState = readBestState();
+  for (const [key, score] of Object.entries(bests)) {
+    if (score > (initialBestState.scores[key] || 0)) {
+      pendingBestChanges.set(key, { score, base: undefined, hadMap: initialBestState.available && initialBestState.hasMap });
+    }
+  }
   function currentBest(config = gameplayConfig()) { return bests[bestKey(config)] || 0; }
   let best = currentBest();
 
@@ -3443,6 +3540,7 @@
   // worldY = how far down the mountain we've traveled (in px).
   let worldY = 0;
   let player, objects, particles, tracks, yeti, stats;
+  let startCorridor;
 
   function resetGame() {
     worldY = 0;
@@ -3472,6 +3570,16 @@
       // collision can't burn through multiple lives in consecutive frames.
       lives: gameplayConfig().livesMode ? 9 : 1,
       invincT: 0,
+    };
+
+    // Leave 1.5 seconds of clear center lane even at peak tuck speed.
+    // These fixed world bounds apply to both seeded and streamed objects.
+    const clearDistance = (1.6 + 1.8) * D.speedMul * 90;
+    startCorridor = {
+      x: player.x,
+      y: player.screenY + clearDistance / 2,
+      w: 72 + player.width,
+      h: clearDistance + player.height,
     };
 
     objects = [];     // trees, rocks, flags, jumps, moguls
@@ -3561,6 +3669,7 @@
       if (type === 'jump')  { obj.w = 30; obj.h = 8;  }
       if (type === 'mogul') { obj.w = 18; obj.h = 10; }
 
+      if ((type === 'tree' || type === 'rock') && aabb(obj, startCorridor)) continue;
       objects.push(obj);
     }
   }
@@ -4283,8 +4392,10 @@
 
   window.addEventListener('storage', event => {
     if (event.key === 'skior_bests' || event.key === null) {
-      bests = readStoredBests();
+      bests = mergePendingBests(readBestState());
       refreshBestForCombo();
+      // Retry local improvements when another tab proves storage writable.
+      if (pendingBestChanges.size) flushBestChanges();
     }
     if (event.key === LB_CACHE_KEY || event.key === null) {
       leaderboardCache = event.newValue === null ? loadLeaderboardCache()
@@ -4388,11 +4499,12 @@
     if (state !== STATE.PLAY || completedRun) return;
     const config = gameplayConfig();
     stats.score = calculateScore();
+    bests = mergePendingBests(readBestState());
     best = currentBest(config);
     if (stats.score > best) {
       best = stats.score;
-      bests[bestKey(config)] = best;
-      saveBests(bests);
+      saveBest(bestKey(config), best);
+      best = currentBest(config);
     }
     completedRun = Object.freeze({
       config, score: stats.score, distance: stats.distance, elapsed: stats.elapsed,
@@ -4437,6 +4549,7 @@
   }
 
   function startRun() {
+    closeSettings();
     activeRunConfig = Object.freeze(selectedRunConfig());
     completedRun = null;
     completedFrame = null;
@@ -4485,6 +4598,7 @@
   }
   function resumeGame() {
     if (state !== STATE.PAUSED) return;
+    closeSettings();
     state = STATE.PLAY;
     resetFrameClock();
     overlayPaused.classList.add('hidden');

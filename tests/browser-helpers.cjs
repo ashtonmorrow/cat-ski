@@ -10,12 +10,13 @@ const ORIGIN = 'https://catski.test';
 const hook = `
   window.__test = {
     snapshot: () => ({ state, keys: { ...keys }, player: { ...player },
-      stats: { ...stats }, worldY, activeRunConfig, completedRun }),
+      stats: { ...stats }, objects: objects.map(object => ({ ...object })), worldY, activeRunConfig, completedRun }),
     start: () => startRun(),
     frame: timestamp => loop(timestamp),
     pause: () => pauseGame(),
     resume: () => resumeGame(),
     update: () => update(),
+    spawn: (y, density) => spawnObjectsAround(y, density),
     crash: cause => crash(cause),
     setAir(frames = 120) {
       player.air = player.airMax = frames;
@@ -46,9 +47,10 @@ async function createHarness() {
   const browser = await chromium.launch({ headless: true, ...(executablePath ? { executablePath } : {}) });
   const contexts = new Set();
   async function openGame({ viewport = { width: 1280, height: 900 }, mobile = false,
-    storage = {}, manualClock = false, storageFailure = null, context: existingContext } = {}) {
+    storage = {}, manualClock = false, storageFailure = null, userAgent, context: existingContext } = {}) {
     const context = existingContext || await browser.newContext({ viewport,
-      isMobile: mobile, hasTouch: mobile, serviceWorkers: 'block', acceptDownloads: true });
+      isMobile: mobile, hasTouch: mobile, serviceWorkers: 'block', acceptDownloads: true,
+      ...(userAgent ? { userAgent } : {}) });
     if (!existingContext) {
       contexts.add(context);
       await context.addInitScript(({ storage, manualClock, storageFailure }) => {
