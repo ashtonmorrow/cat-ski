@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>CAT SKI // Retro Downhill 1989</title>
+<title>Cat Ski: Free SkiFree-Style Skiing Game Online</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <!-- Canonical URL — explicit so search engines don't conflate www/non-www
@@ -112,7 +112,7 @@
     "url": "https://go.mike-lee.me/"
   },
   "datePublished": "2026-04-24",
-  "dateModified": "2026-09-07",
+  "dateModified": "2026-09-29",
   "softwareVersion": "1.0"
 }
 </script>
@@ -124,7 +124,7 @@
 <meta name="apple-mobile-web-app-title" content="Cat Ski">
 
 <!-- Open Graph (iMessage, Slack, Discord, Facebook, LinkedIn, WhatsApp) -->
-<meta property="og:title" content="CAT SKI // 1989">
+<meta property="og:title" content="Cat Ski: Free SkiFree-Style Skiing Game">
 <meta property="og:description" content="A free browser game inspired by SkiFree (1991). Play as a cat down an endless mountain. Three themes, mid-air tricks, dog and snowman chasers, tunable difficulty.">
 <meta property="og:image" content="https://ski.unwoke.ninja/preview.png?v=19">
 <meta property="og:image:secure_url" content="https://ski.unwoke.ninja/preview.png?v=19">
@@ -138,7 +138,7 @@
 
 <!-- Twitter / X -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="CAT SKI // 1989">
+<meta name="twitter:title" content="Cat Ski: Free SkiFree-Style Skiing Game">
 <meta name="twitter:description" content="A free browser game inspired by SkiFree (1991). Play as a cat down an endless mountain. Three themes, mid-air tricks, dog and snowman chasers, tunable difficulty.">
 <meta name="twitter:image" content="https://ski.unwoke.ninja/preview.png?v=19">
 <meta name="twitter:image:alt" content="Black cat with yellow goggles skiing through snowy Alps, chased by a German shepherd and a top-hat snowman">
@@ -610,7 +610,8 @@
     box-shadow: 6px 6px 0 #000, 0 0 0 2px #000 inset;
     max-width: 520px;
   }
-  .panel h1 {
+  .panel h1,
+  .panel .panel-title {
     font-family: var(--font-display);
     font-size: var(--type-lg);
     color: var(--snow);
@@ -619,7 +620,8 @@
     letter-spacing: 2px;
   }
   .panel h1 .alt { color: var(--accent); }
-  .panel h2 {
+  .panel h2,
+  .panel h3 {
     font-family: var(--font-display);
     font-size: var(--type-md);
     color: var(--accent-2);
@@ -1244,8 +1246,10 @@
   body.mobile-layout .diff-swatch { padding: 10px 12px; font-size: var(--type-sm); }
   body.mobile-layout .overlay { padding: 10px; }
   body.mobile-layout .panel { padding: 16px 18px; max-width: 92%; max-height: 100%; overflow-y: auto; }
-  body.mobile-layout .panel h1 { font-size: var(--type-md); margin-bottom: 6px; }
-  body.mobile-layout .panel h2 { font-size: var(--type-sm); margin-bottom: 10px; }
+  body.mobile-layout .panel h1,
+  body.mobile-layout .panel .panel-title { font-size: var(--type-md); margin-bottom: 6px; }
+  body.mobile-layout .panel h2,
+  body.mobile-layout .panel h3 { font-size: var(--type-sm); margin-bottom: 10px; }
   body.mobile-layout .panel p  { font-size: 17px; }
   body.mobile-layout .panel .keys { gap: 4px 12px; margin: 10px 0 6px; font-size: var(--type-sm); }
   body.mobile-layout .panel .hint { font-size: var(--type-sm); margin-top: 12px; }
@@ -1282,6 +1286,8 @@
   }
   .credit a:hover { color: #fff; border-bottom-color: #fff; }
   body.mobile-layout .credit { font-size: 14px; padding: 10px 10px 18px; }
+  .about-line { margin-top: 4px; }
+  body.mobile-layout .about-line { padding-top: 0; }
 
   /* ---------- Mobile controls toggle ----------
      Hides all the pickers by default when in mobile-layout, so the
@@ -1379,7 +1385,7 @@
 <div class="frame">
   <div class="bezel-title">
     <span class="bezel-left">
-      <a href="https://go.mike-lee.me/" class="bezel-link" target="_blank" rel="noopener noreferrer">HOME</a>
+      <a href="https://unwoke.ninja/" class="bezel-link" target="_blank" rel="noopener noreferrer">HOME</a>
       <a href="/readme.html" class="bezel-link" target="_blank" rel="noopener" data-i18n="link.help">HOW TO PLAY</a>
     </span>
     <span class="bezel-center">CAT SKI <span class="dot">&#9632;</span> 1989</span>
@@ -1449,7 +1455,7 @@
     <!-- Pause screen -->
     <div class="overlay hidden" id="overlay-paused">
       <div class="panel">
-        <h1 data-i18n="pause.title">PAUSED</h1>
+        <h2 class="panel-title" data-i18n="pause.title">PAUSED</h2>
         <p id="paused-line">Take a breath.</p>
         <div class="hint" id="paused-hint"><span class="blink">&gt;</span> SPACE TO RESUME</div>
       </div>
@@ -1458,8 +1464,8 @@
     <!-- Game over screen -->
     <div class="overlay hidden" id="overlay-over">
       <div class="panel">
-        <h1 id="over-title">WIPEOUT</h1>
-        <h2 id="over-sub">YOU ATE SNOW</h2>
+        <h2 class="panel-title" id="over-title">WIPEOUT</h2>
+        <h3 id="over-sub">YOU ATE SNOW</h3>
         <div class="stat-row"><span data-i18n="over.time">TIME</span><span class="v" id="over-time">0:00</span></div>
         <div class="stat-row"><span data-i18n="over.distance">DISTANCE</span><span class="v" id="over-dist">0 M</span></div>
         <div class="stat-row"><span data-i18n="over.score">SCORE</span><span class="v" id="over-score">0</span></div>
@@ -1626,13 +1632,15 @@
     <span data-i18n="credit.by">created by</span>
     <a href="https://www.linkedin.com/in/mikelee89/" target="_blank" rel="noopener noreferrer">Whisker Leaks</a>
   </div>
+  <!-- Plain-text summary: the game is a canvas, so this is the page's main crawlable description. -->
+  <p class="credit about-line" data-i18n-html="credit.about">Cat Ski is a free SkiFree-style skiing game for your browser and phone. <a href="/readme.html" target="_blank" rel="noopener">How to play</a> &middot; <a href="https://unwoke.ninja/cat-ski/built-with-ai" target="_blank" rel="noopener">How it was built</a></p>
 </div>
 
 <!-- Native modal stays in the viewport and makes the game behind it inert. -->
 <dialog class="install-dialog" id="overlay-install-ios" aria-labelledby="install-title" aria-describedby="install-description">
   <div class="panel">
-    <h1 id="install-title" data-i18n="install.title">INSTALL</h1>
-    <h2 data-i18n="install.subtitle">ADD TO HOME SCREEN</h2>
+    <h2 class="panel-title" id="install-title" data-i18n="install.title">INSTALL</h2>
+    <h3 data-i18n="install.subtitle">ADD TO HOME SCREEN</h3>
     <div id="install-description">
       <p data-i18n-html="install.step1">1. Tap the <strong>Share</strong> icon in Safari</p>
       <p data-i18n="install.step2">2. Scroll down</p>
@@ -2205,6 +2213,7 @@
         'mobile.hide':    'CLOSE SETTINGS',
         'footer':       'NO QUARTER REQUIRED, NO QUARTER GIVEN',
         'credit.by':    'created by',
+        'credit.about': 'Cat Ski is a free SkiFree-style skiing game for your browser and phone. <a href="/readme.html" target="_blank" rel="noopener">How to play</a> &middot; <a href="https://unwoke.ninja/cat-ski/built-with-ai" target="_blank" rel="noopener">How it was built</a>',
         "lb.label": "Top three scores on this device",
         "aria.catGroup": "Cat color",
         "aria.themeGroup": "Mountain theme",
@@ -2397,6 +2406,7 @@
         'mobile.hide':    'CERRAR AJUSTES',
         'footer':       'GRATIS',
         'credit.by':    'creado por',
+        'credit.about': 'Cat Ski es un juego de esquí gratis al estilo SkiFree para tu navegador y tu celular. <a href="/readme.html" target="_blank" rel="noopener">Cómo jugar</a> &middot; <a href="https://unwoke.ninja/cat-ski/built-with-ai" target="_blank" rel="noopener">Cómo se hizo</a>',
         "lb.label": "Los tres mejores puntajes de este dispositivo",
         "aria.catGroup": "Color del gato",
         "aria.themeGroup": "Montaña",
