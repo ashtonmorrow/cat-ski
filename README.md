@@ -6,11 +6,11 @@ Play it at https://ski.unwoke.ninja/
 
 ## What it is
 
-The game code is in one HTML file, with separate artwork, icons, and self-hosted fonts. There is no build step, no framework, and no game backend. A service worker caches the game assets for offline play. The game draws to an HTML5 canvas at a low internal resolution of 360 by 270 and scales it up with pixelated rendering.
+The game code is in one HTML file. Sprites are drawn in code; icons, the preview image, and self-hosted fonts are separate files. There is no build step, no framework, and no game backend. A service worker caches the game assets for offline play. The game draws to an HTML5 canvas at a low internal resolution of 360 by 270 and scales it up with pixelated rendering.
 
 ## Features
 
-- Three mountain themes: Alps, Rockies, and Himalayas. Each palette comes from landscape photography of the real range.
+- Three mountain themes: Alps, Rockies, and Himalayas. Each has its own designed palette, meant to evoke how that range looks in photographs.
 - Four cat variants: black, tabby, calico, and orange.
 - Mid-air tricks that chain for extra points: Meow Roll, Whisker Twist, Cat Nap.
 - A snowman chaser in the role of the SkiFree yeti, plus dog breeds that match each region.
@@ -72,10 +72,10 @@ See [release checks](RELEASING.md) for native-device checks that browser automat
 
 ## Stack
 
-Vanilla HTML, CSS, and JavaScript. HTML5 Canvas for rendering. Web Audio API for procedural sound, so there are no audio files. The leaderboard lives in localStorage, so there is no database and no accounts. Hosted on Vercel, deployed automatically from this repository.
+Vanilla HTML, CSS, and JavaScript. HTML5 Canvas for rendering. Web Audio API for procedural sound, so there are no audio files. The leaderboard lives in localStorage, so there is no database and no accounts. Hosted on Vercel behind Cloudflare, deployed automatically from this repository.
 
 ## More
 
-See [How to play](https://ski.unwoke.ninja/readme.html) for gameplay details and privacy notes. The [build story](https://unwoke.ninja/cat-ski/built-with-ai) covers the color-from-photography approach and the design criteria for each element.
+See [How to play](https://ski.unwoke.ninja/readme.html) for gameplay details and privacy notes. The [build story](https://unwoke.ninja/cat-ski/built-with-ai/) covers the game loop, the dog-ramp maths, the mountain palettes, and the static hosting setup. [Cat Ski vs SkiFree](https://unwoke.ninja/cat-ski/skifree/) compares it with the original.
 
 Built by Mike Lee. Inspired by SkiFree by Chris Pirih, 1991.

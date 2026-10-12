@@ -1,6 +1,6 @@
 # Cat Ski 1989
 
-> A free browser game inspired by SkiFree (1991). Play as a cat skiing down an endless mountain. Three regional themes, mid-air tricks, dog and snowman chasers, tunable difficulty, a 9-lives casual mode that is on by default, and a local high-score leaderboard split by lives mode. No build step or install required. Last updated 7 September 2026.
+> A free browser game inspired by SkiFree (1991). Play as a cat skiing down an endless mountain. Three regional themes, mid-air tricks, dog and snowman chasers, tunable difficulty, a 9-lives casual mode that is on by default, and a local high-score leaderboard split by lives mode. No build step or install required. Last updated 12 October 2026.
 
 Cat Ski 1989 is an open-source browser game inspired by SkiFree, with a cat as the player character. It includes three mountain themes (Alps, Rockies, Himalayas), four cat variants (black, tabby, calico, orange), chained mid-air tricks (Meow Roll, Whisker Twist, Cat Nap), gold escape ramps, regional dog breeds, and a snowman in the role of the original yeti. The snowman appears 20–40 seconds after the final dog wave clears. Each catch costs a life; losing the last life ends the run.
 
@@ -14,7 +14,8 @@ Press Space or tap the start screen to begin. Left/right arrows or A/D steer; up
 
 - [Play Cat Ski](https://ski.unwoke.ninja/): The game itself. Loads in a browser and is playable on desktop or mobile. Press SPACE on desktop or tap on mobile to start.
 - [How to play](https://ski.unwoke.ninja/readme.html): Quick start, controls, gameplay details, installation, local scores, and privacy notes.
-- [Build story](https://unwoke.ninja/cat-ski/built-with-ai): The game's design, photography-derived mountain palettes, and development workflow.
+- [Build story](https://unwoke.ninja/cat-ski/built-with-ai/): How the game was built with an AI coding agent: the game loop, dog-ramp maths, procedural sprites, mountain palettes, and static hosting.
+- [Cat Ski vs SkiFree](https://unwoke.ninja/cat-ski/skifree/): How Cat Ski compares with the original 1991 game.
 
 ## About the project
 
@@ -23,8 +24,8 @@ Press Space or tap the start screen to begin. Left/right arrows or A/D steer; up
 - Source code: https://github.com/ashtonmorrow/cat-ski
 - License: open source (see repository)
 - Inspiration: SkiFree (1991, Microsoft Entertainment Pack 3 for Windows 3.0)
-- Stack: vanilla HTML, CSS, and JavaScript in index.html; HTML5 Canvas (360x270 internal, scaled with image-rendering: pixelated); Web Audio API for procedural sound; separate artwork, icons, and self-hosted fonts; no build step or framework
-- Hosting: Vercel, deployed automatically from the GitHub repository
+- Stack: vanilla HTML, CSS, and JavaScript in index.html; HTML5 Canvas (360x270 internal, scaled with image-rendering: pixelated); Web Audio API for procedural sound; sprites drawn in code; separate icons, preview image, and self-hosted fonts; no build step or framework
+- Hosting: Vercel behind Cloudflare, deployed automatically from the GitHub repository
 - Game backend: none. The leaderboard is per-browser localStorage; there are no accounts or shared score database
 - PWA: installable through the INSTALL button when supported, or the browser's Add to Home Screen option; a service worker caches game assets for offline play
 - Analytics: Google Analytics 4 on the game and help pages; Mixpanel game events after acceptance of the analytics banner. GA Consent Mode defaults to denied analytics storage but can still send cookieless measurements

@@ -483,11 +483,11 @@
 
     <h2 id="about">About cat-ski</h2>
 
-    <p>Cat Ski 1989 is a <a href="/">free browser skiing game</a> inspired by <a href="https://en.wikipedia.org/wiki/SkiFree" target="_blank" rel="noopener noreferrer">SkiFree</a>, the 1991 release that shipped in Microsoft Entertainment Pack 3 for Windows 3.0. The original presented an endless downhill ski run with trees, jumps, and an unkillable abominable yeti that eventually appeared and ended every run. Cat Ski 1989 recreates the same loop with a cat as the player character. The game includes three regional mountain themes (Alps, Rockies, Himalayas), four cat color variants, an in-air trick system with chained scoring, gold escape ramps that spawn alongside each dog wave, and a snowman that takes the role of the original yeti. Difficulty is tunable through two sliders, with four named presets for casual players.</p>
+    <p>Cat Ski 1989 is a <a href="/">free browser skiing game</a> inspired by <a href="https://en.wikipedia.org/wiki/SkiFree" target="_blank" rel="noopener noreferrer">SkiFree</a>, the 1991 release that shipped in Microsoft Entertainment Pack 3 for Windows 3.0. The original presented an endless downhill ski run with trees, jumps, and an Abominable Snow Monster that eventually appeared and chased the skier down. Cat Ski 1989 recreates the same loop with a cat as the player character. The game includes three regional mountain themes (Alps, Rockies, Himalayas), four cat color variants, an in-air trick system with chained scoring, gold escape ramps that spawn alongside each dog wave, and a snowman that takes the role of the original yeti. Difficulty is tunable through two sliders, with four named presets for casual players.</p>
 
     <p>The game ships with a 9-lives casual mode enabled by default. Each crash, dog grab, or snowman chomp consumes a life, with a brief invincibility window before the next hit registers. A top-3 leaderboard sits at the top of the page, with separate boards for 9-lives and 1-life. Each browser keeps its own saved runs. Entering a nickname is optional and only happens after a qualifying run. English and rioplatense Spanish are available in the settings.</p>
 
-    <p>The project is open source at <a href="https://github.com/ashtonmorrow/cat-ski" target="_blank" rel="noopener noreferrer">github.com/ashtonmorrow/cat-ski</a>. It was developed by <a href="https://www.linkedin.com/in/mikelee89/" target="_blank" rel="noopener noreferrer">Mike Lee</a> using Claude as a coding collaborator. The game code is in one HTML file, with separate artwork, icons, and self-hosted fonts. There is no build step, framework, or game backend. A service worker caches the game assets for offline play, and saved scores stay in the browser.</p>
+    <p>The project is open source at <a href="https://github.com/ashtonmorrow/cat-ski" target="_blank" rel="noopener noreferrer">github.com/ashtonmorrow/cat-ski</a>. It was developed by <a href="https://www.linkedin.com/in/mikelee89/" target="_blank" rel="noopener noreferrer">Mike Lee</a> using Claude as a coding collaborator. The game code is in one HTML file. Sprites are drawn in code; icons, the preview image, and self-hosted fonts are separate files. There is no build step, framework, or game backend. A service worker caches the game assets for offline play, and saved scores stay in the browser.</p>
 
     <h2 id="play">Gameplay details</h2>
 
@@ -503,9 +503,9 @@
 
     <h2 id="build">How it's built</h2>
 
-    <p>Cat Ski uses vanilla JavaScript in <code>index.html</code>, an HTML canvas at 360x270 scaled up with pixelated rendering, and the Web Audio API for sound. Artwork, icons, and fonts are separate files; sound is synthesized without audio files. There is no framework or build step. The source is versioned on GitHub and deployed to Vercel.</p>
+    <p>Cat Ski uses vanilla JavaScript in <code>index.html</code>, an HTML canvas at 360x270 scaled up with pixelated rendering, and the Web Audio API for sound. The cats, dogs, snowman, and scenery are drawn in code rather than loaded as images; icons and fonts are separate files, and sound is synthesized without audio files. There is no framework or build step. The source is versioned on GitHub and deployed to Vercel, served through Cloudflare.</p>
 
-    <p>The full build story, with the game loop, the maths behind the dog chase, the palettes pulled from photographs, and the free toolchain, lives at <a href="https://unwoke.ninja/cat-ski/built-with-ai" target="_blank" rel="noopener">unwoke.ninja/cat-ski/built-with-ai</a>.</p>
+    <p>The full build story, with the game loop, the maths behind the dog chase, the mountain palettes, and the static hosting setup, lives at <a href="https://unwoke.ninja/cat-ski/built-with-ai/" target="_blank" rel="noopener">How Cat Ski was built with an AI coding agent</a>.</p>
 
     <h2 id="privacy">Privacy notes</h2>
 
@@ -542,11 +542,11 @@
 
     <h3>Third parties</h3>
 
-    <p>Vercel hosts the site. Requests to Vercel and the analytics providers expose standard network information, including an IP address and browser headers. Fonts and artwork are self-hosted. The game has no account system, shared score database, or advertising placements.</p>
+    <p>Vercel hosts the site, and Cloudflare sits in front of it as a content delivery network. Requests to Cloudflare, Vercel, and the analytics providers expose standard network information, including an IP address and browser headers. Fonts and images are self-hosted. The game has no account system, shared score database, or advertising placements.</p>
 
     <h3>Changes</h3>
 
-    <p>Last updated: 7 September 2026.</p>
+    <p>Last updated: 12 October 2026.</p>
 
     <h2 id="faq">Common questions</h2>
 
@@ -578,6 +578,8 @@
 
     <ul>
       <li><a href="https://en.wikipedia.org/wiki/SkiFree" target="_blank" rel="noopener noreferrer">SkiFree on Wikipedia</a>: background on the original 1991 game.</li>
+      <li><a href="https://unwoke.ninja/cat-ski/skifree/" target="_blank" rel="noopener">Cat Ski vs SkiFree</a>: how the two games compare, and whether you can still play the original.</li>
+      <li><a href="https://unwoke.ninja/cat-ski/built-with-ai/" target="_blank" rel="noopener">How Cat Ski was built</a>: the game loop, dog-ramp maths, and hosting setup.</li>
       <li><a href="https://github.com/ashtonmorrow/cat-ski" target="_blank" rel="noopener noreferrer">github.com/ashtonmorrow/cat-ski</a>: full source code, issues, and pull requests.</li>
       <li><a href="https://www.linkedin.com/in/mikelee89/" target="_blank" rel="noopener noreferrer">Mike Lee on LinkedIn</a>: contact for the project author.</li>
     </ul>
