@@ -503,7 +503,7 @@
 
     <h2 id="build">How it's built</h2>
 
-    <p>Cat Ski uses vanilla JavaScript in <code>index.html</code>, an HTML canvas at 360x270 scaled up with pixelated rendering, and the Web Audio API for sound. The cats, dogs, snowman, and scenery are drawn in code rather than loaded as images; icons and fonts are separate files, and sound is synthesized without audio files. There is no framework or build step. The source is versioned on GitHub and deployed to Vercel, served through Cloudflare.</p>
+    <p>Cat Ski uses vanilla JavaScript in <code>index.html</code>, an HTML canvas at 360x270 scaled up with pixelated rendering, and the Web Audio API for sound. The cats, dogs, snowman, and scenery are drawn in code rather than loaded as images; icons and fonts are separate files, and sound is synthesized without audio files. There is no framework or build step. The source is versioned on GitHub and served as static files from Cloudflare.</p>
 
     <p>The full build story, with the game loop, the maths behind the dog chase, the mountain palettes, and the static hosting setup, lives at <a href="https://unwoke.ninja/cat-ski/built-with-ai/" target="_blank" rel="noopener">How Cat Ski was built with an AI coding agent</a>.</p>
 
@@ -542,7 +542,7 @@
 
     <h3>Third parties</h3>
 
-    <p>Vercel hosts the site, and Cloudflare sits in front of it as a content delivery network. Requests to Cloudflare, Vercel, and the analytics providers expose standard network information, including an IP address and browser headers. Fonts and images are self-hosted. The game has no account system, shared score database, or advertising placements.</p>
+    <p>Cloudflare hosts the site. Requests to Cloudflare and the analytics providers expose standard network information, including an IP address and browser headers. Fonts and images are self-hosted. The game has no account system, shared score database, or advertising placements.</p>
 
     <h3>Changes</h3>
 

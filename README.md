@@ -72,7 +72,7 @@ See [release checks](RELEASING.md) for native-device checks that browser automat
 
 ## Stack
 
-Vanilla HTML, CSS, and JavaScript. HTML5 Canvas for rendering. Web Audio API for procedural sound, so there are no audio files. The leaderboard lives in localStorage, so there is no database and no accounts. Hosted on Vercel behind Cloudflare, deployed automatically from this repository.
+Vanilla HTML, CSS, and JavaScript. HTML5 Canvas for rendering. Web Audio API for procedural sound, so there are no audio files. The leaderboard lives in localStorage, so there is no database and no accounts. Hosted as static assets on a Cloudflare Worker.
 
 ## More
 

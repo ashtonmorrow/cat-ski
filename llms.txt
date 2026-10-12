@@ -25,7 +25,7 @@ Press Space or tap the start screen to begin. Left/right arrows or A/D steer; up
 - License: open source (see repository)
 - Inspiration: SkiFree (1991, Microsoft Entertainment Pack 3 for Windows 3.0)
 - Stack: vanilla HTML, CSS, and JavaScript in index.html; HTML5 Canvas (360x270 internal, scaled with image-rendering: pixelated); Web Audio API for procedural sound; sprites drawn in code; separate icons, preview image, and self-hosted fonts; no build step or framework
-- Hosting: Vercel behind Cloudflare, deployed automatically from the GitHub repository
+- Hosting: static assets on a Cloudflare Worker; source on GitHub
 - Game backend: none. The leaderboard is per-browser localStorage; there are no accounts or shared score database
 - PWA: installable through the INSTALL button when supported, or the browser's Add to Home Screen option; a service worker caches game assets for offline play
 - Analytics: Google Analytics 4 on the game and help pages; Mixpanel game events after acceptance of the analytics banner. GA Consent Mode defaults to denied analytics storage but can still send cookieless measurements
