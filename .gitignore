@@ -17,3 +17,4 @@ ehthumbs.db
 # Development-only regression tools
 node_modules/
 test-results/
+.wrangler/

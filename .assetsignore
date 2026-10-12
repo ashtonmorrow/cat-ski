@@ -1,0 +1,16 @@
+# Files Wrangler must not upload as public assets (gitignore syntax).
+.git
+.github
+.claude
+.qa
+.wrangler
+node_modules
+tests
+test-results
+*.md
+package.json
+package-lock.json
+wrangler.jsonc
+.gitignore
+.assetsignore
+.DS_Store

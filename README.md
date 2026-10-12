@@ -66,7 +66,7 @@ The test tools are development dependencies; the game still runs without a build
 
 The suite checks timing across simulated refresh rates, safe starts, run results, keyboard and touch controls, phone settings, sharing and installation, storage failures and score resets across tabs, consent, and offline cache failures. It also covers restored startup settings, accessible game actions and reduced motion, natural dog/snowman progression, and an upgrade from the previous release. Chromium, WebKit, and Firefox each run the keyboard, score-saving, preferences, guide, and phone-layout smoke flow. Browser tests use local files and block external analytics requests. To use an existing Chrome installation for the Chromium checks, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to its executable path.
 
-GitHub Actions runs the suite on pushes and pull requests. The `Regression tests` check is required for `main`, including admin pushes. To release, push a working branch, wait for its checks to pass, then merge or fast-forward the checked commit into `main`. Vercel publishes from `main` after that gate.
+GitHub Actions runs the suite on pushes and pull requests. The `Regression tests` check is required for `main`, including admin pushes. To release, push a working branch, wait for its checks to pass, then merge or fast-forward the checked commit into `main`. Cloudflare Workers Builds deploys `main` to the `cat-ski` Worker after that gate.
 
 See [release checks](RELEASING.md) for native-device checks that browser automation does not cover.
 

@@ -1,0 +1,11 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "cat-ski",
+  "compatibility_date": "2026-10-12",
+  // Static site: the repository root is the asset directory. .assetsignore
+  // keeps docs, tests and tooling out of the upload. Routes and the custom
+  // domain stay managed in the Cloudflare dashboard.
+  "assets": {
+    "directory": "."
+  }
+}
